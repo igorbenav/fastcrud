@@ -2,7 +2,8 @@ from typing import Any, Dict, Generic, List, Type, TypeVar, Union
 from datetime import datetime
 
 from pydantic import BaseModel
-from sqlalchemy import select, update, delete, func, and_, inspect
+from sqlalchemy import select, update, delete, func, and_, inspect, asc, desc
+from sqlalchemy.exc import ArgumentError
 from sqlalchemy.sql import Join
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine.row import Row
@@ -24,12 +25,89 @@ DeleteSchemaType = TypeVar("DeleteSchemaType", bound=BaseModel)
 class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType, UpdateSchemaInternalType, DeleteSchemaType]):
     """
     Base class for CRUD operations on a model.
+
+    Parameters
+    ----------
+    model : Type[ModelType]
+        The SQLAlchemy model type.
     """
-    def __init__(
-        self, 
-        model: Type[ModelType]
-    ) -> None:
+    def __init__(self, model: Type[ModelType]) -> None:
         self.model = model
+
+    def apply_sorting(self, stmt, sort_columns, sort_orders=None):
+        """
+        Apply sorting to a SQLAlchemy query based on specified column names and sort orders.
+
+        Parameters
+        ----------
+        stmt : sqlalchemy.sql.selectable.Select
+            The SQLAlchemy Select statement to which sorting will be applied.
+        sort_columns : Union[str, List[str]]
+            A single column name or a list of column names on which to apply sorting.
+        sort_orders : Union[str, List[str]], optional
+            A single sort order ('asc' or 'desc') or a list of sort orders corresponding 
+            to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
+
+        Raises
+        ------
+        ValueError
+            Raised if sort orders are provided without corresponding sort columns, 
+            or if an invalid sort order is provided (not 'asc' or 'desc').
+        ArgumentError
+            Raised if an invalid column name is provided that does not exist in the model.
+
+        Returns
+        -------
+        sqlalchemy.sql.selectable.Select
+            The modified Select statement with sorting applied.
+
+        Examples
+        --------
+        Applying ascending sort on a single column:
+        >>> stmt = apply_sorting(stmt, 'name')
+
+        Applying descending sort on a single column:
+        >>> stmt = apply_sorting(stmt, 'age', 'desc')
+
+        Applying mixed sort orders on multiple columns:
+        >>> stmt = apply_sorting(stmt, ['name', 'age'], ['asc', 'desc'])
+
+        Applying ascending sort on multiple columns:
+        >>> stmt = apply_sorting(stmt, ['name', 'age'])
+
+        Note
+        ----
+        This method modifies the passed Select statement in-place by applying the order_by clause
+        based on the provided column names and sort orders.
+        """
+        if sort_orders and not sort_columns:
+            raise ValueError("Sort orders provided without corresponding sort columns.")
+
+        if sort_columns:
+            if not isinstance(sort_columns, list):
+                sort_columns = [sort_columns]
+
+            if sort_orders:
+                if not isinstance(sort_orders, list):
+                    sort_orders = [sort_orders] * len(sort_columns)
+                if len(sort_columns) != len(sort_orders):
+                    raise ValueError("The length of sort_columns and sort_orders must match.")
+
+                for idx, order in enumerate(sort_orders):
+                    if order not in ['asc', 'desc']:
+                        raise ValueError(f"Invalid sort order: {order}. Only 'asc' or 'desc' are allowed.")
+
+            validated_sort_orders = ['asc'] * len(sort_columns) if not sort_orders else sort_orders
+
+            for idx, column_name in enumerate(sort_columns):
+                column = getattr(self.model, column_name, None)
+                if not column:
+                    raise ArgumentError(f"Invalid column name: {column_name}")
+
+                order = validated_sort_orders[idx]
+                stmt = stmt.order_by(asc(column) if order == 'asc' else desc(column))
+
+        return stmt
 
     async def create(
             self, 
@@ -144,55 +222,81 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType, UpdateSche
         ----
         This method provides a quick way to get the count of records without retrieving the actual data.
         """
-        if kwargs:
-            conditions = [getattr(self.model, key) == value for key, value in kwargs.items()]
-            combined_conditions = and_(*conditions)
-            count_query = select(func.count()).select_from(self.model).filter(combined_conditions)
-        else:
-            count_query = select(func.count()).select_from(self.model)
+        conditions = [getattr(self.model, key) == value for key, value in kwargs.items()]
+        combined_conditions = and_(*conditions)
 
+        count_query = select(func.count()).filter(combined_conditions)
         total_count: int = await db.scalar(count_query)
 
         return total_count
 
     async def get_multi(
-            self, 
-            db: AsyncSession, 
-            offset: int = 0, 
-            limit: int = 100, 
-            schema_to_select: Union[Type[BaseModel], List[Type[BaseModel]], None] = None,
-            **kwargs: Any
+        self, 
+        db: AsyncSession, 
+        offset: int = 0, 
+        limit: int = 100, 
+        schema_to_select: Union[Type[BaseModel], List[Type[BaseModel]], None] = None,
+        sort_columns: Union[str, List[str]] = None,
+        sort_orders: Union[str, List[str]] = None,
+        **kwargs: Any
     ) -> Dict[str, Any]:
         """
-        Fetch multiple records based on filters.
+        Fetch multiple records based on filters, with optional sorting and pagination.
 
         Parameters
         ----------
         db : AsyncSession
             The SQLAlchemy async session.
-        offset : int, optional
-            Number of rows to skip before fetching. Default is 0.
-        limit : int, optional
-            Maximum number of rows to fetch. Default is 100.
-        schema_to_select : Union[Type[BaseModel], List[Type[BaseModel]], None], optional
-            Pydantic schema for selecting specific columns. Default is None to select all columns.
+        offset : int
+            Number of rows to skip before fetching.
+        limit : int
+            Maximum number of rows to fetch.
+        schema_to_select : Union[Type[BaseModel], List[Type[BaseModel]], None]
+            Pydantic schema for selecting specific columns.
+        sort_columns : Union[str, List[str]], optional
+            Single column name or a list of column names for sorting.
+        sort_orders : Union[str, List[str]], optional
+            Single sort direction ('asc' or 'desc') or a list of directions. 
+            Corresponds to each column in sort_columns. If not provided, defaults to 'asc'.
         kwargs : dict
             Filters to apply to the query.
 
         Returns
         -------
         Dict[str, Any]
-            Dictionary containing the fetched rows under 'data' key and total count under 'total_count'.
+            A dictionary containing the fetched rows under 'data' key and total count under 'total_count'.
+
+        Examples
+        --------
+        Fetch the first 10 users:
+        ```python
+        users = await crud.get_multi(db, 0, 10)
+        ```
+
+        Fetch next 10 users with sorting:
+        ```python
+        users = await crud.get_multi(db, 10, 10, sort_columns='username', sort_orders='desc')
+        ```
+
+        Fetch users with filtering and multiple column sorting:
+        ```python
+        users = await crud.get_multi(db, 0, 10, is_active=True, sort_columns=['username', 'email'], sort_orders=['asc', 'desc'])
+        ```
         """
+
         to_select = _extract_matching_columns_from_schema(model=self.model, schema=schema_to_select)
-        stmt = select(*to_select) \
-            .filter_by(**kwargs) \
-            .offset(offset) \
-            .limit(limit)
+        stmt = select(*to_select).filter_by(**kwargs)
+
+        if sort_orders and not sort_columns:
+            raise ValueError("Sort orders provided without corresponding sort columns.")
         
+        if sort_columns:
+            stmt = self.apply_sorting(stmt, sort_columns, sort_orders)
+
+        stmt = stmt.offset(offset).limit(limit)
+
         result = await db.execute(stmt)
         data = [dict(row) for row in result.mappings()]
-
         total_count = await self.count(db=db, **kwargs)
 
         return {"data": data, "total_count": total_count}
@@ -200,7 +304,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType, UpdateSche
     async def get_joined(
             self,
             db: AsyncSession,
-            joinmodel: Type[ModelType],
+            join_model: Type[ModelType],
             join_prefix: str | None = None,
             join_on: Union[Join, None] = None,
             schema_to_select: Union[Type[BaseModel], List, None] = None,
@@ -216,7 +320,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType, UpdateSche
         ----------
         db : AsyncSession
             The SQLAlchemy async session.
-        joinmodel : Type[ModelType]
+        join_model : Type[ModelType]
             The model to join with.
         join_prefix : Optional[str]
             Optional prefix to be added to all columns of the joined model. If None, no prefix is added.
@@ -243,7 +347,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType, UpdateSche
         ```python
         result = await crud_user.get_joined(
             db=session,
-            joinmodel=Tier,
+            join_model=Tier,
             schema_to_select=UserSchema,
             join_schema_to_select=TierSchema
         )
@@ -254,7 +358,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType, UpdateSche
         from sqlalchemy import and_
         result = await crud_user.get_joined(
             db=session,
-            joinmodel=Tier,
+            join_model=Tier,
             join_prefix="tier_",
             join_on=and_(User.tier_id == Tier.id, User.is_superuser == True),
             schema_to_select=UserSchema,
@@ -286,15 +390,15 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType, UpdateSche
         ```
         """
         if join_on is None:
-            join_on = _auto_detect_join_condition(self.model, joinmodel)
+            join_on = _auto_detect_join_condition(self.model, join_model)
 
         primary_select = _extract_matching_columns_from_schema(model=self.model, schema=schema_to_select)
         join_select = []
 
         if join_schema_to_select:
-            columns = _extract_matching_columns_from_schema(model=joinmodel, schema=join_schema_to_select)
+            columns = _extract_matching_columns_from_schema(model=join_model, schema=join_schema_to_select)
         else:
-            columns = inspect(joinmodel).c
+            columns = inspect(join_model).c
             
         for column in columns:
             labeled_column = _add_column_with_prefix(column, join_prefix)
@@ -302,9 +406,9 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType, UpdateSche
                 join_select.append(labeled_column)
 
         if join_type == "left":
-            stmt = select(*primary_select, *join_select).outerjoin(joinmodel, join_on)
+            stmt = select(*primary_select, *join_select).outerjoin(join_model, join_on)
         elif join_type == "inner":
-            stmt = select(*primary_select, *join_select).join(joinmodel, join_on)
+            stmt = select(*primary_select, *join_select).join(join_model, join_on)
         else:
             raise ValueError(f"Invalid join type: {join_type}. Only 'left' or 'inner' are valid.")
 
@@ -321,26 +425,28 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType, UpdateSche
         return None
     
     async def get_multi_joined(
-            self,
-            db: AsyncSession,
-            joinmodel: Type[ModelType],
-            join_prefix: str | None = None,
-            join_on: Union[Join, None] = None,
-            schema_to_select: Union[Type[BaseModel], List[Type[BaseModel]], None] = None,
-            join_schema_to_select: Union[Type[BaseModel], List[Type[BaseModel]], None] = None,
-            join_type: str = "left",
-            offset: int = 0,
-            limit: int = 100,
-            **kwargs: Any
+        self,
+        db: AsyncSession,
+        join_model: Type[ModelType],
+        join_prefix: str | None = None,
+        join_on: Union[Join, None] = None,
+        schema_to_select: Union[Type[BaseModel], List[Type[BaseModel]], None] = None,
+        join_schema_to_select: Union[Type[BaseModel], List[Type[BaseModel]], None] = None,
+        join_type: str = "left",
+        offset: int = 0,
+        limit: int = 100,
+        sort_columns: Union[str, List[str]] = None,
+        sort_orders: Union[str, List[str]] = None,
+        **kwargs: Any
     ) -> Dict[str, Any]:
         """
-        Fetch multiple records with a join on another model, allowing for pagination.
+        Fetch multiple records with a join on another model, allowing for pagination and optional sorting.
 
         Parameters
         ----------
         db : AsyncSession
             The SQLAlchemy async session.
-        joinmodel : Type[ModelType]
+        join_model : Type[ModelType]
             The model to join with.
         join_prefix : Optional[str]
             Optional prefix to be added to all columns of the joined model. If None, no prefix is added.
@@ -357,6 +463,10 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType, UpdateSche
             The offset (number of records to skip) for pagination.
         limit : int, default 100
             The limit (maximum number of records to return) for pagination.
+        sort_columns : Union[str, List[str]], optional
+            A single column name or a list of column names on which to apply sorting.
+        sort_orders : Union[str, List[str]], optional
+            A single sort order ('asc' or 'desc') or a list of sort orders corresponding to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
         kwargs : dict
             Filters to apply to the primary query.
 
@@ -367,27 +477,29 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType, UpdateSche
 
         Examples
         --------
-        # Fetching multiple User records joined with Tier records, using left join
-        users = await crud_user.get_multi_joined(
-            db=session,
-            joinmodel=Tier,
-            join_prefix="tier_",
-            schema_to_select=UserSchema,
-            join_schema_to_select=TierSchema,
-            offset=0,
-            limit=10
-        )
+        Fetching multiple User records joined with Tier records, using left join:
+        >>> users = await crud_user.get_multi_joined(
+                db=session,
+                join_model=Tier,
+                join_prefix="tier_",
+                schema_to_select=UserSchema,
+                join_schema_to_select=TierSchema,
+                offset=0,
+                limit=10,
+                sort_columns=['username'],
+                sort_orders=['desc']
+            )
         """
         if join_on is None:
-            join_on = _auto_detect_join_condition(self.model, joinmodel)
+            join_on = _auto_detect_join_condition(self.model, join_model)
 
         primary_select = _extract_matching_columns_from_schema(model=self.model, schema=schema_to_select)
         join_select = []
 
         if join_schema_to_select:
-            columns = _extract_matching_columns_from_schema(model=joinmodel, schema=join_schema_to_select)
+            columns = _extract_matching_columns_from_schema(model=join_model, schema=join_schema_to_select)
         else:
-            columns = inspect(joinmodel).c
+            columns = inspect(join_model).c
 
         for column in columns:
             labeled_column = _add_column_with_prefix(column, join_prefix)
@@ -395,15 +507,17 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType, UpdateSche
                 join_select.append(labeled_column)
 
         if join_type == "left":
-            stmt = select(*primary_select, *join_select).outerjoin(joinmodel, join_on)
+            stmt = select(*primary_select, *join_select).outerjoin(join_model, join_on)
         elif join_type == "inner":
-            stmt = select(*primary_select, *join_select).join(joinmodel, join_on)
+            stmt = select(*primary_select, *join_select).join(join_model, join_on)
         else:
             raise ValueError(f"Invalid join type: {join_type}. Only 'left' or 'inner' are valid.")
 
         for key, value in kwargs.items():
             if hasattr(self.model, key):
                 stmt = stmt.where(getattr(self.model, key) == value)
+
+        stmt = self.apply_sorting(stmt, sort_columns, sort_orders)
 
         stmt = stmt.offset(offset).limit(limit)
 

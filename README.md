@@ -1,1 +1,1 @@
-# crud-fastapi
+# fastcrud

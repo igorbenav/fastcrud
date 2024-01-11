@@ -11,11 +11,12 @@ python = "^3.11"
 SQLAlchemy = "^2.0.21"
 pydantic = "^2.4.1"
 SQLAlchemy-Utils = "^0.41.1"
+
+[tool.poetry.dev-dependencies]
 pytest = "^7.4.4"
 pytest-asyncio = "^0.23.3"
 aiosqlite = "^0.19.0"
 greenlet = "^3.0.3"
-
 
 [build-system]
 requires = ["poetry-core"]

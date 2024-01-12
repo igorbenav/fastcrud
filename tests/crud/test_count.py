@@ -1,6 +1,6 @@
 import pytest
 from fastcrud.crud.crud_base import CRUDBase
-from ..conftest import ModelTest
+
 
 @pytest.mark.asyncio
 async def test_count_no_filters(async_session, test_model, test_data):
@@ -12,6 +12,7 @@ async def test_count_no_filters(async_session, test_model, test_data):
     count = await crud.count(async_session)
 
     assert count == len(test_data)
+
 
 @pytest.mark.asyncio
 async def test_count_with_filters(async_session, test_model, test_data):
@@ -25,9 +26,10 @@ async def test_count_with_filters(async_session, test_model, test_data):
 
     assert count == 1
 
+
 @pytest.mark.asyncio
 async def test_count_no_matching_records(async_session, test_model):
-    non_existent_filter = {'name': 'NonExistentName'}
+    non_existent_filter = {"name": "NonExistentName"}
     crud = CRUDBase(test_model)
     count = await crud.count(async_session, **non_existent_filter)
 

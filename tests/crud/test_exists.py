@@ -1,6 +1,6 @@
 import pytest
 from fastcrud.crud.crud_base import CRUDBase
-from ..conftest import ModelTest
+
 
 @pytest.mark.asyncio
 async def test_exists_record_found(async_session, test_model, test_data):
@@ -13,10 +13,11 @@ async def test_exists_record_found(async_session, test_model, test_data):
 
     assert exists is True
 
+
 @pytest.mark.asyncio
 async def test_exists_record_not_found(async_session, test_model):
     crud = CRUDBase(test_model)
-    non_existent_filter = {'name': 'NonExistentName'}
+    non_existent_filter = {"name": "NonExistentName"}
     exists = await crud.exists(async_session, **non_existent_filter)
 
     assert exists is False

@@ -227,13 +227,17 @@ class CRUDBase(
         ----
         This method provides a quick way to get the count of records without retrieving the actual data.
         """
-        conditions = [getattr(self.model, key) == value for key, value in kwargs.items()]
+        conditions = [
+            getattr(self.model, key) == value for key, value in kwargs.items()
+        ]
         if conditions:
             combined_conditions = and_(*conditions)
         else:
             combined_conditions = true()
 
-        count_query = select(func.count()).select_from(self.model).where(combined_conditions)
+        count_query = (
+            select(func.count()).select_from(self.model).where(combined_conditions)
+        )
         total_count: int = await db.scalar(count_query)
 
         return total_count

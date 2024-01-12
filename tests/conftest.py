@@ -3,28 +3,29 @@ import pytest_asyncio
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class Base(DeclarativeBase):
     pass
 
 
-class TestModel(Base):
+class ModelTest(Base):
     __tablename__ = "test"
     id = Column(Integer, primary_key=True)
     name = Column(String)
 
 
-class TestCreateSchema(BaseModel):
+class CreateSchemaTest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name: str
 
 
-class TestUpdateSchema(BaseModel):
+class UpdateSchemaTest(BaseModel):
     name: str
 
 
-class TestDeleteSchema(BaseModel):
+class DeleteSchemaTest(BaseModel):
     pass
 
 
@@ -72,19 +73,19 @@ def test_data() -> list[dict]:
 
 @pytest.fixture
 def test_model():
-    return TestModel
+    return ModelTest
 
 
 @pytest.fixture
 def create_schema():
-    return TestCreateSchema
+    return CreateSchemaTest
 
 
 @pytest.fixture
 def update_schema():
-    return TestUpdateSchema
+    return UpdateSchemaTest
 
 
 @pytest.fixture
 def delete_schema():
-    return TestDeleteSchema
+    return DeleteSchemaTest

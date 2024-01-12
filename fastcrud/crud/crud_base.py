@@ -2,7 +2,7 @@ from typing import Any, Dict, Generic, List, Type, TypeVar, Union
 from datetime import datetime
 
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import select, update, delete, func, and_, inspect, asc, desc
+from sqlalchemy import select, update, delete, func, and_, inspect, asc, desc, true
 from sqlalchemy.exc import ArgumentError
 from sqlalchemy.sql import Join
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -227,12 +227,13 @@ class CRUDBase(
         ----
         This method provides a quick way to get the count of records without retrieving the actual data.
         """
-        conditions = [
-            getattr(self.model, key) == value for key, value in kwargs.items()
-        ]
-        combined_conditions = and_(*conditions)
+        conditions = [getattr(self.model, key) == value for key, value in kwargs.items()]
+        if conditions:
+            combined_conditions = and_(*conditions)
+        else:
+            combined_conditions = true()
 
-        count_query = select(func.count()).filter(combined_conditions)
+        count_query = select(func.count()).select_from(self.model).where(combined_conditions)
         total_count: int = await db.scalar(count_query)
 
         return total_count

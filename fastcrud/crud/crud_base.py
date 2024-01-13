@@ -663,9 +663,12 @@ class CRUDBase(
         Make sure the column used for cursor pagination is indexed for performance.
         This method assumes hat your records can be ordered by a unique, sequential field (like `id` or `created_at`)
         """
+        if limit == 0:
+            return {"data": [], "next_cursor": None}
+
         to_select = _extract_matching_columns_from_schema(self.model, schema_to_select)
         stmt = select(*to_select).filter_by(**kwargs)
-
+        
         if cursor:
             if sort_order == "asc":
                 stmt = stmt.where(getattr(self.model, sort_column) > cursor)
@@ -717,6 +720,11 @@ class CRUDBase(
 
         if "updated_at" in update_data.keys():
             update_data["updated_at"] = datetime.now(UTC)
+
+        model_columns = {column.name for column in inspect(self.model).c}
+        extra_fields = set(update_data) - model_columns
+        if extra_fields:
+            raise ValueError(f"Extra fields provided: {extra_fields}")
 
         stmt = update(self.model).filter_by(**kwargs).values(update_data)
 

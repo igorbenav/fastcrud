@@ -1,7 +1,8 @@
-from typing import Any, Dict, Generic, List, Type, TypeVar, Union
+from typing import Any, Generic, TypeVar, Union, Optional
 from datetime import datetime, UTC
 
 from pydantic import BaseModel, ValidationError
+import sqlalchemy.sql.selectable
 from sqlalchemy import select, update, delete, func, and_, inspect, asc, desc, true
 from sqlalchemy.exc import ArgumentError
 from sqlalchemy.sql import Join
@@ -35,60 +36,52 @@ class CRUDBase(
     """
     Base class for CRUD operations on a model.
 
-    Parameters
-    ----------
-    model : Type[ModelType]
-        The SQLAlchemy model type.
+    Args:
+        model: The SQLAlchemy model type.
     """
 
-    def __init__(self, model: Type[ModelType]) -> None:
+    def __init__(self, model: type[ModelType]) -> None:
         self.model = model
 
-    def apply_sorting(self, stmt, sort_columns, sort_orders=None):
+    def apply_sorting(
+        self,
+        stmt: sqlalchemy.sql.selectable.Select,
+        sort_columns: Union[str, list[str]],
+        sort_orders: Optional[Union[str, list[str]]] = None,
+    ) -> sqlalchemy.sql.selectable.Select:
         """
         Apply sorting to a SQLAlchemy query based on specified column names and sort orders.
 
-        Parameters
-        ----------
-        stmt : sqlalchemy.sql.selectable.Select
-            The SQLAlchemy Select statement to which sorting will be applied.
-        sort_columns : Union[str, List[str]]
-            A single column name or a list of column names on which to apply sorting.
-        sort_orders : Union[str, List[str]], optional
-            A single sort order ('asc' or 'desc') or a list of sort orders corresponding
-            to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
+        Args:
+            stmt: The SQLAlchemy Select statement to which sorting will be applied.
+            sort_columns: A single column name or a list of column names on which to apply sorting.
+            sort_orders: A single sort order ('asc' or 'desc') or a list of sort orders corresponding
+                to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
 
-        Raises
-        ------
-        ValueError
-            Raised if sort orders are provided without corresponding sort columns,
-            or if an invalid sort order is provided (not 'asc' or 'desc').
-        ArgumentError
-            Raised if an invalid column name is provided that does not exist in the model.
+        Raises:
+            ValueError: Raised if sort orders are provided without corresponding sort columns,
+                or if an invalid sort order is provided (not 'asc' or 'desc').
+            ArgumentError: Raised if an invalid column name is provided that does not exist in the model.
 
-        Returns
-        -------
-        sqlalchemy.sql.selectable.Select
+        Returns:
             The modified Select statement with sorting applied.
 
-        Examples
-        --------
-        Applying ascending sort on a single column:
-        >>> stmt = apply_sorting(stmt, 'name')
+        Examples:
+            Applying ascending sort on a single column:
+            >>> stmt = apply_sorting(stmt, 'name')
 
-        Applying descending sort on a single column:
-        >>> stmt = apply_sorting(stmt, 'age', 'desc')
+            Applying descending sort on a single column:
+            >>> stmt = apply_sorting(stmt, 'age', 'desc')
 
-        Applying mixed sort orders on multiple columns:
-        >>> stmt = apply_sorting(stmt, ['name', 'age'], ['asc', 'desc'])
+            Applying mixed sort orders on multiple columns:
+            >>> stmt = apply_sorting(stmt, ['name', 'age'], ['asc', 'desc'])
 
-        Applying ascending sort on multiple columns:
-        >>> stmt = apply_sorting(stmt, ['name', 'age'])
+            Applying ascending sort on multiple columns:
+            >>> stmt = apply_sorting(stmt, ['name', 'age'])
 
-        Note
-        ----
-        This method modifies the passed Select statement in-place by applying the order_by clause
-        based on the provided column names and sort orders.
+        Note:
+            This method modifies the passed Select statement in-place by applying the order_by clause
+            based on the provided column names and sort orders.
         """
         if sort_orders and not sort_columns:
             raise ValueError("Sort orders provided without corresponding sort columns.")
@@ -129,16 +122,11 @@ class CRUDBase(
         """
         Create a new record in the database.
 
-        Parameters
-        ----------
-        db : AsyncSession
-            The SQLAlchemy async session.
-        object : CreateSchemaType
-            The Pydantic schema containing the data to be saved.
+        Args:
+            db: The SQLAlchemy async session.
+            object: The Pydantic schema containing the data to be saved.
 
-        Returns
-        -------
-        ModelType
+        Returns:
             The created database object.
         """
         object_dict = object.model_dump()
@@ -150,24 +138,19 @@ class CRUDBase(
     async def get(
         self,
         db: AsyncSession,
-        schema_to_select: Union[Type[BaseModel], List, None] = None,
+        schema_to_select: Optional[Union[type[BaseModel], list]] = None,
         **kwargs: Any,
-    ) -> Dict | None:
+    ) -> Optional[dict]:
         """
         Fetch a single record based on filters.
 
-        Parameters
-        ----------
-        db : AsyncSession
-            The SQLAlchemy async session.
-        schema_to_select : Union[Type[BaseModel], List, None], optional
-            Pydantic schema for selecting specific columns. Default is None to select all columns.
-        kwargs : dict
-            Filters to apply to the query.
+        Args:
+            db: The SQLAlchemy async session.
+            schema_to_select: Pydantic schema for selecting specific columns.
+                Default is None to select all columns.
+            **kwargs: Filters to apply to the query.
 
-        Returns
-        -------
-        Dict | None
+        Returns:
             The fetched database row or None if not found.
         """
         to_select = _extract_matching_columns_from_schema(
@@ -187,16 +170,11 @@ class CRUDBase(
         """
         Check if a record exists based on filters.
 
-        Parameters
-        ----------
-        db : AsyncSession
-            The SQLAlchemy async session.
-        kwargs : dict
-            Filters to apply to the query.
+        Args:
+            db: The SQLAlchemy async session.
+            **kwargs: Filters to apply to the query.
 
-        Returns
-        -------
-        bool
+        Returns:
             True if a record exists, False otherwise.
         """
         to_select = _extract_matching_columns_from_kwargs(
@@ -211,21 +189,15 @@ class CRUDBase(
         """
         Count the records based on filters.
 
-        Parameters
-        ----------
-        db : AsyncSession
-            The SQLAlchemy async session.
-        kwargs : dict
-            Filters to apply to the query.
+        Args:
+            db: The SQLAlchemy async session.
+            **kwargs: Filters to apply to the query.
 
-        Returns
-        -------
-        int
+        Returns:
             Total count of records that match the applied filters.
 
-        Note
-        ----
-        This method provides a quick way to get the count of records without retrieving the actual data.
+        Note:
+            This method provides a quick way to get the count of records without retrieving the actual data.
         """
         conditions = [
             getattr(self.model, key) == value for key, value in kwargs.items()
@@ -247,60 +219,46 @@ class CRUDBase(
         db: AsyncSession,
         offset: int = 0,
         limit: int = 100,
-        schema_to_select: Union[Type[BaseModel], None] = None,
-        sort_columns: Union[str, List[str], None] = None,
-        sort_orders: Union[str, List[str], None] = None,
+        schema_to_select: Optional[type[BaseModel]] = None,
+        sort_columns: Optional[Union[str, list[str]]] = None,
+        sort_orders: Optional[Union[str, list[str]]] = None,
         return_as_model: bool = False,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Fetch multiple records based on filters, with optional sorting, pagination, and model conversion.
 
-        Parameters
-        ----------
-        db : AsyncSession
-            The SQLAlchemy async session.
-        offset : int
-            Number of rows to skip before fetching. Must be non-negative.
-        limit : int
-            Maximum number of rows to fetch. Must be non-negative.
-        schema_to_select : Union[Type[SchemaType], List[Type[SchemaType]], None]
-            Pydantic schema for selecting specific columns.
-        sort_columns : Union[str, List[str]], optional
-            Single column name or a list of column names for sorting.
-        sort_orders : Union[str, List[str]], optional
-            Single sort direction ('asc' or 'desc') or a list of directions corresponding to the columns in sort_columns. Defaults to 'asc'.
-        return_as_model : bool, default False
-            If True, returns the data as instances of the Pydantic model.
-        kwargs : dict
-            Filters to apply to the query.
+        Args:
+            db: The SQLAlchemy async session.
+            offset: Number of rows to skip before fetching. Must be non-negative.
+            limit: Maximum number of rows to fetch. Must be non-negative.
+            schema_to_select: Pydantic schema for selecting specific columns.
+            sort_columns: Single column name or a list of column names for sorting.
+            sort_orders: Single sort direction ('asc' or 'desc') or a list of directions corresponding to the columns in sort_columns. Defaults to 'asc'.
+            return_as_model: If True, returns the data as instances of the Pydantic model.
+            **kwargs: Filters to apply to the query.
 
-        Returns
-        -------
-        Dict[str, Any]
+        Returns:
             A dictionary containing the fetched rows under 'data' key and total count under 'total_count'.
 
-        Raises
-        ------
-        ValueError
-            If limit or offset is negative, or if schema_to_select is required but not provided or invalid.
+        Raises:
+            ValueError: If limit or offset is negative, or if schema_to_select is required but not provided or invalid.
 
-        Examples
-        --------
-        Fetch the first 10 users:
-        ```python
-        users = await crud.get_multi(db, 0, 10)
-        ```
+        Examples:
+            Fetch the first 10 users:
+            ```python
+            users = await crud.get_multi(db, 0, 10)
+            ```
 
-        Fetch next 10 users with sorting:
-        ```python
-        users = await crud.get_multi(db, 10, 10, sort_columns='username', sort_orders='desc')
-        ```
+            Fetch next 10 users with sorting:
+            ```python
+            users = await crud.get_multi(db, 10, 10, sort_columns='username', sort_orders='desc')
+            ```
 
-        Fetch users with filtering and multiple column sorting:
-        ```python
-        users = await crud.get_multi(db, 0, 10, is_active=True, sort_columns=['username', 'email'], sort_orders=['asc', 'desc'])
-        ```
+            Fetch users with filtering and multiple column sorting:
+            ```python
+            users = await crud.get_multi(db, 0, 10, is_active=True, sort_columns=['username', 'email'], sort_orders=['asc', 'desc'])
+            ```
         """
         if limit < 0 or offset < 0:
             raise ValueError("Limit and offset must be non-negative.")
@@ -333,90 +291,78 @@ class CRUDBase(
     async def get_joined(
         self,
         db: AsyncSession,
-        join_model: Type[ModelType],
-        join_prefix: str | None = None,
-        join_on: Union[Join, None] = None,
-        schema_to_select: Union[Type[BaseModel], List, None] = None,
-        join_schema_to_select: Union[Type[BaseModel], List, None] = None,
+        join_model: type[ModelType],
+        join_prefix: Optional[str] = None,
+        join_on: Optional[Union[Join, None]] = None,
+        schema_to_select: Optional[Union[type[BaseModel], list]] = None,
+        join_schema_to_select: Optional[Union[type[BaseModel], list]] = None,
         join_type: str = "left",
         **kwargs: Any,
-    ) -> dict | None:
+    ) -> Optional[dict[str, Any]]:
         """
         Fetches a single record with a join on another model. If 'join_on' is not provided, the method attempts
         to automatically detect the join condition using foreign key relationships.
 
-        Parameters
-        ----------
-        db : AsyncSession
-            The SQLAlchemy async session.
-        join_model : Type[ModelType]
-            The model to join with.
-        join_prefix : Optional[str]
-            Optional prefix to be added to all columns of the joined model. If None, no prefix is added.
-        join_on : Join, optional
-            SQLAlchemy Join object for specifying the ON clause of the join. If None, the join condition is
-            auto-detected based on foreign keys.
-        schema_to_select : Union[Type[BaseModel], List, None], optional
-            Pydantic schema for selecting specific columns from the primary model.
-        join_schema_to_select : Union[Type[BaseModel], List, None], optional
-            Pydantic schema for selecting specific columns from the joined model.
-        join_type : str, default "left"
-            Specifies the type of join operation to perform. Can be "left" for a left outer join or "inner" for an inner join.
-        kwargs : dict
-            Filters to apply to the query.
+        Args:
+            db: The SQLAlchemy async session.
+            join_model: The model to join with.
+            join_prefix: Optional prefix to be added to all columns of the joined model. If None, no prefix is added.
+            join_on: SQLAlchemy Join object for specifying the ON clause of the join. If None, the join condition is
+                auto-detected based on foreign keys.
+            schema_to_select: Pydantic schema for selecting specific columns from the primary model.
+            join_schema_to_select: Pydantic schema for selecting specific columns from the joined model.
+            join_type: Specifies the type of join operation to perform. Can be "left" for a left outer join or "inner" for an inner join.
+            **kwargs: Filters to apply to the query.
 
-        Returns
-        -------
-        Dict | None
+        Returns:
             The fetched database row or None if not found.
 
-        Examples
-        --------
-        Simple example: Joining User and Tier models without explicitly providing join_on
-        ```python
-        result = await crud_user.get_joined(
-            db=session,
-            join_model=Tier,
-            schema_to_select=UserSchema,
-            join_schema_to_select=TierSchema
-        )
-        ```
+        Examples:
+            Simple example: Joining User and Tier models without explicitly providing join_on
+            ```python
+            result = await crud_user.get_joined(
+                db=session,
+                join_model=Tier,
+                schema_to_select=UserSchema,
+                join_schema_to_select=TierSchema
+            )
+            ```
 
-        Complex example: Joining with a custom join condition, additional filter parameters, and a prefix
-        ```python
-        from sqlalchemy import and_
-        result = await crud_user.get_joined(
-            db=session,
-            join_model=Tier,
-            join_prefix="tier_",
-            join_on=and_(User.tier_id == Tier.id, User.is_superuser == True),
-            schema_to_select=UserSchema,
-            join_schema_to_select=TierSchema,
-            username="john_doe"
-        )
-        ```
+            Complex example: Joining with a custom join condition, additional filter parameters, and a prefix
+            ```python
+            from sqlalchemy import and_
+            result = await crud_user.get_joined(
+                db=session,
+                join_model=Tier,
+                join_prefix="tier_",
+                join_on=and_(User.tier_id == Tier.id, User.is_superuser == True),
+                schema_to_select=UserSchema,
+                join_schema_to_select=TierSchema,
+                username="john_doe"
+            )
+            ```
 
-        Return example: prefix added, no schema_to_select or join_schema_to_select
-        ```python
-        {
-            "id": 1,
-            "name": "John Doe",
-            "username": "john_doe",
-            "email": "johndoe@example.com",
-            "hashed_password": "hashed_password_example",
-            "profile_image_url": "https://profileimageurl.com/default.jpg",
-            "uuid": "123e4567-e89b-12d3-a456-426614174000",
-            "created_at": "2023-01-01T12:00:00",
-            "updated_at": "2023-01-02T12:00:00",
-            "deleted_at": null,
-            "is_deleted": false,
-            "is_superuser": false,
-            "tier_id": 2,
-            "tier_name": "Premium",
-            "tier_created_at": "2022-12-01T10:00:00",
-            "tier_updated_at": "2023-01-01T11:00:00"
-        }
-        ```
+            Return example: prefix added, no schema_to_select or join_schema_to_select
+            ```python
+            {
+                "id": 1,
+                "name": "John Doe",
+                "username": "john_doe",
+                "email": "johndoe@example.com",
+                "hashed_password": "hashed_password_example",
+                "profile_image_url": "https://profileimageurl.com/default.jpg",
+                "uuid": "123e4567-e89b-12d3-a456-426614174000",
+                "created_at": "2023-01-01T12:00:00",
+                "updated_at": "2023-01-02T12:00:00",
+                "deleted_at": null,
+                "is_deleted": false,
+                "is_superuser": false,
+                "tier_id": 2,
+                "tier_name": "Premium",
+                "tier_created_at": "2022-12-01T10:00:00",
+                "tier_updated_at": "2023-01-01T11:00:00"
+            }
+            ```
         """
         if join_on is None:
             join_on = _auto_detect_join_condition(self.model, join_model)
@@ -464,102 +410,82 @@ class CRUDBase(
     async def get_multi_joined(
         self,
         db: AsyncSession,
-        join_model: Type[ModelType],
-        join_prefix: str | None = None,
-        join_on: Union[Join, None] = None,
-        schema_to_select: Union[Type[BaseModel], None] = None,
-        join_schema_to_select: Union[Type[BaseModel], None] = None,
+        join_model: type[ModelType],
+        join_prefix: Optional[str] = None,
+        join_on: Optional[Join] = None,
+        schema_to_select: Optional[type[BaseModel]] = None,
+        join_schema_to_select: Optional[type[BaseModel]] = None,
         join_type: str = "left",
         offset: int = 0,
         limit: int = 100,
-        sort_columns: Union[str, List[str], None] = None,
-        sort_orders: Union[str, List[str], None] = None,
+        sort_columns: Optional[Union[str, list[str]]] = None,
+        sort_orders: Optional[Union[str, list[str]]] = None,
         return_as_model: bool = False,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Fetch multiple records with a join on another model, allowing for pagination, optional sorting, and model conversion.
 
-        Parameters
-        ----------
-        db : AsyncSession
-            The SQLAlchemy async session.
-        join_model : Type[ModelType]
-            The model to join with.
-        join_prefix : Optional[str]
-            Optional prefix to be added to all columns of the joined model. If None, no prefix is added.
-        join_on : Join, optional
-            SQLAlchemy Join object for specifying the ON clause of the join. If None, the join condition is
-            auto-detected based on foreign keys.
-        schema_to_select : Union[Type[BaseModel], List[Type[BaseModel]], None], optional
-            Pydantic schema for selecting specific columns from the primary model.
-        join_schema_to_select : Union[Type[BaseModel], List[Type[BaseModel]], None], optional
-            Pydantic schema for selecting specific columns from the joined model.
-        join_type : str, default "left"
-            Specifies the type of join operation to perform. Can be "left" for a left outer join or "inner" for an inner join.
-        offset : int, default 0
-            The offset (number of records to skip) for pagination.
-        limit : int, default 100
-            The limit (maximum number of records to return) for pagination.
-        sort_columns : Union[str, List[str]], optional
-            A single column name or a list of column names on which to apply sorting.
-        sort_orders : Union[str, List[str]], optional
-            A single sort order ('asc' or 'desc') or a list of sort orders corresponding to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
-        return_as_model : bool, optional
-            If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
-        kwargs : dict
-            Filters to apply to the primary query.
+        Args:
+            db: The SQLAlchemy async session.
+            join_model: The model to join with.
+            join_prefix: Optional prefix to be added to all columns of the joined model. If None, no prefix is added.
+            join_on: SQLAlchemy Join object for specifying the ON clause of the join. If None, the join condition is auto-detected based on foreign keys.
+            schema_to_select: Pydantic schema for selecting specific columns from the primary model.
+            join_schema_to_select: Pydantic schema for selecting specific columns from the joined model.
+            join_type: Specifies the type of join operation to perform. Can be "left" for a left outer join or "inner" for an inner join.
+            offset: The offset (number of records to skip) for pagination.
+            limit: The limit (maximum number of records to return) for pagination.
+            sort_columns: A single column name or a list of column names on which to apply sorting.
+            sort_orders: A single sort order ('asc' or 'desc') or a list of sort orders corresponding to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
+            return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
+            **kwargs: Filters to apply to the primary query.
 
-        Returns
-        -------
-        Dict[str, Any]
+        Returns:
             A dictionary containing the fetched rows under 'data' key and total count under 'total_count'.
 
-        Raises
-        ------
-        ValueError
-            If limit or offset is negative, or if schema_to_select is required but not provided or invalid.
+        Raises:
+            ValueError: If limit or offset is negative, or if schema_to_select is required but not provided or invalid.
 
-        Examples
-        --------
-        Fetching multiple User records joined with Tier records, using left join, returning raw data:
-        >>> users = await crud_user.get_multi_joined(
-                db=session,
-                join_model=Tier,
-                join_prefix="tier_",
-                schema_to_select=UserSchema,
-                join_schema_to_select=TierSchema,
-                offset=0,
-                limit=10
-            )
+        Examples:
+            Fetching multiple User records joined with Tier records, using left join, returning raw data:
+            >>> users = await crud_user.get_multi_joined(
+                    db=session,
+                    join_model=Tier,
+                    join_prefix="tier_",
+                    schema_to_select=UserSchema,
+                    join_schema_to_select=TierSchema,
+                    offset=0,
+                    limit=10
+                )
 
-        Fetching and sorting by username in descending order, returning as Pydantic model:
-        >>> users = await crud_user.get_multi_joined(
-                db=session,
-                join_model=Tier,
-                join_prefix="tier_",
-                schema_to_select=UserSchema,
-                join_schema_to_select=TierSchema,
-                offset=0,
-                limit=10,
-                sort_columns=['username'],
-                sort_orders=['desc'],
-                return_as_model=True
-            )
+            Fetching and sorting by username in descending order, returning as Pydantic model:
+            >>> users = await crud_user.get_multi_joined(
+                    db=session,
+                    join_model=Tier,
+                    join_prefix="tier_",
+                    schema_to_select=UserSchema,
+                    join_schema_to_select=TierSchema,
+                    offset=0,
+                    limit=10,
+                    sort_columns=['username'],
+                    sort_orders=['desc'],
+                    return_as_model=True
+                )
 
-        Fetching with complex conditions and custom join, returning as Pydantic model:
-        >>> users = await crud_user.get_multi_joined(
-                db=session,
-                join_model=Tier,
-                join_prefix="tier_",
-                join_on=User.tier_id == Tier.id,
-                schema_to_select=UserSchema,
-                join_schema_to_select=TierSchema,
-                offset=0,
-                limit=10,
-                is_active=True,
-                return_as_model=True
-            )
+            Fetching with complex conditions and custom join, returning as Pydantic model:
+            >>> users = await crud_user.get_multi_joined(
+                    db=session,
+                    join_model=Tier,
+                    join_prefix="tier_",
+                    join_on=User.tier_id == Tier.id,
+                    schema_to_select=UserSchema,
+                    join_schema_to_select=TierSchema,
+                    offset=0,
+                    limit=10,
+                    is_active=True,
+                    return_as_model=True
+                )
         """
         if limit < 0 or offset < 0:
             raise ValueError("Limit and offset must be non-negative.")
@@ -599,7 +525,8 @@ class CRUDBase(
             if hasattr(self.model, key):
                 stmt = stmt.where(getattr(self.model, key) == value)
 
-        stmt = self.apply_sorting(stmt, sort_columns, sort_orders)
+        if sort_columns:
+            stmt = self.apply_sorting(stmt, sort_columns, sort_orders)
 
         stmt = stmt.offset(offset).limit(limit)
 
@@ -618,57 +545,45 @@ class CRUDBase(
         db: AsyncSession,
         cursor: Any = None,
         limit: int = 100,
-        schema_to_select: Union[Type[BaseModel], None] = None,
+        schema_to_select: Optional[type[BaseModel]] = None,
         sort_column: str = "id",
         sort_order: str = "asc",
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Fetch multiple records based on a cursor for pagination, with optional sorting.
 
-        Parameters
-        ----------
-        db : AsyncSession
-            The SQLAlchemy async session.
-        cursor : Any, optional
-            The cursor value to start fetching records from. Defaults to None.
-        limit : int, default 100
-            Maximum number of rows to fetch.
-        schema_to_select : Union[Type[BaseModel], None], optional
-            Pydantic schema for selecting specific columns.
-        sort_column : str, default 'id'
-            Column name to use for sorting and cursor pagination.
-        sort_order : str, default 'asc'
-            Sorting direction, either 'asc' or 'desc'.
-        kwargs : dict
-            Additional filters to apply to the query.
+        Args:
+            db: The SQLAlchemy async session.
+            cursor: The cursor value to start fetching records from. Defaults to None.
+            limit: Maximum number of rows to fetch.
+            schema_to_select: Pydantic schema for selecting specific columns.
+            sort_column: Column name to use for sorting and cursor pagination.
+            sort_order: Sorting direction, either 'asc' or 'desc'.
+            **kwargs: Additional filters to apply to the query.
 
-        Returns
-        -------
-        Dict[str, Any]
+        Returns:
             A dictionary containing the fetched rows under 'data' key and the next cursor value under 'next_cursor'.
 
-        Usage Examples
-        --------------
-        # Fetch the first set of records (e.g., the first page in an infinite scrolling scenario)
-        >>> first_page = await crud.get_multi_by_cursor(db, limit=10, sort_column='created_at', sort_order='desc')
+        Usage Examples:
+            # Fetch the first set of records (e.g., the first page in an infinite scrolling scenario)
+            >>> first_page = await crud.get_multi_by_cursor(db, limit=10, sort_column='created_at', sort_order='desc')
 
-        # Fetch the next set of records using the cursor from the first page
-        >>> next_cursor = first_page['next_cursor']
-        >>> second_page = await crud.get_multi_by_cursor(db, cursor=next_cursor, limit=10, sort_column='created_at', sort_order='desc')
+            # Fetch the next set of records using the cursor from the first page
+            >>> next_cursor = first_page['next_cursor']
+            >>> second_page = await crud.get_multi_by_cursor(db, cursor=next_cursor, limit=10, sort_column='created_at', sort_order='desc')
 
-        Note
-        ----
-        This method is designed for efficient pagination in large datasets and is ideal for infinite scrolling features.
-        Make sure the column used for cursor pagination is indexed for performance.
-        This method assumes hat your records can be ordered by a unique, sequential field (like `id` or `created_at`)
+        Note:
+            This method is designed for efficient pagination in large datasets and is ideal for infinite scrolling features.
+            Make sure the column used for cursor pagination is indexed for performance.
+            This method assumes that your records can be ordered by a unique, sequential field (like `id` or `created_at`).
         """
         if limit == 0:
             return {"data": [], "next_cursor": None}
 
         to_select = _extract_matching_columns_from_schema(self.model, schema_to_select)
         stmt = select(*to_select).filter_by(**kwargs)
-        
+
         if cursor:
             if sort_order == "asc":
                 stmt = stmt.where(getattr(self.model, sort_column) > cursor)
@@ -694,24 +609,22 @@ class CRUDBase(
     async def update(
         self,
         db: AsyncSession,
-        object: Union[UpdateSchemaType, Dict[str, Any]],
+        object: Union[UpdateSchemaType, dict[str, Any]],
         **kwargs: Any,
     ) -> None:
         """
         Update an existing record in the database.
 
-        Parameters
-        ----------
-        db : AsyncSession
-            The SQLAlchemy async session.
-        object : Union[UpdateSchemaType, Dict[str, Any]]
-            The Pydantic schema or dictionary containing the data to be updated.
-        kwargs : dict
-            Filters for the update.
+        Args:
+            db: The SQLAlchemy async session.
+            object: The Pydantic schema or dictionary containing the data to be updated.
+            **kwargs: Filters for the update.
 
-        Returns
-        -------
-        None
+        Returns:
+            None
+
+        Raises:
+            ValueError: If extra fields not present in the model are provided in the update data.
         """
         if isinstance(object, dict):
             update_data = object
@@ -735,39 +648,30 @@ class CRUDBase(
         """
         Delete a record in the database.
 
-        Parameters
-        ----------
-        db : AsyncSession
-            The SQLAlchemy async session.
-        kwargs : dict
-            Filters for the delete.
+        Args:
+            db: The SQLAlchemy async session.
+            **kwargs: Filters for the delete.
 
-        Returns
-        -------
-        None
+        Returns:
+            None
         """
         stmt = delete(self.model).filter_by(**kwargs)
         await db.execute(stmt)
         await db.commit()
 
     async def delete(
-        self, db: AsyncSession, db_row: Row | None = None, **kwargs: Any
+        self, db: AsyncSession, db_row: Optional[Row] = None, **kwargs: Any
     ) -> None:
         """
         Soft delete a record if it has "is_deleted" attribute, otherwise perform a hard delete.
 
-        Parameters
-        ----------
-        db : AsyncSession
-            The SQLAlchemy async session.
-        db_row : Row | None, optional
-            Existing database row to delete. If None, it will be fetched based on `kwargs`. Default is None.
-        kwargs : dict
-            Filters for fetching the database row if not provided.
+        Args:
+            db: The SQLAlchemy async session.
+            db_row: Existing database row to delete. If None, it will be fetched based on `kwargs`. Default is None.
+            **kwargs: Filters for fetching the database row if not provided.
 
-        Returns
-        -------
-        None
+        Returns:
+            None
         """
         db_row = db_row or await self.exists(db=db, **kwargs)
         if db_row:

@@ -1,4 +1,4 @@
-from typing import Any, List, Type, Union, Optional
+from typing import Any, Union, Optional
 from sqlalchemy import inspect
 from sqlalchemy.orm import DeclarativeMeta
 from sqlalchemy.orm import DeclarativeBase
@@ -10,21 +10,16 @@ from pydantic import BaseModel
 
 
 def _extract_matching_columns_from_schema(
-    model: Type[DeclarativeBase], schema: Union[Type[BaseModel], list, None]
-) -> List[Any]:
+    model: type[DeclarativeBase], schema: Optional[Union[type[BaseModel], list]]
+) -> list[Any]:
     """
     Retrieves a list of ORM column objects from a SQLAlchemy model that match the field names in a given Pydantic schema.
 
-    Parameters
-    ----------
-    model: Type[Base]
-        The SQLAlchemy ORM model containing columns to be matched with the schema fields.
-    schema: Type[BaseModel]
-        The Pydantic schema containing field names to be matched with the model's columns.
+    Args:
+        model: The SQLAlchemy ORM model containing columns to be matched with the schema fields.
+        schema: The Pydantic schema containing field names to be matched with the model's columns.
 
-    Returns
-    -------
-    List[Any]
+    Returns:
         A list of ORM column objects from the model that correspond to the field names defined in the schema.
     """
     column_list = list(model.__table__.columns)
@@ -43,8 +38,18 @@ def _extract_matching_columns_from_schema(
 
 
 def _extract_matching_columns_from_kwargs(
-    model: Type[DeclarativeBase], kwargs: dict
-) -> List[Any]:
+    model: type[DeclarativeBase], kwargs: dict[str, Any]
+) -> list[Any]:
+    """
+    Extracts matching ORM column objects from a SQLAlchemy model based on provided keyword arguments.
+
+    Args:
+        model: The SQLAlchemy ORM model.
+        kwargs: A dictionary containing field names as keys.
+
+    Returns:
+        A list of ORM column objects from the model that correspond to the field names provided in kwargs.
+    """
     if kwargs is not None:
         kwargs_fields = kwargs.keys()
         column_list = []
@@ -56,8 +61,18 @@ def _extract_matching_columns_from_kwargs(
 
 
 def _extract_matching_columns_from_column_names(
-    model: Type[DeclarativeBase], column_names: list
-) -> List[Any]:
+    model: type[DeclarativeBase], column_names: list[str]
+) -> list[Any]:
+    """
+    Extracts ORM column objects from a SQLAlchemy model based on a list of column names.
+
+    Args:
+        model: The SQLAlchemy ORM model.
+        column_names: A list of column names to extract.
+
+    Returns:
+        A list of ORM column objects from the model that match the provided column names.
+    """
     column_list = []
     for column_name in column_names:
         if hasattr(model, column_name):
@@ -67,33 +82,24 @@ def _extract_matching_columns_from_column_names(
 
 
 def _auto_detect_join_condition(
-    base_model: Type[DeclarativeMeta], join_model: Type[DeclarativeMeta]
+    base_model: type[DeclarativeMeta], join_model: type[DeclarativeMeta]
 ) -> Optional[ColumnElement]:
     """
     Automatically detects the join condition for SQLAlchemy models based on foreign key relationships.
-    This function scans the foreign keys in the base model and tries to match them with columns in the join model.
 
-    Parameters
-    ----------
-    base_model : Type[DeclarativeMeta]
-        The base SQLAlchemy model from which to join.
-    join_model : Type[DeclarativeMeta]
-        The SQLAlchemy model to join with the base model.
+    Args:
+        base_model: The base SQLAlchemy model from which to join.
+        join_model: The SQLAlchemy model to join with the base model.
 
-    Returns
-    -------
-    Optional[ColumnElement]
+    Returns:
         A SQLAlchemy ColumnElement representing the join condition, if successfully detected.
 
-    Raises
-    ------
-    ValueError
-        If the join condition cannot be automatically determined, a ValueError is raised.
+    Raises:
+        ValueError: If the join condition cannot be automatically determined.
 
-    Example
-    -------
-    # Assuming User has a foreign key reference to Tier:
-    join_condition = auto_detect_join_condition(User, Tier)
+    Example:
+        # Assuming User has a foreign key reference to Tier:
+        join_condition = auto_detect_join_condition(User, Tier)
     """
     fk_columns = [col for col in inspect(base_model).c if col.foreign_keys]
     join_on = next(
@@ -118,16 +124,11 @@ def _add_column_with_prefix(column: Column, prefix: Optional[str]) -> Label:
     """
     Creates a SQLAlchemy column label with an optional prefix.
 
-    Parameters
-    ----------
-    column : Column
-        The SQLAlchemy Column object to be labeled.
-    prefix : Optional[str]
-        An optional prefix to prepend to the column's name.
+    Args:
+        column: The SQLAlchemy Column object to be labeled.
+        prefix: An optional prefix to prepend to the column's name.
 
-    Returns
-    -------
-    Label
+    Returns:
         A labeled SQLAlchemy Column object.
     """
     column_label = f"{prefix}{column.name}" if prefix else column.name

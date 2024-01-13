@@ -1,5 +1,5 @@
 from typing import Any, Generic, TypeVar, Union, Optional
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 from pydantic import BaseModel, ValidationError
 import sqlalchemy.sql.selectable
@@ -632,7 +632,7 @@ class CRUDBase(
             update_data = object.model_dump(exclude_unset=True)
 
         if "updated_at" in update_data.keys():
-            update_data["updated_at"] = datetime.now(UTC)
+            update_data["updated_at"] = datetime.now(timezone.utc)
 
         model_columns = {column.name for column in inspect(self.model).c}
         extra_fields = set(update_data) - model_columns
@@ -676,7 +676,10 @@ class CRUDBase(
         db_row = db_row or await self.exists(db=db, **kwargs)
         if db_row:
             if "is_deleted" in self.model.__table__.columns:
-                object_dict = {"is_deleted": True, "deleted_at": datetime.now(UTC)}
+                object_dict = {
+                    "is_deleted": True,
+                    "deleted_at": datetime.now(timezone.utc),
+                }
                 stmt = update(self.model).filter_by(**kwargs).values(object_dict)
 
                 await db.execute(stmt)

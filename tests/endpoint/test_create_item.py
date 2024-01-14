@@ -1,0 +1,20 @@
+from fastapi.testclient import TestClient
+import pytest
+from sqlalchemy import select
+
+
+@pytest.mark.asyncio
+async def test_create_item(client: TestClient, async_session, test_model, test_data):
+    tester_data = {"name": test_data[0]["name"], "tier_id": test_data[0]["tier_id"]}
+    response = client.post("/test/create", json=tester_data)
+
+    assert response.status_code == 200
+
+    stmt = select(test_model).where(test_model.name == test_data[0]["name"])
+
+    result = await async_session.execute(stmt)
+    fetched_record = result.scalar_one_or_none()
+
+    assert fetched_record is not None, response.text
+    assert fetched_record.name == test_data[0]["name"]
+    assert fetched_record.tier_id == 1

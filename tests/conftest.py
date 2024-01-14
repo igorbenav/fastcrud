@@ -1,9 +1,16 @@
 import pytest
 import pytest_asyncio
+
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase, relationship
 from pydantic import BaseModel, ConfigDict
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from fastcrud.endpoint_creator import EndpointCreator
+from fastcrud.crud.crud_base import CRUDBase
 
 
 class Base(DeclarativeBase):
@@ -50,6 +57,15 @@ async_engine = create_async_engine(
 )
 
 
+local_session = sessionmaker(
+    bind=async_engine, class_=AsyncSession, expire_on_commit=False
+)
+
+
+def get_session_local():
+    yield local_session()
+
+
 @pytest_asyncio.fixture(scope="function")
 async def async_session() -> AsyncSession:
     session = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
@@ -64,11 +80,6 @@ async def async_session() -> AsyncSession:
         await conn.run_sync(Base.metadata.drop_all)
 
     await async_engine.dispose()
-
-
-local_session = sessionmaker(
-    bind=async_engine, class_=AsyncSession, expire_on_commit=False
-)
 
 
 @pytest.fixture(scope="function")
@@ -120,3 +131,22 @@ def update_schema():
 @pytest.fixture
 def delete_schema():
     return DeleteSchemaTest
+
+
+@pytest.fixture
+def client(test_model, create_schema, update_schema, delete_schema):
+    app = FastAPI()
+    crud = CRUDBase(test_model)
+    endpoint_creator = EndpointCreator(
+        session=get_session_local,
+        model=test_model,
+        crud=crud,
+        create_schema=create_schema,
+        update_schema=update_schema,
+        delete_schema=delete_schema,
+        path="/test",
+        tags=["test"],
+    )
+    endpoint_creator.add_routes_to_router()
+    app.include_router(endpoint_creator.router)
+    return TestClient(app)

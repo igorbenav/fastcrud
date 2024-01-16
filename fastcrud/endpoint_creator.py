@@ -3,6 +3,7 @@ from typing import Type, TypeVar, Optional, Callable, Union
 from fastapi import Depends, Body, Query, APIRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.sql.schema import Column
 from sqlalchemy import inspect
 from pydantic import BaseModel
 
@@ -113,6 +114,11 @@ class EndpointCreator:
         inspector = inspect(model)
         primary_key_columns = inspector.primary_key
         return primary_key_columns[0].name if primary_key_columns else None
+
+    def _extract_unique_columns(self, model: type[DeclarativeBase]) -> list[Column]:
+        """Extracts columns from a SQLAlchemy model that are marked as unique."""
+        unique_columns = [column for column in model.__table__.columns if column.unique]
+        return unique_columns
 
     def _create_item(self):
         """Creates an endpoint for creating items in the database."""

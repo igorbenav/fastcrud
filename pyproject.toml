@@ -15,7 +15,6 @@ fastapi = "^0.109.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4.4"
-pytest-asyncio = "^0.23.3"
 aiosqlite = "^0.19.0"
 greenlet = "^3.0.3"
 httpx = "^0.26.0"

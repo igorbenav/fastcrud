@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from .exceptions.http_exceptions import NotFoundException
 from .crud.crud_base import CRUDBase
+from .exceptions.http_exceptions import DuplicateValueException
 
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
@@ -127,6 +128,18 @@ class EndpointCreator:
             db: AsyncSession = Depends(self.session),
             item: self.create_schema = Body(...),  # type: ignore
         ):
+            unique_columns = self._extract_unique_columns(self.model)
+
+            for column in unique_columns:
+                col_name = column.name
+                if hasattr(item, col_name):
+                    value = getattr(item, col_name)
+                    exists = await self.crud.exists(db, **{col_name: value})
+                    if exists:
+                        raise DuplicateValueException(
+                            f"Value {value} is already registered"
+                        )
+
             return await self.crud.create(db, item)
 
         return endpoint

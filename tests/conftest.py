@@ -30,7 +30,7 @@ class ModelTest(Base):
 class TierModel(Base):
     __tablename__ = "tier"
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String, unique=True)
     tests = relationship("ModelTest", back_populates="tier")
 
 
@@ -50,6 +50,10 @@ class DeleteSchemaTest(BaseModel):
 
 class TierSchemaTest(BaseModel):
     name: str
+
+
+class TierDeleteSchemaTest(BaseModel):
+    pass
 
 
 async_engine = create_async_engine(
@@ -134,19 +138,47 @@ def delete_schema():
 
 
 @pytest.fixture
-def client(test_model, create_schema, update_schema, delete_schema):
+def tier_delete_schema():
+    return TierDeleteSchemaTest
+
+
+@pytest.fixture
+def client(
+    test_model,
+    tier_model,
+    create_schema,
+    update_schema,
+    delete_schema,
+    tier_schema,
+    tier_delete_schema,
+):
     app = FastAPI()
-    crud = CRUDBase(test_model)
-    endpoint_creator = EndpointCreator(
+
+    test_crud = CRUDBase(test_model)
+    test_endpoint_creator = EndpointCreator(
         session=get_session_local,
         model=test_model,
-        crud=crud,
+        crud=test_crud,
         create_schema=create_schema,
         update_schema=update_schema,
         delete_schema=delete_schema,
         path="/test",
         tags=["test"],
     )
-    endpoint_creator.add_routes_to_router()
-    app.include_router(endpoint_creator.router)
+    test_endpoint_creator.add_routes_to_router()
+    app.include_router(test_endpoint_creator.router)
+
+    tier_crud = CRUDBase(tier_model)
+    tier_endpoint_creator = EndpointCreator(
+        session=get_session_local,
+        model=tier_model,
+        crud=tier_crud,
+        create_schema=tier_schema,
+        update_schema=tier_schema,
+        delete_schema=tier_delete_schema,
+        path="/tier",
+        tags=["tier"],
+    )
+    tier_endpoint_creator.add_routes_to_router()
+    app.include_router(tier_endpoint_creator.router)
     return TestClient(app)

@@ -18,3 +18,16 @@ async def test_create_item(client: TestClient, async_session, test_model, test_d
     assert fetched_record is not None, response.text
     assert fetched_record.name == test_data[0]["name"]
     assert fetched_record.tier_id == 1
+
+
+@pytest.mark.asyncio
+async def test_create_tier_duplicate_check(client: TestClient):
+    test_tier_1 = {"name": "Premium"}
+    response = client.post("/tier/create", json=test_tier_1)
+    assert response.status_code == 200, response.text
+
+    test_tier_2 = {"name": "Premium"}
+    response = client.post("/tier/create", json=test_tier_2)
+
+    assert response.status_code == 422, response.text
+    assert "is already registered" in response.text, response.text

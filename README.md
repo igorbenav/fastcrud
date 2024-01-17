@@ -16,7 +16,7 @@
 </p>
 <hr>
 <p align="justify">
-<b>FastCRUD</b> is a Python package for <b>FastAPI</b>, offering robust async CRUD operations and endpoint creation utilities, streamlined through advanced features like <b>auto-detected join</b> conditions, <b>dynamic sorting</b>, and offset or cursor <b>pagination</b>.
+<b>FastCRUD</b> is a Python package for <b>FastAPI</b>, offering robust and flexible async CRUD operations and endpoint creation utilities, streamlined through advanced features like <b>auto-detected join</b> conditions, <b>dynamic sorting</b>, and offset and cursor <b>pagination</b>.
 </p>
 <p><b>Documentation:</b></p>
 <hr>

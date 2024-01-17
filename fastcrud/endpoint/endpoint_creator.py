@@ -1,15 +1,14 @@
-from typing import Type, TypeVar, Optional, Callable, Union
+from typing import Type, TypeVar, Optional, Callable
 
 from fastapi import Depends, Body, Query, APIRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.sql.schema import Column
-from sqlalchemy import inspect
 from pydantic import BaseModel
 
-from .exceptions.http_exceptions import NotFoundException
-from .crud.crud_base import CRUDBase
-from .exceptions.http_exceptions import DuplicateValueException
+from ..exceptions.http_exceptions import NotFoundException
+from ..crud.crud_base import CRUDBase
+from ..exceptions.http_exceptions import DuplicateValueException
+from .helper import _get_primary_key, _extract_unique_columns
 
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
@@ -24,6 +23,7 @@ class EndpointCreator:
     This class simplifies the process of adding create, read, update, and delete (CRUD) endpoints
     to a FastAPI router. It is initialized with a SQLAlchemy session, model, CRUD operations,
     and Pydantic schemas, and allows for custom dependency injection for each endpoint.
+    This method assumes 'id' is the primary key for path parameters.
 
     Attributes:
         session: The SQLAlchemy async session.
@@ -98,7 +98,7 @@ class EndpointCreator:
         path: str = "",
         tags: Optional[list[str]] = None,
     ) -> None:
-        self.primary_key_name = self._get_primary_key(model)
+        self.primary_key_name = _get_primary_key(model)
         self.session = session
         self.crud = crud
         self.model = model
@@ -110,17 +110,6 @@ class EndpointCreator:
         self.tags = tags or []
         self.router = APIRouter()
 
-    def _get_primary_key(self, model: DeclarativeBase) -> Union[str, None]:
-        """Get the primary key of a SQLAlchemy model."""
-        inspector = inspect(model)
-        primary_key_columns = inspector.primary_key
-        return primary_key_columns[0].name if primary_key_columns else None
-
-    def _extract_unique_columns(self, model: type[DeclarativeBase]) -> list[Column]:
-        """Extracts columns from a SQLAlchemy model that are marked as unique."""
-        unique_columns = [column for column in model.__table__.columns if column.unique]
-        return unique_columns
-
     def _create_item(self):
         """Creates an endpoint for creating items in the database."""
 
@@ -128,7 +117,7 @@ class EndpointCreator:
             db: AsyncSession = Depends(self.session),
             item: self.create_schema = Body(...),  # type: ignore
         ):
-            unique_columns = self._extract_unique_columns(self.model)
+            unique_columns = _extract_unique_columns(self.model)
 
             for column in unique_columns:
                 col_name = column.name
@@ -147,8 +136,8 @@ class EndpointCreator:
     def _read_item(self):
         """Creates an endpoint for reading a single item from the database."""
 
-        async def endpoint(item_id: int, db: AsyncSession = Depends(self.session)):
-            item = await self.crud.get(db, item_id=item_id)
+        async def endpoint(id: int, db: AsyncSession = Depends(self.session)):
+            item = await self.crud.get(db, id=id)
             if not item:
                 raise NotFoundException(detail="Item not found")
             return item
@@ -172,19 +161,19 @@ class EndpointCreator:
         """Creates an endpoint for updating an existing item in the database."""
 
         async def endpoint(
-            item_id: int,
+            id: int,
             item: self.update_schema = Body(...),  # type: ignore
             db: AsyncSession = Depends(self.session),
         ):
-            return await self.crud.update(db, item, item_id=item_id)
+            return await self.crud.update(db, item, id=id)
 
         return endpoint
 
     def _delete_item(self):
         """Creates an endpoint for deleting an item from the database."""
 
-        async def endpoint(item_id: int, db: AsyncSession = Depends(self.session)):
-            await self.crud.delete(db, item_id=item_id)
+        async def endpoint(id: int, db: AsyncSession = Depends(self.session)):
+            await self.crud.delete(db, id=id)
             return {"message": "Item deleted successfully"}
 
         return endpoint
@@ -198,8 +187,8 @@ class EndpointCreator:
         async session to permanently delete the item from the database.
         """
 
-        async def endpoint(item_id: int, db: AsyncSession = Depends(self.session)):
-            await self.crud.db_delete(db, item_id=item_id)
+        async def endpoint(id: int, db: AsyncSession = Depends(self.session)):
+            await self.crud.db_delete(db, id=id)
             return {"message": "Item permanently deleted from the database"}
 
         return endpoint
@@ -265,6 +254,7 @@ class EndpointCreator:
         Note:
             This method should be called to register the endpoints with the FastAPI application.
             If 'delete_schema' is provided, a hard delete endpoint is also registered.
+            This method assumes 'id' is the primary key for path parameters.
         """
         self.router.add_api_route(
             f"{self.path}/create",

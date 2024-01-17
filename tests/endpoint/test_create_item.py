@@ -21,7 +21,7 @@ async def test_create_item(client: TestClient, async_session, test_model, test_d
 
 
 @pytest.mark.asyncio
-async def test_create_tier_duplicate_check(client: TestClient):
+async def test_create_tier_duplicate_check(client: TestClient, async_session):
     test_tier_1 = {"name": "Premium"}
     response = client.post("/tier/create", json=test_tier_1)
     assert response.status_code == 200, response.text
@@ -30,4 +30,5 @@ async def test_create_tier_duplicate_check(client: TestClient):
     response = client.post("/tier/create", json=test_tier_2)
 
     assert response.status_code == 422, response.text
+
     assert "is already registered" in response.text, response.text

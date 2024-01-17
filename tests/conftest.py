@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from fastcrud.endpoint_creator import EndpointCreator
+from fastcrud.endpoint.endpoint_creator import EndpointCreator
 from fastcrud.crud.crud_base import CRUDBase
 
 
@@ -181,4 +181,8 @@ def client(
     )
     tier_endpoint_creator.add_routes_to_router()
     app.include_router(tier_endpoint_creator.router)
+
+    for route in app.routes:
+        print(route.path, route.methods)
+
     return TestClient(app)

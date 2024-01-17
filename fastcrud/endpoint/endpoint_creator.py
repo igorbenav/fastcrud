@@ -152,8 +152,7 @@ class EndpointCreator:
             offset: int = Query(0),
             limit: int = Query(100),
         ):
-            items = await self.crud.get_multi(db, offset=offset, limit=limit)
-            return {"data": items}
+            return await self.crud.get_multi(db, offset=offset, limit=limit)
 
         return endpoint
 
@@ -283,7 +282,7 @@ class EndpointCreator:
         self.router.add_api_route(
             f"{self.path}/update/{{{self.primary_key_name}}}",
             self._update_item(),
-            methods=["PUT"],
+            methods=["PATCH"],
             include_in_schema=self.include_in_schema,
             tags=self.tags,
             dependencies=update_deps,

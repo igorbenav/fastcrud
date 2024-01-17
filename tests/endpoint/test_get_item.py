@@ -15,7 +15,6 @@ async def test_read_item_success(
 
     response = client.get(f"/test/get/{new_item.id}")
 
-    print(response.text)
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == tester_data["name"]

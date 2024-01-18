@@ -1,5 +1,5 @@
 import pytest
-from fastcrud.crud.crud_base import CRUDBase
+from fastcrud.crud.fast_crud import FastCRUD
 from sqlalchemy import select, func
 
 
@@ -14,7 +14,7 @@ async def test_get_multi_basic(async_session, test_model, test_data):
     )
     total_count = total_count_query.scalar()
 
-    crud = CRUDBase(test_model)
+    crud = FastCRUD(test_model)
     result = await crud.get_multi(async_session)
 
     assert len(result["data"]) <= 100
@@ -33,7 +33,7 @@ async def test_get_multi_pagination(async_session, test_model, test_data):
     )
     total_count = total_count_query.scalar()
 
-    crud = CRUDBase(test_model)
+    crud = FastCRUD(test_model)
     result_page_1 = await crud.get_multi(async_session, offset=0, limit=5)
     result_page_2 = await crud.get_multi(async_session, offset=5, limit=5)
 
@@ -52,7 +52,7 @@ async def test_get_multi_sorting(async_session, test_model, test_data):
     )
     total_count = total_count_query.scalar()
 
-    crud = CRUDBase(test_model)
+    crud = FastCRUD(test_model)
     result = await crud.get_multi(
         async_session, sort_columns=["name"], sort_orders=["asc"]
     )
@@ -69,7 +69,7 @@ async def test_get_multi_filtering(async_session, test_model, test_data):
         async_session.add(test_model(**item))
     await async_session.commit()
 
-    crud = CRUDBase(test_model)
+    crud = FastCRUD(test_model)
     filter_criteria = {"name": "SpecificName"}
     result = await crud.get_multi(async_session, **filter_criteria)
 
@@ -87,7 +87,7 @@ async def test_get_multi_edge_cases(async_session, test_model, test_data):
     )
     total_count = total_count_query.scalar()
 
-    crud = CRUDBase(test_model)
+    crud = FastCRUD(test_model)
 
     with pytest.raises(ValueError):
         await crud.get_multi(async_session, offset=-1)
@@ -106,7 +106,7 @@ async def test_get_multi_return_model(
         async_session.add(test_model(**item))
     await async_session.commit()
 
-    crud = CRUDBase(test_model)
+    crud = FastCRUD(test_model)
     result = await crud.get_multi(
         async_session, return_as_model=True, schema_to_select=create_schema
     )

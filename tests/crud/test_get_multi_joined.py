@@ -1,5 +1,5 @@
 import pytest
-from fastcrud.crud.crud_base import CRUDBase
+from fastcrud.crud.fast_crud import FastCRUD
 from ..conftest import ModelTest, TierModel, CreateSchemaTest, TierSchemaTest
 
 
@@ -13,7 +13,7 @@ async def test_get_multi_joined_basic(async_session, test_data, test_data_tier):
         async_session.add(ModelTest(**user_item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     result = await crud.get_multi_joined(
         db=async_session,
         join_model=TierModel,
@@ -39,7 +39,7 @@ async def test_get_multi_joined_sorting(async_session, test_data, test_data_tier
         async_session.add(ModelTest(**user_item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     result = await crud.get_multi_joined(
         db=async_session,
         join_model=TierModel,
@@ -71,7 +71,7 @@ async def test_get_multi_joined_filtering(async_session, test_data, test_data_ti
         async_session.add(ModelTest(**user_item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     result = await crud.get_multi_joined(
         db=async_session,
         join_model=TierModel,
@@ -99,7 +99,7 @@ async def test_get_multi_joined_different_join_types(
         async_session.add(ModelTest(**user_item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     for join_type in ["left", "inner"]:
         result = await crud.get_multi_joined(
             db=async_session,
@@ -124,7 +124,7 @@ async def test_get_multi_joined_return_model(async_session, test_data, test_data
         async_session.add(ModelTest(**user_item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     result = await crud.get_multi_joined(
         db=async_session,
         join_model=TierModel,
@@ -141,7 +141,7 @@ async def test_get_multi_joined_return_model(async_session, test_data, test_data
 
 @pytest.mark.asyncio
 async def test_get_multi_joined_no_results(async_session, test_data, test_data_tier):
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     result = await crud.get_multi_joined(
         db=async_session,
         join_model=TierModel,
@@ -158,7 +158,7 @@ async def test_get_multi_joined_no_results(async_session, test_data, test_data_t
 
 @pytest.mark.asyncio
 async def test_get_multi_joined_large_offset(async_session, test_data, test_data_tier):
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     result = await crud.get_multi_joined(
         db=async_session,
         join_model=TierModel,
@@ -175,7 +175,7 @@ async def test_get_multi_joined_large_offset(async_session, test_data, test_data
 async def test_get_multi_joined_invalid_limit_offset(
     async_session, test_data, test_data_tier
 ):
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     with pytest.raises(ValueError):
         await crud.get_multi_joined(
             db=async_session,

@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import select
 from sqlalchemy.exc import ArgumentError
-from fastcrud.crud.crud_base import CRUDBase
+from fastcrud.crud.fast_crud import FastCRUD
 
 
 @pytest.mark.asyncio
@@ -10,9 +10,9 @@ async def test_apply_sorting_single_column_asc(async_session, test_model, test_d
         async_session.add(test_model(**item))
     await async_session.commit()
 
-    crud = CRUDBase(test_model)
+    crud = FastCRUD(test_model)
     stmt = select(test_model)
-    sorted_stmt = crud.apply_sorting(stmt, "name")
+    sorted_stmt = crud._apply_sorting(stmt, "name")
 
     result = await async_session.execute(sorted_stmt)
     sorted_data = result.scalars().all()
@@ -27,9 +27,9 @@ async def test_apply_sorting_single_column_desc(async_session, test_model, test_
         async_session.add(test_model(**item))
     await async_session.commit()
 
-    crud = CRUDBase(test_model)
+    crud = FastCRUD(test_model)
     stmt = select(test_model)
-    sorted_stmt = crud.apply_sorting(stmt, "name", "desc")
+    sorted_stmt = crud._apply_sorting(stmt, "name", "desc")
 
     result = await async_session.execute(sorted_stmt)
     sorted_data = result.scalars().all()
@@ -48,9 +48,9 @@ async def test_apply_sorting_multiple_columns_mixed_order(
         async_session.add(test_model(**item))
     await async_session.commit()
 
-    crud = CRUDBase(test_model)
+    crud = FastCRUD(test_model)
     stmt = select(test_model)
-    sorted_stmt = crud.apply_sorting(stmt, ["name", "id"], ["asc", "desc"])
+    sorted_stmt = crud._apply_sorting(stmt, ["name", "id"], ["asc", "desc"])
 
     result = await async_session.execute(sorted_stmt)
     sorted_data = result.scalars().all()
@@ -66,11 +66,11 @@ async def test_apply_sorting_invalid_column(async_session, test_model, test_data
         async_session.add(test_model(**item))
     await async_session.commit()
 
-    crud = CRUDBase(test_model)
+    crud = FastCRUD(test_model)
     stmt = select(test_model)
 
     with pytest.raises(ArgumentError):
-        crud.apply_sorting(stmt, "invalid_column")
+        crud._apply_sorting(stmt, "invalid_column")
 
 
 @pytest.mark.asyncio
@@ -79,11 +79,11 @@ async def test_apply_sorting_invalid_sort_order(async_session, test_model, test_
         async_session.add(test_model(**item))
     await async_session.commit()
 
-    crud = CRUDBase(test_model)
+    crud = FastCRUD(test_model)
     stmt = select(test_model)
 
     with pytest.raises(ValueError):
-        crud.apply_sorting(stmt, "name", "invalid_order")
+        crud._apply_sorting(stmt, "name", "invalid_order")
 
 
 @pytest.mark.asyncio
@@ -92,8 +92,8 @@ async def test_apply_sorting_mismatched_lengths(async_session, test_model, test_
         async_session.add(test_model(**item))
     await async_session.commit()
 
-    crud = CRUDBase(test_model)
+    crud = FastCRUD(test_model)
     stmt = select(test_model)
 
     with pytest.raises(ValueError):
-        crud.apply_sorting(stmt, ["name", "id"], ["asc"])
+        crud._apply_sorting(stmt, ["name", "id"], ["asc"])

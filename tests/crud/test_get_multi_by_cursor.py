@@ -1,5 +1,5 @@
 import pytest
-from fastcrud.crud.crud_base import CRUDBase
+from fastcrud.crud.fast_crud import FastCRUD
 from ..conftest import ModelTest
 
 
@@ -9,7 +9,7 @@ async def test_get_multi_by_cursor_initial_fetch(async_session, test_data):
         async_session.add(ModelTest(**item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     first_page = await crud.get_multi_by_cursor(db=async_session, limit=5)
 
     assert len(first_page["data"]) == 5
@@ -22,7 +22,7 @@ async def test_get_multi_by_cursor_pagination(async_session, test_data):
         async_session.add(ModelTest(**item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     first_page = await crud.get_multi_by_cursor(db=async_session, limit=5)
     second_page = await crud.get_multi_by_cursor(
         db=async_session, cursor=first_page["next_cursor"], limit=5
@@ -38,7 +38,7 @@ async def test_get_multi_by_cursor_sorting(async_session, test_data):
         async_session.add(ModelTest(**item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     asc_page = await crud.get_multi_by_cursor(
         db=async_session, limit=5, sort_order="asc"
     )
@@ -56,7 +56,7 @@ async def test_get_multi_by_cursor_filtering(async_session, test_data):
         async_session.add(ModelTest(**item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     filter_criteria = {"name": "SpecificName"}
     filtered_page = await crud.get_multi_by_cursor(
         db=async_session, limit=5, **filter_criteria
@@ -71,7 +71,7 @@ async def test_get_multi_by_cursor_edge_cases(async_session, test_data):
         async_session.add(ModelTest(**item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
 
     all_records = await crud.get_multi_by_cursor(db=async_session)
     print("All records:", all_records)

@@ -9,8 +9,8 @@ from pydantic import BaseModel, ConfigDict
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from fastcrud.endpoint.endpoint_creator import EndpointCreator
-from fastcrud.crud.crud_base import CRUDBase
+from fastcrud.crud.fast_crud import FastCRUD
+from fastcrud.endpoint.crud_router import crud_router
 
 
 class Base(DeclarativeBase):
@@ -154,35 +154,30 @@ def client(
 ):
     app = FastAPI()
 
-    test_crud = CRUDBase(test_model)
-    test_endpoint_creator = EndpointCreator(
-        session=get_session_local,
-        model=test_model,
-        crud=test_crud,
-        create_schema=create_schema,
-        update_schema=update_schema,
-        delete_schema=delete_schema,
-        path="/test",
-        tags=["test"],
+    app.include_router(
+        crud_router(
+            session=get_session_local,
+            model=test_model,
+            crud=FastCRUD(test_model),
+            create_schema=create_schema,
+            update_schema=update_schema,
+            delete_schema=delete_schema,
+            path="/test",
+            tags=["test"],
+        )
     )
-    test_endpoint_creator.add_routes_to_router()
-    app.include_router(test_endpoint_creator.router)
 
-    tier_crud = CRUDBase(tier_model)
-    tier_endpoint_creator = EndpointCreator(
-        session=get_session_local,
-        model=tier_model,
-        crud=tier_crud,
-        create_schema=tier_schema,
-        update_schema=tier_schema,
-        delete_schema=tier_delete_schema,
-        path="/tier",
-        tags=["tier"],
+    app.include_router(
+        crud_router(
+            session=get_session_local,
+            model=tier_model,
+            crud=FastCRUD(tier_model),
+            create_schema=tier_schema,
+            update_schema=tier_schema,
+            delete_schema=tier_delete_schema,
+            path="/tier",
+            tags=["tier"],
+        )
     )
-    tier_endpoint_creator.add_routes_to_router()
-    app.include_router(tier_endpoint_creator.router)
-
-    for route in app.routes:
-        print(route.path, route.methods)
 
     return TestClient(app)

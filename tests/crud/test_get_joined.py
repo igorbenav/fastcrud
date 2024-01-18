@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy import and_
-from fastcrud.crud.crud_base import CRUDBase
+from fastcrud.crud.fast_crud import FastCRUD
 from ..conftest import ModelTest, TierModel, CreateSchemaTest, TierSchemaTest
 
 
@@ -14,7 +14,7 @@ async def test_get_joined_basic(async_session, test_data, test_data_tier):
         async_session.add(ModelTest(**user_item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     result = await crud.get_joined(
         db=async_session,
         join_model=TierModel,
@@ -39,7 +39,7 @@ async def test_get_joined_custom_condition(async_session, test_data, test_data_t
         async_session.add(ModelTest(**user_item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     result = await crud.get_joined(
         db=async_session,
         join_model=TierModel,
@@ -65,7 +65,7 @@ async def test_get_joined_with_prefix(async_session, test_data, test_data_tier):
         async_session.add(ModelTest(**user_item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     result = await crud.get_joined(
         db=async_session,
         join_model=TierModel,
@@ -91,7 +91,7 @@ async def test_get_joined_different_join_types(
         async_session.add(ModelTest(**user_item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     result_left = await crud.get_joined(
         db=async_session,
         join_model=TierModel,
@@ -122,7 +122,7 @@ async def test_get_joined_with_filters(async_session, test_data, test_data_tier)
         async_session.add(ModelTest(**user_item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     result = await crud.get_joined(
         db=async_session,
         join_model=TierModel,

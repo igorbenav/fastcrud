@@ -24,7 +24,7 @@ UpdateSchemaInternalType = TypeVar("UpdateSchemaInternalType", bound=BaseModel)
 DeleteSchemaType = TypeVar("DeleteSchemaType", bound=BaseModel)
 
 
-class CRUDBase(
+class FastCRUD(
     Generic[
         ModelType,
         CreateSchemaType,
@@ -36,14 +36,121 @@ class CRUDBase(
     """
     Base class for CRUD operations on a model.
 
+    This class provides a set of methods for create, read, update, and delete operations on a given SQLAlchemy model,
+    utilizing Pydantic schemas for data validation and serialization.
+
     Args:
         model: The SQLAlchemy model type.
+
+    Methods:
+        create(db: AsyncSession, object: CreateSchemaType) -> ModelType:
+            Creates a new record in the database. The 'object' parameter is a Pydantic schema
+            containing the data to be saved.
+
+        get(db: AsyncSession, schema_to_select: Optional[Union[type[BaseModel], list]] = None, **kwargs: Any) -> Optional[dict]:
+            Retrieves a single record based on filters. You can specify a Pydantic schema to
+            select specific columns, and pass filter conditions as keyword arguments.
+
+        exists(db: AsyncSession, **kwargs: Any) -> bool:
+            Checks if a record exists based on the provided filters. Returns True if the record
+            exists, False otherwise.
+
+        count(db: AsyncSession, **kwargs: Any) -> int:
+            Counts the number of records matching the provided filters. Useful for pagination
+            and analytics.
+
+        get_multi(db: AsyncSession, offset: int = 0, limit: int = 100, schema_to_select: Optional[type[BaseModel]] = None, sort_columns: Optional[Union[str, list[str]]] = None, sort_orders: Optional[Union[str, list[str]]] = None, return_as_model: bool = False, **kwargs: Any) -> dict[str, Any]:
+            Fetches multiple records with optional sorting, pagination, and model conversion.
+            Filters, sorting, and pagination parameters can be provided.
+
+        get_joined(db: AsyncSession, join_model: type[ModelType], join_prefix: Optional[str] = None, join_on: Optional[Union[Join, None]] = None, schema_to_select: Optional[Union[type[BaseModel], list]] = None, join_schema_to_select: Optional[Union[type[BaseModel], list]] = None, join_type: str = "left", **kwargs: Any) -> Optional[dict[str, Any]]:
+            Performs a join operation with another model. Supports custom join conditions and
+            selection of specific columns using Pydantic schemas.
+
+        get_multi_joined(db: AsyncSession, join_model: type[ModelType], join_prefix: Optional[str] = None, join_on: Optional[Join] = None, schema_to_select: Optional[type[BaseModel]] = None, join_schema_to_select: Optional[type[BaseModel]] = None, join_type: str = "left", offset: int = 0, limit: int = 100, sort_columns: Optional[Union[str, list[str]]] = None, sort_orders: Optional[Union[str, list[str]]] = None, return_as_model: bool = False, **kwargs: Any) -> dict[str, Any]:
+            Similar to 'get_joined', but for fetching multiple records. Offers pagination and
+            sorting functionalities for the joined tables.
+
+        get_multi_by_cursor(db: AsyncSession, cursor: Any = None, limit: int = 100, schema_to_select: Optional[type[BaseModel]] = None, sort_column: str = "id", sort_order: str = "asc", **kwargs: Any) -> dict[str, Any]:
+            Implements cursor-based pagination for fetching records. Useful for large datasets
+            and infinite scrolling features.
+
+        update(db: AsyncSession, object: Union[UpdateSchemaType, dict[str, Any]], **kwargs: Any) -> None:
+            Updates an existing record. The 'object' can be a Pydantic schema or dictionary
+            containing update data.
+
+        db_delete(db: AsyncSession, **kwargs: Any) -> None:
+            Hard deletes a record from the database based on provided filters.
+
+        delete(db: AsyncSession, db_row: Optional[Row] = None, **kwargs: Any) -> None:
+            Soft deletes a record if it has an "is_deleted" attribute; otherwise, performs a
+            hard delete. Filters or an existing database row can be provided for deletion.
+
+    Examples:
+        Example 1: Basic Usage
+        ----------------------
+        Create a FastCRUD instance for a User model and perform basic CRUD operations.
+        ```python
+        user_crud = FastCRUD(User, UserCreateSchema, UserUpdateSchema)
+        async with db_session() as db:
+            # Create a new user
+            new_user = await user_crud.create(db, UserCreateSchema(name="Alice"))
+            # Read a user
+            user = await user_crud.get(db, id=new_user.id)
+            # Update a user
+            await user_crud.update(db, UserUpdateSchema(email="alice@example.com"), id=new_user.id)
+            # Delete a user
+            await user_crud.delete(db, id=new_user.id)
+        ```
+
+        Example 2: Advanced Filtering and Pagination
+        --------------------------------------------
+        Use advanced filtering, sorting, and pagination for fetching records.
+        ```python
+        product_crud = FastCRUD(Product, ProductCreateSchema)
+        async with db_session() as db:
+            products = await product_crud.get_multi(
+                db, offset=0, limit=10, sort_columns=['price'], sort_orders=['asc']
+            )
+        ```
+
+        Example 3: Join Operations with Custom Schemas
+        ----------------------------------------------
+        Perform join operations between two models using custom schemas for selection.
+        ```python
+        order_crud = FastCRUD(Order, OrderCreateSchema, join_model=Product)
+        async with db_session() as db:
+            orders = await order_crud.get_multi_joined(
+                db, offset=0, limit=5, schema_to_select=OrderReadSchema, join_schema_to_select=ProductReadSchema
+            )
+        ```
+
+        Example 4: Cursor Pagination
+        ----------------------------
+        Implement cursor-based pagination for efficient data retrieval in large datasets.
+        ```python
+        comment_crud = FastCRUD(Comment, CommentCreateSchema)
+        async with db_session() as db:
+            first_page = await comment_crud.get_multi_by_cursor(db, limit=10)
+            next_cursor = first_page['next_cursor']
+            second_page = await comment_crud.get_multi_by_cursor(db, cursor=next_cursor, limit=10)
+        ```
+
+        Example 5: Dynamic Filtering and Counting
+        -----------------------------------------
+        Dynamically filter records based on various criteria and count the results.
+        ```python
+        task_crud = FastCRUD(Task, TaskCreateSchema)
+        async with db_session() as db:
+            completed_tasks = await task_crud.get_multi(db, status='completed')
+            high_priority_task_count = await task_crud.count(db, priority='high')
+        ```
     """
 
     def __init__(self, model: type[ModelType]) -> None:
         self.model = model
 
-    def apply_sorting(
+    def _apply_sorting(
         self,
         stmt: sqlalchemy.sql.selectable.Select,
         sort_columns: Union[str, list[str]],
@@ -68,16 +175,16 @@ class CRUDBase(
 
         Examples:
             Applying ascending sort on a single column:
-            >>> stmt = apply_sorting(stmt, 'name')
+            >>> stmt = _apply_sorting(stmt, 'name')
 
             Applying descending sort on a single column:
-            >>> stmt = apply_sorting(stmt, 'age', 'desc')
+            >>> stmt = _apply_sorting(stmt, 'age', 'desc')
 
             Applying mixed sort orders on multiple columns:
-            >>> stmt = apply_sorting(stmt, ['name', 'age'], ['asc', 'desc'])
+            >>> stmt = _apply_sorting(stmt, ['name', 'age'], ['asc', 'desc'])
 
             Applying ascending sort on multiple columns:
-            >>> stmt = apply_sorting(stmt, ['name', 'age'])
+            >>> stmt = _apply_sorting(stmt, ['name', 'age'])
 
         Note:
             This method modifies the passed Select statement in-place by applying the order_by clause
@@ -267,7 +374,7 @@ class CRUDBase(
         stmt = select(*to_select).filter_by(**kwargs)
 
         if sort_columns:
-            stmt = self.apply_sorting(stmt, sort_columns, sort_orders)
+            stmt = self._apply_sorting(stmt, sort_columns, sort_orders)
 
         stmt = stmt.offset(offset).limit(limit)
         result = await db.execute(stmt)
@@ -526,7 +633,7 @@ class CRUDBase(
                 stmt = stmt.where(getattr(self.model, key) == value)
 
         if sort_columns:
-            stmt = self.apply_sorting(stmt, sort_columns, sort_orders)
+            stmt = self._apply_sorting(stmt, sort_columns, sort_orders)
 
         stmt = stmt.offset(offset).limit(limit)
 

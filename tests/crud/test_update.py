@@ -2,7 +2,7 @@ import pytest
 
 from sqlalchemy import select
 
-from fastcrud.crud.crud_base import CRUDBase
+from fastcrud.crud.fast_crud import FastCRUD
 from ..conftest import ModelTest
 
 
@@ -12,7 +12,7 @@ async def test_update_successful(async_session, test_data):
         async_session.add(ModelTest(**item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     some_existing_id = test_data[0]["id"]
     updated_data = {"name": "Updated Name"}
     await crud.update(db=async_session, object=updated_data, id=some_existing_id)
@@ -29,7 +29,7 @@ async def test_update_various_data(async_session, test_data):
         async_session.add(ModelTest(**item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     some_existing_id = test_data[0]["id"]
     updated_data = {"name": "Different Name"}
     await crud.update(db=async_session, object=updated_data, id=some_existing_id)
@@ -46,7 +46,7 @@ async def test_update_non_existent_record(async_session, test_data):
         async_session.add(ModelTest(**item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     non_existent_id = 99999
     updated_data = {"name": "New Name"}
     await crud.update(db=async_session, object=updated_data, id=non_existent_id)
@@ -63,7 +63,7 @@ async def test_update_invalid_filters(async_session, test_data):
         async_session.add(ModelTest(**item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     updated_data = {"name": "New Name"}
 
     non_matching_filter = {"name": "NonExistingName"}
@@ -83,7 +83,7 @@ async def test_update_additional_fields(async_session, test_data):
         async_session.add(ModelTest(**item))
     await async_session.commit()
 
-    crud = CRUDBase(ModelTest)
+    crud = FastCRUD(ModelTest)
     some_existing_id = test_data[0]["id"]
     updated_data = {"name": "Updated Name", "extra_field": "Extra"}
 

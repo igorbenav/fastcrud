@@ -6,7 +6,7 @@ from sqlalchemy.orm import DeclarativeBase
 from pydantic import BaseModel
 
 from ..exceptions.http_exceptions import NotFoundException
-from ..crud.crud_base import CRUDBase
+from ..crud.fast_crud import FastCRUD
 from ..exceptions.http_exceptions import DuplicateValueException
 from .helper import _get_primary_key, _extract_unique_columns
 
@@ -90,7 +90,7 @@ class EndpointCreator:
         self,
         session: AsyncSession,
         model: DeclarativeBase,
-        crud: CRUDBase,
+        crud: FastCRUD,
         create_schema: Type[CreateSchemaType],
         update_schema: Type[UpdateSchemaType],
         include_in_schema: bool = True,

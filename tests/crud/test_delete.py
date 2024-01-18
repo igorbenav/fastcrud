@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy import select
-from fastcrud.crud.crud_base import CRUDBase
+from fastcrud.crud.fast_crud import FastCRUD
 
 
 @pytest.mark.asyncio
@@ -9,7 +9,7 @@ async def test_db_delete_hard_delete(async_session, test_data_tier, tier_model):
         async_session.add(tier_model(**tier_item))
     await async_session.commit()
 
-    crud = CRUDBase(tier_model)
+    crud = FastCRUD(tier_model)
     some_existing_id = test_data_tier[0]["id"]
     await crud.db_delete(db=async_session, id=some_existing_id)
 
@@ -25,7 +25,7 @@ async def test_delete_soft_delete(async_session, test_data, test_model):
         async_session.add(test_model(**item))
     await async_session.commit()
 
-    crud = CRUDBase(test_model)
+    crud = FastCRUD(test_model)
     some_existing_id = test_data[0]["id"]
     await crud.delete(db=async_session, id=some_existing_id)
 
@@ -45,7 +45,7 @@ async def test_delete_hard_delete_as_fallback(
         async_session.add(tier_model(**tier_item))
     await async_session.commit()
 
-    crud = CRUDBase(tier_model)
+    crud = FastCRUD(tier_model)
     some_existing_id = test_data_tier[0]["id"]
     await crud.delete(db=async_session, id=some_existing_id)
 

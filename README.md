@@ -45,11 +45,7 @@
 
 <h2>Installing</h2>
 
-To install, just run:
-```sh
-pip install fastcrud
-```
-
+🚧 Coming Soon 🚧
 <h2>Usage</h2>
 
 FastCRUD offers two primary ways to use its functionalities: 

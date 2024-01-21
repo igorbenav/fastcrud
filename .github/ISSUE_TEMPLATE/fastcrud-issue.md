@@ -13,28 +13,7 @@ A clear and concise description of what the bug or question is.
 **To Reproduce**
 Please provide a self-contained, minimal, and reproducible example of your use case
 ```python
-from fastapi import FastAPI
-from fastcrud import FastCRUD, crud_router
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-
-DATABASE_URL = "sqlite+aiosqlite:///./test.db"
-engine = create_async_engine(DATABASE_URL, echo=True)
-async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-app = FastAPI()
-
-item_router = crud_router(
-    session=async_session,
-    model=Item,
-    crud=FastCRUD(Item),
-    create_schema=ItemCreateSchema,
-    update_schema=ItemUpdateSchema,
-    path="/items",
-    tags=["Items"]
-)
-
-app.include_router(item_router)
+# Your code here
 ```
 
 **Description**

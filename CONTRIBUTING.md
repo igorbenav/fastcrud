@@ -67,7 +67,7 @@ After making your changes:
 - Address any feedback from code reviews.
 - Once approved, your contributions will be merged into the main branch.
 
-##Code of Conduct
-Please adhere to our Code of Conduct to maintain a welcoming and inclusive environment.
+## Code of Conduct
+Please adhere to our [Code of Conduct](CODE_OF_CONDUCT.md) to maintain a welcoming and inclusive environment.
 
-Thank you for contributing to FastCRUD!
+Thank you for contributing to FastCRUD🚀

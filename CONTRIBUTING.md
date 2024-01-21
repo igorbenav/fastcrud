@@ -8,7 +8,7 @@ Thank you for your interest in contributing to FastCRUD! This guide is meant to 
 Start by forking and cloning the FastCRUD repository:
 
 ```sh
-git clone https://github.com/YOUR-GITHUB-USERNAME/fastcrud.git
+git clone https://github.com/igorbenav/fastcrud.git
 ```
 
 ### Using Poetry for Dependency Management

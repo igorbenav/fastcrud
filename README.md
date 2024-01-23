@@ -1,17 +1,20 @@
 <p align="center">
   <a href="https://github.com/igorbenav/fastcrud">
-    <img src="assets/fastcrud.png" alt="FastCRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto">
+    <img src="https://private-user-images.githubusercontent.com/43156212/298843774-4d6aa4b9-8f9e-44cc-94b1-97a1bf03a607.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MDU5OTU1OTcsIm5iZiI6MTcwNTk5NTI5NywicGF0aCI6Ii80MzE1NjIxMi8yOTg4NDM3NzQtNGQ2YWE0YjktOGY5ZS00NGNjLTk0YjEtOTdhMWJmMDNhNjA3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDAxMjMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwMTIzVDA3MzQ1N1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTFjMWQ3YjY5YmRlNjMwYzE1MzgyMzgzMmNlMWQ0MTgxM2FhOTFlZTNhZGUwZTM1YjcxZmY5MTg3YTQ0MmY1NjcmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.ZEu70eS4smnceGPLiTBTpUhZkT-a4sWvWWk6KugCQpM" alt="FastCRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto">
   </a>
 </p>
 <p align="center" markdown=1>
   <i>Powerful CRUD methods and automatic endpoint creation for FastAPI.</i>
 </p>
 <p align="center" markdown=1>
-<a href="https://github.com/igorbenav/fastcrud/actions/workflows/python-versions.yml">
-  <img src="https://github.com/igorbenav/fastcrud/actions/workflows/python-versions.yml/badge.svg" alt="Python Versions"/>
-</a>
 <a href="https://github.com/igorbenav/fastcrud/actions/workflows/tests.yml">
   <img src="https://github.com/igorbenav/fastcrud/actions/workflows/tests.yml/badge.svg" alt="Tests"/>
+</a>
+<a href="https://pypi.org/project/fastcrud/">
+  <img src="https://img.shields.io/pypi/v/fastcrud?color=%2334D058&label=pypi%20package" alt="PyPi Version"/>
+</a>
+<a href="https://pypi.org/project/fastcrud/">
+  <img src="https://img.shields.io/pypi/pyversions/fastcrud.svg?color=%2334D058" alt="Supported Python Versions"/>
 </a>
 </p>
 <hr>
@@ -45,7 +48,17 @@
 
 <h2>Installing</h2>
 
-🚧 Coming Soon 🚧
+ To install, just run:
+ ```sh
+ pip install fastcrud
+ ```
+
+Or, if using poetry:
+
+```sh
+ poetry add fastcrud
+ ```
+
 <h2>Usage</h2>
 
 FastCRUD offers two primary ways to use its functionalities: 

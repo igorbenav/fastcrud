@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/igorbenav/fastcrud">
-    <img src="https://private-user-images.githubusercontent.com/43156212/298843774-4d6aa4b9-8f9e-44cc-94b1-97a1bf03a607.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MDU5OTU1OTcsIm5iZiI6MTcwNTk5NTI5NywicGF0aCI6Ii80MzE1NjIxMi8yOTg4NDM3NzQtNGQ2YWE0YjktOGY5ZS00NGNjLTk0YjEtOTdhMWJmMDNhNjA3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDAxMjMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwMTIzVDA3MzQ1N1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTFjMWQ3YjY5YmRlNjMwYzE1MzgyMzgzMmNlMWQ0MTgxM2FhOTFlZTNhZGUwZTM1YjcxZmY5MTg3YTQ0MmY1NjcmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.ZEu70eS4smnceGPLiTBTpUhZkT-a4sWvWWk6KugCQpM" alt="FastCRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto">
+    <img src="https://github.com/igorbenav/fastcrud/blob/main/assets/fastcrud.png?raw=true" alt="FastCRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto">
   </a>
 </p>
 <p align="center" markdown=1>

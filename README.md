@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/igorbenav/fastcrud">
-    <img src="https://github.com/igorbenav/fastcrud/blob/main/assets/fastcrud.png?raw=true" alt="FastCRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto">
+    <img src="https://github.com/igorbenav/fastcrud/blob/main/assets/fastcrud_with_background.png?raw=true" alt="FastCRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto">
   </a>
 </p>
 <p align="center" markdown=1>
@@ -70,16 +70,20 @@ Below are examples demonstrating both approaches:
 
 <h3>Using crud_router for Automatic Endpoint Creation</h3>
 
+> \[!WARNING\]
+> For now, your primary column must be named `id` or automatic endpoint creation will not work.
+
 Here's a quick example to get you started:
 
 <h4>Define Your Model and Schema</h4>
 
 ```python
 from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 from pydantic import BaseModel
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
 
 class Item(Base):
     __tablename__ = 'items'

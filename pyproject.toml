@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastcrud"
-version = "0.1.5"
+version = "0.1.6"
 description = "FastCRUD is a Python package for FastAPI, offering robust async CRUD operations and flexible endpoint creation utilities."
 authors = ["Igor Benav <igor.magalhaes.r@gmail.com>"]
 license = "MIT"

@@ -36,54 +36,61 @@ class EndpointCreator:
         path: Base path for the CRUD endpoints.
         tags: List of tags for grouping endpoints in the documentation.
 
-    Usage Examples:
-        Example 1 - Basic Setup:
-            from fastapi import FastAPI
-            from myapp.models import MyModel
-            from myapp.schemas import CreateMyModel, UpdateMyModel
-            from myapp.crud import CRUDMyModel
-            from myapp.database import async_session
-            from myapp.api import EndpointCreator
+    Examples:
+        Basic Setup:
+        ```python
+        from fastapi import FastAPI
+        from fastcrud import EndpointCreator
+        
+        from myapp.models import MyModel
+        from myapp.schemas import CreateMyModel, UpdateMyModel
+        from myapp.crud import CRUDMyModel
+        from myapp.database import async_session
 
-            app = FastAPI()
-            my_model_crud = CRUDMyModel(MyModel)
-            endpoint_creator = EndpointCreator(
-                session=async_session,
-                model=MyModel,
-                crud=my_model_crud,
-                create_schema=CreateMyModel,
-                update_schema=UpdateMyModel
-            )
-            endpoint_creator.add_routes_to_router()
-            app.include_router(endpoint_creator.router, prefix="/mymodel")
+        app = FastAPI()
+        my_model_crud = CRUDMyModel(MyModel)
+        endpoint_creator = EndpointCreator(
+            session=async_session,
+            model=MyModel,
+            crud=my_model_crud,
+            create_schema=CreateMyModel,
+            update_schema=UpdateMyModel
+        )
+        endpoint_creator.add_routes_to_router()
+        app.include_router(endpoint_creator.router, prefix="/mymodel")
+        ```
 
-        Example 2 - With Custom Dependencies:
-            from fastapi.security import OAuth2PasswordBearer
+        With Custom Dependencies:
+        ```python
+        from fastapi.security import OAuth2PasswordBearer
 
-            oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+        oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-            def get_current_user(token: str = Depends(oauth2_scheme)):
-                # Implement user retrieval
-                return ...
+        def get_current_user(token: str = Depends(oauth2_scheme)):
+            # Implement user retrieval
+            return ...
 
-            endpoint_creator.add_routes_to_router(
-                read_deps=[get_current_user],
-                update_deps=[get_current_user]
-            )
+        endpoint_creator.add_routes_to_router(
+            read_deps=[get_current_user],
+            update_deps=[get_current_user]
+        )
+        ```
 
-        Example 3 - Integrating with Multiple Models:
-            # Assuming definitions for OtherModel, CRUDOtherModel, CreateOtherModel, UpdateOtherModel
+        Integrating with Multiple Models:
+        ```python
+        # Assuming definitions for OtherModel, CRUDOtherModel, CreateOtherModel, UpdateOtherModel
 
-            other_model_crud = CRUDOtherModel(OtherModel)
-            other_endpoint_creator = EndpointCreator(
-                session=async_session,
-                model=OtherModel,
-                crud=other_model_crud,
-                create_schema=CreateOtherModel,
-                update_schema=UpdateOtherModel
-            )
-            other_endpoint_creator.add_routes_to_router()
-            app.include_router(other_endpoint_creator.router, prefix="/othermodel")
+        other_model_crud = CRUDOtherModel(OtherModel)
+        other_endpoint_creator = EndpointCreator(
+            session=async_session,
+            model=OtherModel,
+            crud=other_model_crud,
+            create_schema=CreateOtherModel,
+            update_schema=UpdateOtherModel
+        )
+        other_endpoint_creator.add_routes_to_router()
+        app.include_router(other_endpoint_creator.router, prefix="/othermodel")
+        ```
     """
 
     def __init__(
@@ -217,38 +224,44 @@ class EndpointCreator:
 
         The dependencies are callables that FastAPI can use to inject dependencies into the path operation functions.
 
-        Usage Examples:
-            Example 1 - Basic Setup Without Additional Dependencies:
-                endpoint_creator = EndpointCreator(...)
-                endpoint_creator.add_routes_to_router()
+        Examples:
+            Basic Setup Without Additional Dependencies:
+            ```python
+            endpoint_creator = EndpointCreator(...)
+            endpoint_creator.add_routes_to_router()
+            ```
 
-            Example 2 - With Custom Dependencies for Authentication:
-                from fastapi.security import OAuth2PasswordBearer
+            With Custom Dependencies for Authentication:
+            ```python
+            from fastapi.security import OAuth2PasswordBearer
 
-                oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+            oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-                def get_current_user(token: str = Depends(oauth2_scheme)):
-                    # Implement user retrieval logic
-                    return ...
+            def get_current_user(token: str = Depends(oauth2_scheme)):
+                # Implement user retrieval logic
+                return ...
 
-                endpoint_creator.add_routes_to_router(
-                    create_deps=[get_current_user],
-                    read_deps=[get_current_user],
-                    update_deps=[get_current_user],
-                    delete_deps=[get_current_user]
-                )
+            endpoint_creator.add_routes_to_router(
+                create_deps=[get_current_user],
+                read_deps=[get_current_user],
+                update_deps=[get_current_user],
+                delete_deps=[get_current_user]
+            )
+            ```
 
-            Example 3 - Different Dependencies for Different Endpoints:
-                def validate_admin_user(...):
-                    # Admin validation logic
-                    ...
+            Different Dependencies for Different Endpoints:
+            ```python
+            def validate_admin_user(...):
+                # Admin validation logic
+                ...
 
-                endpoint_creator.add_routes_to_router(
-                    create_deps=[get_current_user, validate_admin_user],
-                    read_multi_deps=[get_current_user],
-                    update_deps=[get_current_user, validate_admin_user],
-                    delete_deps=[get_current_user, validate_admin_user]
-                )
+            endpoint_creator.add_routes_to_router(
+                create_deps=[get_current_user, validate_admin_user],
+                read_multi_deps=[get_current_user],
+                update_deps=[get_current_user, validate_admin_user],
+                delete_deps=[get_current_user, validate_admin_user]
+            )
+            ```
 
         Note:
             This method should be called to register the endpoints with the FastAPI application.

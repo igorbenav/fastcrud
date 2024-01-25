@@ -49,78 +49,88 @@ def crud_router(
     Returns:
         An APIRouter object with configured CRUD endpoints.
 
-    Usage Examples:
-        Example 1 - Basic Setup:
-            router = crud_router(
-                session=async_session,
-                model=MyModel,
-                crud=CRUDMyModel(MyModel),
-                create_schema=CreateMyModelSchema,
-                update_schema=UpdateMyModelSchema,
-                path="/mymodel",
-                tags=["MyModel"]
-            )
+    Examples:
+        Basic Setup:
+        ```python
+        router = crud_router(
+            session=async_session,
+            model=MyModel,
+            crud=CRUDMyModel(MyModel),
+            create_schema=CreateMyModelSchema,
+            update_schema=UpdateMyModelSchema,
+            path="/mymodel",
+            tags=["MyModel"]
+        )
+        ```
 
-        Example 2 - With Custom Dependencies:
-            def get_current_user(token: str = Depends(oauth2_scheme)):
-                # Implement user retrieval logic
-                return ...
+        With Custom Dependencies:
+        ```python
+        def get_current_user(token: str = Depends(oauth2_scheme)):
+            # Implement user retrieval logic
+            return ...
 
-            router = crud_router(
-                session=async_session,
-                model=UserModel,
-                crud=CRUDUserModel(UserModel),
-                create_schema=CreateUserSchema,
-                update_schema=UpdateUserSchema,
-                read_deps=[get_current_user],
-                update_deps=[get_current_user],
-                path="/users",
-                tags=["Users"]
-            )
+        router = crud_router(
+            session=async_session,
+            model=UserModel,
+            crud=CRUDUserModel(UserModel),
+            create_schema=CreateUserSchema,
+            update_schema=UpdateUserSchema,
+            read_deps=[get_current_user],
+            update_deps=[get_current_user],
+            path="/users",
+            tags=["Users"]
+        )
+        ```
 
-        Example 3 - Adding Delete Endpoints:
-            router = crud_router(
-                session=async_session,
-                model=ProductModel,
-                crud=CRUDProductModel(ProductModel),
-                create_schema=CreateProductSchema,
-                update_schema=UpdateProductSchema,
-                delete_schema=DeleteProductSchema,
-                path="/products",
-                tags=["Products"]
-            )
+        Adding Delete Endpoints:
+        ```python
+        router = crud_router(
+            session=async_session,
+            model=ProductModel,
+            crud=CRUDProductModel(ProductModel),
+            create_schema=CreateProductSchema,
+            update_schema=UpdateProductSchema,
+            delete_schema=DeleteProductSchema,
+            path="/products",
+            tags=["Products"]
+        )
+        ```
+        
+        Customizing Path and Tags:
+        ```python
+        router = crud_router(
+            session=async_session,
+            model=OrderModel,
+            crud=CRUDOrderModel(OrderModel),
+            create_schema=CreateOrderSchema,
+            update_schema=UpdateOrderSchema,
+            path="/orders",
+            tags=["Orders", "Sales"]
+        )
+        ```
 
-        Example 4 - Customizing Path and Tags:
-            router = crud_router(
-                session=async_session,
-                model=OrderModel,
-                crud=CRUDOrderModel(OrderModel),
-                create_schema=CreateOrderSchema,
-                update_schema=UpdateOrderSchema,
-                path="/orders",
-                tags=["Orders", "Sales"]
-            )
+        Integrating Multiple Models:
+        ```python
+        product_router = crud_router(
+            session=async_session,
+            model=ProductModel,
+            crud=CRUDProductModel(ProductModel),
+            create_schema=CreateProductSchema,
+            update_schema=UpdateProductSchema,
+            path="/products",
+            tags=["Inventory"]
+        )
 
-        Example 5 - Integrating Multiple Models:
-            product_router = crud_router(
-                session=async_session,
-                model=ProductModel,
-                crud=CRUDProductModel(ProductModel),
-                create_schema=CreateProductSchema,
-                update_schema=UpdateProductSchema,
-                path="/products",
-                tags=["Inventory"]
-            )
-
-            customer_router = crud_router(
-                session=async_session,
-                model=CustomerModel,
-                crud=CRUDCustomerModel(CustomerModel),
-                create_schema=CreateCustomerSchema,
-                update_schema=UpdateCustomerSchema,
-                path="/customers",
-                tags=["CRM"]
-            )
+        customer_router = crud_router(
+            session=async_session,
+            model=CustomerModel,
+            crud=CRUDCustomerModel(CustomerModel),
+            create_schema=CreateCustomerSchema,
+            update_schema=UpdateCustomerSchema,
+            path="/customers",
+            tags=["CRM"]
+        )
+        ```
     """
     endpoint_creator = EndpointCreator(
         session=session,

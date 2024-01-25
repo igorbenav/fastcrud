@@ -1,6 +1,13 @@
+<style>
+    .md-typeset h1,
+    .md-content__button {
+        display: none;
+    }
+</style>
+
 <p align="center">
   <a href="https://github.com/igorbenav/fastcrud">
-    <img src="https://github.com/igorbenav/fastcrud/blob/main/assets/fastcrud.png?raw=true" alt="FastCRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto">
+    <img src="assets/fastcrud.png?raw=true" alt="FastCRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto">
   </a>
 </p>
 <p align="center" markdown=1>
@@ -21,22 +28,21 @@
 <p align="justify">
 <b>FastCRUD</b> is a Python package for <b>FastAPI</b>, offering robust async CRUD operations and flexible endpoint creation utilities, streamlined through advanced features like <b>auto-detected join</b> conditions, <b>dynamic sorting</b>, and offset and cursor <b>pagination</b>.
 </p>
-<p><b>Documentation: 🚧 Coming Soon 🚧</b></p>
 <hr>
-<h2>Features</h2>
 
-- ⚡️ **Fully Async**: Leverages Python's async capabilities for non-blocking database operations.
-- 📚 **SQLAlchemy 2.0**: Works with the latest SQLAlchemy version for robust database interactions.
-- 🦾 **Powerful CRUD Functionality**: Full suite of efficient CRUD operations with support for joins.
-- ⚙️ **Dynamic Query Building**: Supports building complex queries dynamically, including filtering, sorting, and pagination.
-- 🤝 **Advanced Join Operations**: Facilitates performing SQL joins with other models with automatic join condition detection.
-- 📖 **Built-in Offset Pagination**: Comes with ready-to-use offset pagination.
-- ➤ **Cursor-based Pagination**: Implements efficient pagination for large datasets, ideal for infinite scrolling interfaces.
-- 🤸‍♂️ **Modular and Extensible**: Designed for easy extension and customization to fit your requirements.
-- 🛣️ **Auto-generated Endpoints**: Streamlines the process of adding CRUD endpoints with custom dependencies and configurations.
+## Features
 
+- **Fully Async**: Leverages Python's async capabilities for non-blocking database operations.
+- **SQLAlchemy 2.0**: Works with the latest SQLAlchemy version for robust database interactions.
+- **Powerful CRUD Functionality**: Full suite of efficient CRUD operations with support for joins.
+- **Dynamic Query Building**: Supports building complex queries dynamically, including filtering, sorting, and pagination.
+- **Advanced Join Operations**: Facilitates performing SQL joins with other models with automatic join condition detection.
+- **Built-in Offset Pagination**: Comes with ready-to-use offset pagination.
+- **Cursor-based Pagination**: Implements efficient pagination for large datasets, ideal for infinite scrolling interfaces.
+- **Modular and Extensible**: Designed for easy extension and customization to fit your requirements.
+- **Auto-generated Endpoints**: Streamlines the process of adding CRUD endpoints with custom dependencies and configurations.
 
-<h2>Requirements</h2>
+## Requirements
 <p>Before installing FastCRUD, ensure you have the following prerequisites:</p>
 <ul>
   <li><b>Python:</b> Version 3.9 or newer.</li>
@@ -46,7 +52,7 @@
   <li><b>SQLAlchemy-Utils:</b> Optional, but recommended for additional SQLAlchemy utilities.</li>
 </ul>
 
-<h2>Installing</h2>
+## Installing
 
  To install, just run:
  ```sh
@@ -56,10 +62,10 @@
 Or, if using poetry:
 
 ```sh
- poetry add fastcrud
- ```
+poetry add fastcrud
+```
 
-<h2>Usage</h2>
+## Usage
 
 FastCRUD offers two primary ways to use its functionalities: 
 
@@ -68,16 +74,16 @@ FastCRUD offers two primary ways to use its functionalities:
 
 Below are examples demonstrating both approaches:
 
-<h3>Using crud_router for Automatic Endpoint Creation</h3>
+### Using crud_router for Automatic Endpoint Creation
 
-> \[!WARNING\]
-> For now, your primary column must be named `id` or automatic endpoint creation will not work.
+!!! WARNING
+    For now, your primary column must be named `id` or automatic endpoint creation will not work.
 
 Here's a quick example to get you started:
 
-<h4>Define Your Model and Schema</h4>
+#### Define Your Model and Schema
 
-```python
+```python title="models/item.py"
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import DeclarativeBase
 from pydantic import BaseModel
@@ -101,9 +107,9 @@ class ItemUpdateSchema(BaseModel):
 
 ```
 
-<h4>Set Up FastAPI and FastCRUD</h4>
+#### Set Up FastAPI and FastCRUD
 
-```python
+```python title="main.py"
 from fastapi import FastAPI
 from fastcrud import FastCRUD, crud_router
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -135,18 +141,16 @@ app.include_router(item_router)
 
 ```
 
-<h3>Using FastCRUD in User-Defined FastAPI Endpoints</h3>
+### Using FastCRUD in User-Defined FastAPI Endpoints
 
 For more control over your endpoints, you can use FastCRUD directly within your custom FastAPI route functions. Here's an example:
 
-```python
+```python title="api/v1/item.py" hl_lines="10 14 18"
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastcrud import FastCRUD
 from yourapp.models import Item
 from yourapp.schemas import ItemCreateSchema, ItemUpdateSchema
-
-app = FastAPI()
 
 # Assume async_session is already set up as per the previous example
 
@@ -167,18 +171,6 @@ async def read_item(item_id: int, db: AsyncSession = Depends(async_session)):
 # You can add more routes for update and delete operations in a similar fashion
 ```
 
-In this example, we define custom endpoints for creating and reading items using FastCRUD directly, providing more flexibility in how the endpoints are structured and how the responses are handled.
-
-
-## References
-
-This project was heavily inspired by CRUDBase in [`FastAPI Microservices`](https://github.com/Kludex/fastapi-microservices) by @kludex.
-
-## 10. License
+## License
 
 [`MIT`](LICENSE.md)
-
-## 11. Contact
-
-Igor Magalhaes – [@igormagalhaesr](https://twitter.com/igormagalhaesr) – igormagalhaesr@gmail.com
-[github.com/igorbenav](https://github.com/igorbenav/)

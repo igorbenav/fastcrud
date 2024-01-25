@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/igorbenav/fastcrud">
+  <a href="https://igorbenav.github.io/fastcrud/">
     <img src="https://github.com/igorbenav/fastcrud/blob/main/assets/fastcrud.png?raw=true" alt="FastCRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto">
   </a>
 </p>
@@ -21,7 +21,7 @@
 <p align="justify">
 <b>FastCRUD</b> is a Python package for <b>FastAPI</b>, offering robust async CRUD operations and flexible endpoint creation utilities, streamlined through advanced features like <b>auto-detected join</b> conditions, <b>dynamic sorting</b>, and offset and cursor <b>pagination</b>.
 </p>
-<p><b>Documentation: 🚧 Coming Soon 🚧</b></p>
+<p><b>Documentation</b>: <a href="https://igorbenav.github.io/fastcrud/">igorbenav.github.io/fastcrud</a></p>
 <hr>
 <h2>Features</h2>
 
@@ -169,6 +169,7 @@ async def read_item(item_id: int, db: AsyncSession = Depends(async_session)):
 
 In this example, we define custom endpoints for creating and reading items using FastCRUD directly, providing more flexibility in how the endpoints are structured and how the responses are handled.
 
+To read more detailed descriptions, go to the <a href="https://igorbenav.github.io/fastcrud/">documentation</a>.
 
 ## References
 

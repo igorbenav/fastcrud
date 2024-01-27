@@ -245,7 +245,7 @@ class FastCRUD(
     async def get(
         self,
         db: AsyncSession,
-        schema_to_select: Optional[Union[type[BaseModel], list]] = None,
+        schema_to_select: Optional[type[BaseModel]] = None,
         **kwargs: Any,
     ) -> Optional[dict]:
         """
@@ -401,8 +401,8 @@ class FastCRUD(
         join_model: type[ModelType],
         join_prefix: Optional[str] = None,
         join_on: Optional[Union[Join, None]] = None,
-        schema_to_select: Optional[Union[type[BaseModel], list]] = None,
-        join_schema_to_select: Optional[Union[type[BaseModel], list]] = None,
+        schema_to_select: Optional[type[BaseModel]] = None,
+        join_schema_to_select: Optional[type[BaseModel]] = None,
         join_type: str = "left",
         **kwargs: Any,
     ) -> Optional[dict[str, Any]]:

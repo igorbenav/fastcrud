@@ -173,13 +173,14 @@ To read more detailed descriptions, go to the <a href="https://igorbenav.github.
 
 ## References
 
-This project was heavily inspired by CRUDBase in [`FastAPI Microservices`](https://github.com/Kludex/fastapi-microservices) by @kludex.
+- This project was heavily inspired by CRUDBase in [`FastAPI Microservices`](https://github.com/Kludex/fastapi-microservices) by @kludex.
+- Thanks @ada0l for the PyPI package name!
 
-## 10. License
+## License
 
 [`MIT`](LICENSE.md)
 
-## 11. Contact
+## Contact
 
 Igor Magalhaes – [@igormagalhaesr](https://twitter.com/igormagalhaesr) – igormagalhaesr@gmail.com
 [github.com/igorbenav](https://github.com/igorbenav/)

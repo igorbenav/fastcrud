@@ -41,7 +41,7 @@ class EndpointCreator:
         ```python
         from fastapi import FastAPI
         from fastcrud import EndpointCreator
-        
+
         from myapp.models import MyModel
         from myapp.schemas import CreateMyModel, UpdateMyModel
         from myapp.crud import CRUDMyModel
@@ -268,6 +268,10 @@ class EndpointCreator:
             If 'delete_schema' is provided, a hard delete endpoint is also registered.
             This method assumes 'id' is the primary key for path parameters.
         """
+        delete_description = "Delete a"
+        if self.delete_schema:
+            delete_description = "Soft delete a"
+
         self.router.add_api_route(
             f"{self.path}/create",
             self._create_item(),
@@ -275,6 +279,7 @@ class EndpointCreator:
             include_in_schema=self.include_in_schema,
             tags=self.tags,
             dependencies=create_deps,
+            description=f"Create a new {self.model.__name__} row in the database.",
         )
         self.router.add_api_route(
             f"{self.path}/get/{{{self.primary_key_name}}}",
@@ -283,6 +288,7 @@ class EndpointCreator:
             include_in_schema=self.include_in_schema,
             tags=self.tags,
             dependencies=read_deps,
+            description=f"Read a single {self.model.__name__} row from the database by its primary key: {self.primary_key_name}.",
         )
         self.router.add_api_route(
             f"{self.path}/get_multi",
@@ -291,6 +297,7 @@ class EndpointCreator:
             include_in_schema=self.include_in_schema,
             tags=self.tags,
             dependencies=read_multi_deps,
+            description=f"Read multiple {self.model.__name__} rows from the database with optional pagination.",
         )
         self.router.add_api_route(
             f"{self.path}/update/{{{self.primary_key_name}}}",
@@ -299,6 +306,7 @@ class EndpointCreator:
             include_in_schema=self.include_in_schema,
             tags=self.tags,
             dependencies=update_deps,
+            description=f"Update an existing {self.model.__name__} row in the database by its primary key: {self.primary_key_name}.",
         )
         self.router.add_api_route(
             f"{self.path}/delete/{{{self.primary_key_name}}}",
@@ -307,6 +315,7 @@ class EndpointCreator:
             include_in_schema=self.include_in_schema,
             tags=self.tags,
             dependencies=delete_deps,
+            description=f"{delete_description} {self.model.__name__} row from the database by its primary key: {self.primary_key_name}.",
         )
 
         if self.delete_schema:
@@ -317,4 +326,5 @@ class EndpointCreator:
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
                 dependencies=db_delete_deps,
+                description=f"Permanently delete a {self.model.__name__} row from the database by its primary key: {self.primary_key_name}.",
             )

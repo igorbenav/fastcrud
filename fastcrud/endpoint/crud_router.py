@@ -95,7 +95,7 @@ def crud_router(
             tags=["Products"]
         )
         ```
-        
+
         Customizing Path and Tags:
         ```python
         router = crud_router(

@@ -56,7 +56,6 @@ create(
 **Usage Example**: Creates an item with name 'New Item'.
 
 ```python
-# creates an item with name 'New Item'
 new_item = await item_crud.create(db, ItemCreateSchema(name="New Item"))
 ```
 
@@ -65,7 +64,7 @@ new_item = await item_crud.create(db, ItemCreateSchema(name="New Item"))
 ```python
 get(
     db: AsyncSession, 
-    schema_to_select: Optional[Union[type[BaseModel], list]] = None, 
+    schema_to_select: Optional[type[BaseModel]] = None,
     **kwargs: Any
 ) -> Optional[dict]
 ```
@@ -74,7 +73,6 @@ get(
 **Usage Example**: Fetches the item with item_id as its id.
 
 ```python
-# fetches the item with item_id as its id
 item = await item_crud.get(db, id=item_id)
 ```
 
@@ -91,7 +89,6 @@ exists(
 **Usage Example**: Checks whether an item with name 'Existing Item' exists.
 
 ```python
-# checks whether an item with name 'Existing Item' exists
 exists = await item_crud.exists(db, name="Existing Item")
 ```
 
@@ -108,7 +105,6 @@ count(
 **Usage Example**: Counts the number of items with the 'Books' category.
 
 ```python
-# counts the number of items with the 'Books' category
 count = await item_crud.count(db, category="Books")
 ```
 
@@ -131,7 +127,6 @@ get_multi(
 **Usage Example**: Fetches a subset of 5 items, starting from the 11th item in the database.
 
 ```python
-# fetches a subset of 5 items, starting from the 11th item in the database.
 items = await item_crud.get_multi(db, offset=10, limit=5)
 ```
 
@@ -149,7 +144,6 @@ update(
 **Usage Example**: Updates the description of the item with item_id as its id.
 
 ```python
-# updates the description of the item with item_id as its id
 await item_crud.update(db, ItemUpdateSchema(description="Updated"), id=item_id)
 ```
 
@@ -163,12 +157,10 @@ delete(
 ) -> None
 ```
 
-**Purpose**: To delete a record from the database, with support for soft delete.
+**Purpose**: To delete a record from the database, with support for soft delete.  
 **Usage Example**: Deletes the item with item_id as its id, performs a soft delete if the model has the 'is_deleted' column.
 
 ```python
-# deletes the item with item_id as its id
-# it performs a soft_delete if the model has the 'is_deleted' column
 await item_crud.delete(db, id=item_id)
 ```
 
@@ -181,11 +173,10 @@ db_delete(
 ) -> None
 ```
 
-**Purpose**: To hard delete a record from the database.
+**Purpose**: To hard delete a record from the database.  
 **Usage Example**: Hard deletes the item with item_id as its id.
 
 ```python
-# hard deletes the item with item_id as its id
 await item_crud.db_delete(db, id=item_id)
 ```
 
@@ -209,11 +200,10 @@ get_multi(
 ) -> dict[str, Any]
 ```
 
-**Purpose**: To fetch multiple records based on specified filters, with options for sorting and pagination.
+**Purpose**: To fetch multiple records based on specified filters, with options for sorting and pagination.  
 **Usage Example**: Gets the first 10 items sorted by 'name' in ascending order.
 
 ```python
-# gets the first 10 items sorted by 'name' in ascending order
 items = await item_crud.get_multi(db, offset=0, limit=10, sort_columns=['name'], sort_orders=['asc'])
 ```
 
@@ -225,18 +215,16 @@ get_joined(
     join_model: type[ModelType], 
     join_prefix: Optional[str] = None, 
     join_on: Optional[Union[Join, None]] = None, 
-    schema_to_select: Optional[Union[type[BaseModel], list]] = None, 
-    join_schema_to_select: Optional[Union[type[BaseModel], list]] = None, 
+    schema_to_select: Optional[type[BaseModel]] = None, 
+    join_schema_to_select: Optional[type[BaseModel]] = None, 
     join_type: str = "left", **kwargs: Any
 ) -> Optional[dict[str, Any]]
 ```
 
-**Purpose**: To fetch a single record while performing a join operation with another model.
+**Purpose**: To fetch a single record while performing a join operation with another model.  
 **Usage Example**: Fetches order details for a specific order by joining with the Customer table, selecting specific columns as defined in OrderSchema and CustomerSchema.
 
 ```python
-# fetches order details for a specific order by joining with the Customer table, 
-# selecting specific columns as defined in OrderSchema and CustomerSchema.
 order_details = await order_crud.get_joined(
     db, 
     join_model=Customer, 
@@ -266,12 +254,10 @@ get_multi_joined(
 ) -> dict[str, Any]
 ```
 
-**Purpose**: Similar to `get_joined`, but for fetching multiple records.
+**Purpose**: Similar to `get_joined`, but for fetching multiple records.  
 **Usage Example**: Retrieves a paginated list of orders (up to 5), joined with the Customer table, using specified schemas for selective column retrieval from both tables.
 
 ```python
-# retrieves a paginated list of orders (up to 5), joined with the Customer table, 
-# using specified schemas for selective column retrieval from both tables.
 orders = await order_crud.get_multi_joined(
     db, 
     join_model=Customer, 
@@ -296,12 +282,10 @@ get_multi_by_cursor(
 ) -> dict[str, Any]
 ```
 
-**Purpose**: Implements cursor-based pagination for efficient data retrieval in large datasets.
+**Purpose**: Implements cursor-based pagination for efficient data retrieval in large datasets.  
 **Usage Example**: Fetches the next 10 items after the last cursor for efficient pagination, sorted by creation date in descending order.
 
 ```python
-# fetches the next 10 items after the last cursor for efficient pagination, 
-# sorted by creation date in descending order.
 paginated_items = await item_crud.get_multi_by_cursor(
     db, 
     cursor=last_cursor, 

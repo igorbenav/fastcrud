@@ -1,8 +1,36 @@
-from typing import Union
+from typing import Union, Annotated, List
+from pydantic import BaseModel, Field, ValidationError
+from pydantic.functional_validators import field_validator
 
 from sqlalchemy.sql.schema import Column
 from sqlalchemy import inspect
 from sqlalchemy.orm import DeclarativeBase
+
+
+class CRUDMethods(BaseModel):
+    valid_methods: Annotated[
+        List[str],
+        Field(
+            default=["create", "read", "read_multi", "update", "delete", "db_delete"]
+        ),
+    ]
+
+    @field_validator("valid_methods")
+    def check_valid_method(cls, values: List[str]) -> List[str]:
+        valid_methods = {
+            "create",
+            "read",
+            "read_multi",
+            "update",
+            "delete",
+            "db_delete",
+        }
+
+        for v in values:
+            if v not in valid_methods:
+                raise ValidationError(f"Invalid CRUD method: {v}")
+
+        return values
 
 
 def _get_primary_key(model: DeclarativeBase) -> Union[str, None]:

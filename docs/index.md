@@ -42,13 +42,57 @@
 - **Modular and Extensible**: Designed for easy extension and customization to fit your requirements.
 - **Auto-generated Endpoints**: Streamlines the process of adding CRUD endpoints with custom dependencies and configurations.
 
+## Minimal Example
+Assuming you have your model, schemas and database connection:
+
+```python
+# imports here
+
+# define your model
+class Item(Base):
+    __tablename__ = 'items'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+
+# your schemas
+class ItemSchema(BaseModel):
+    name: str
+
+# database connection
+DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+engine = create_async_engine(DATABASE_URL, echo=True)
+session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+```
+
+Use `crud_router` and include it in your `FastAPI` application
+
+```python
+from fastcrud import FastCRUD, crud_router
+
+app = FastAPI()
+
+item_router = crud_router(
+    session=session,
+    model=Item,
+    crud=FastCRUD(Item),
+    create_schema=ItemSchema,
+    update_schema=ItemSchema,
+    path="/items",
+    tags=["Items"]
+)
+
+app.include_router(item_router)
+```
+
+And it's all done, just go to `/docs` and the crud endpoints are created.
+
 ## Requirements
 <p>Before installing FastCRUD, ensure you have the following prerequisites:</p>
 <ul>
   <li><b>Python:</b> Version 3.9 or newer.</li>
   <li><b>FastAPI:</b> FastCRUD is built to work with FastAPI, so having FastAPI in your project is essential.</li>
-  <li><b>SQLAlchemy:</b> Version 2.0.21 or newer. FastCRUD uses SQLAlchemy for database operations.</li>
-  <li><b>Pydantic:</b> Version 2.4.1 or newer. FastCRUD leverages Pydantic models for data validation and serialization.</li>
+  <li><b>SQLAlchemy:</b> Version 2.0 or newer. FastCRUD uses SQLAlchemy for database operations.</li>
+  <li><b>Pydantic V2:</b> Version 2.0 or newer. FastCRUD leverages Pydantic models for data validation and serialization.</li>
   <li><b>SQLAlchemy-Utils:</b> Optional, but recommended for additional SQLAlchemy utilities.</li>
 </ul>
 
@@ -138,7 +182,6 @@ item_router = crud_router(
 )
 
 app.include_router(item_router)
-
 ```
 
 ### Using FastCRUD in User-Defined FastAPI Endpoints
@@ -173,4 +216,4 @@ async def read_item(item_id: int, db: AsyncSession = Depends(async_session)):
 
 ## License
 
-[`MIT`](LICENSE.md)
+[`MIT`](community/LICENSE.md)

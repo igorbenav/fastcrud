@@ -19,4 +19,4 @@ Learn how to use the `FastCRUD` class for enhanced CRUD operations. This guide d
 To make the most out of these guides, we recommend familiarizing yourself with FastAPI and SQLAlchemy basics, as our application leverages these frameworks extensively.
 
 ## Contribution
-If you have suggestions or contributions to these guides, please refer to our [Contributing Guidelines](../CONTRIBUTING.md). We appreciate your input in improving our documentation.
+If you have suggestions or contributions to these guides, please refer to our [Contributing Guidelines](../community/CONTRIBUTING.md). We appreciate your input in improving our documentation.

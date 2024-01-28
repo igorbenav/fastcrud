@@ -24,7 +24,7 @@ Each component is documented with its own dedicated page, where you can find det
 
 ## Contribution
 
-If you wish to contribute to the development of our API, please refer to our [Contributing Guidelines](../CONTRIBUTING.md). We welcome contributions of all forms, from bug fixes to feature development.
+If you wish to contribute to the development of our API, please refer to our [Contributing Guidelines](../community/CONTRIBUTING.md). We welcome contributions of all forms, from bug fixes to feature development.
 
 ## Feedback
 

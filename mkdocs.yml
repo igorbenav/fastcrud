@@ -8,6 +8,7 @@ theme:
   font:
     text: Ubuntu
   logo: assets/logo.png
+  favicon: assets/logo.png
   features:
     - navigation.instant
     - navigation.instant.prefetch
@@ -42,18 +43,24 @@ plugins:
 
 nav:
   - FastCRUD: index.md
+  - Installing: installing.md
+  - Quick-Start: quick-start.md
   - Usage:
     - Overview: usage/overview.md
     - Automatic Endpoints: usage/endpoint.md
     - CRUD Utilities: usage/crud.md
+  - Advanced:
+    - Custom Endpoints: advanced/endpoint.md
   - API Reference: 
     - Overview: api/overview.md
     - FastCRUD: api/fastcrud.md
     - EndpointCreator: api/endpoint_creator.md
     - crud_router: api/crud_router.md
-  - Contributing: CONTRIBUTING.md
-  - Code of Conduct: CODE_OF_CONDUCT.md
-  - License: LICENSE.md
+  - Community:
+    - Overview: community/overview.md
+    - Contributing: community/CONTRIBUTING.md
+    - Code of Conduct: community/CODE_OF_CONDUCT.md
+    - License: community/LICENSE.md
 
 markdown_extensions:
   - admonition

@@ -60,7 +60,11 @@ app = FastAPI()
 
 # CRUD operations setup
 crud = FastCRUD(Item)
+```
 
+### Step 3: Use `crud_router` to Create Endpoints
+
+```python
 # CRUD router setup
 item_router = crud_router(
     session=async_session,
@@ -83,7 +87,7 @@ ___
 
 ## Using `EndpointCreator` Directly
 
-Using the `EndpointCreator` class in FastCRUD is a more flexible way to add CRUD endpoints to a FastAPI application. This guide covers how to use `EndpointCreator` for more customized endpoint creation.
+Using the `EndpointCreator` class in FastCRUD is a more flexible way to add CRUD endpoints to a FastAPI application.
 
 ### Step 1: Define Your Model and Schema
 
@@ -155,7 +159,7 @@ endpoint_creator = EndpointCreator(
 
 ### Step 4: Add Custom Endpoints
 
-Add custom endpoints using the EndpointCreator. You can inject dependencies as needed.
+Add custom endpoints using EndpointCreator. You can inject dependencies as needed.
 
 ```python
 # Example of adding custom dependencies
@@ -176,13 +180,7 @@ app.include_router(endpoint_creator.router)
 
 ## Advanced Customization
 
-You can override the default methods in EndpointCreator for more control over the CRUD operations. This allows for implementing custom business logic.
-
-### Custom Endpoint Logic
-Override methods like _create_item, _read_item, etc., in your EndpointCreator instance to customize the behavior of each endpoint.
-
-### Handling Complex Scenarios
-For complex scenarios like nested resources, you can manually define additional endpoints and add them to the EndpointCreator router.
+You can override the default methods in EndpointCreator for more control over the CRUD operations. You can also specify the operations you want to include. Read more in the [advanced section](../advanced/endpoint.md).
 
 
 ## Conclusion

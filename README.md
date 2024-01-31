@@ -173,8 +173,11 @@ To read more detailed descriptions, go to the <a href="https://igorbenav.github.
 
 ## References
 
-- This project was heavily inspired by CRUDBase in [`FastAPI Microservices`](https://github.com/Kludex/fastapi-microservices) by @kludex.
-- Thanks @ada0l for the PyPI package name!
+- This project was heavily inspired by CRUDBase in [`FastAPI Microservices`](https://github.com/Kludex/fastapi-microservices) by [@kludex](https://github.com/kludex).
+- Thanks [@ada0l](https://github.com/ada0l) for the PyPI package name!
+
+<i>"I'd love something like this for flask"</i>  
+Check [flask-muck](https://github.com/dtiesling/flask-muck) by [@dtiesling](https://github.com/dtiesling) out!
 
 ## License
 

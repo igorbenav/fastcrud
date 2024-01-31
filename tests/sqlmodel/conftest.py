@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pytest
 import pytest_asyncio
 from datetime import datetime
@@ -20,7 +22,7 @@ class ModelTest(SQLModel, table=True):
     tier_id: int = Field(foreign_key="tier.id")
     tier: "TierModel" = Relationship(back_populates="tests")
     is_deleted: bool = Field(default=False)
-    deleted_at: datetime | None = Field(default=None)
+    deleted_at: Optional[datetime] = Field(default=None)
 
 
 class TierModel(SQLModel, table=True):

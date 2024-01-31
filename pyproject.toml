@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastcrud"
-version = "0.3.0"
+version = "0.4.0"
 description = "FastCRUD is a Python package for FastAPI, offering robust async CRUD operations and flexible endpoint creation utilities."
 authors = ["Igor Benav <igor.magalhaes.r@gmail.com>"]
 license = "MIT"
@@ -42,6 +42,7 @@ httpx = "^0.26.0"
 pytest-asyncio = "^0.23.3"
 tox = "^4.12.1"
 uvicorn = "^0.25.0"
+sqlmodel = "^0.0.14"
 
 [build-system]
 requires = ["poetry-core"]

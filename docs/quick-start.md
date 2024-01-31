@@ -1,3 +1,5 @@
+If you are using SQLModel, go to [Using SQLModel](sqlmodel.md) instead.
+
 ## Minimal Example
 Assuming you have your SQLAlchemy model, Pydantic schemas and database connection, just skip to [Using FastCRUD](#using-fastcrud)
 

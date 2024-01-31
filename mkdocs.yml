@@ -45,6 +45,7 @@ nav:
   - FastCRUD: index.md
   - Installing: installing.md
   - Quick-Start: quick-start.md
+  - Using SQLModel: sqlmodel.md
   - Usage:
     - Overview: usage/overview.md
     - Automatic Endpoints: usage/endpoint.md

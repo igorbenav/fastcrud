@@ -3,9 +3,8 @@
 <ul>
   <li><b>Python:</b> Version 3.9 or newer.</li>
   <li><b>FastAPI:</b> FastCRUD is built to work with FastAPI, so having FastAPI in your project is essential.</li>
-  <li><b>SQLAlchemy:</b> Version 2.0 or newer. FastCRUD uses SQLAlchemy for database operations.</li>
-  <li><b>Pydantic V2:</b> Version 2.0 or newer. FastCRUD leverages Pydantic models for data validation and serialization.</li>
-  <li><b>SQLAlchemy-Utils:</b> Optional, but recommended for additional SQLAlchemy utilities.</li>
+  <li><b>SQLAlchemy or SQLModel:</b> FastCRUD uses SQLAlchemy 2.0 for database operations, so you need SQLAlchemy 2.0 or newer or SQLModel 0.14 or newer.</li>
+  <li><b>Pydantic V2 or SQLModel:</b> FastCRUD leverages Pydantic models for data validation and serialization, so you need Pydantic 2.0 or newer or SQLModel 0.14 or newer.</li>
 </ul>
 
 ## Installing

@@ -94,13 +94,13 @@ async def test_soft_delete_with_custom_columns(async_session, test_data, test_mo
     deleted_record = await async_session.execute(
         select(test_model)
         .where(test_model.id == some_existing_id)
-        .where(getattr(test_model, "is_deleted") is True)
+        .where(getattr(test_model, "is_deleted") == True)  # noqa
     )
     deleted_record = deleted_record.scalar_one_or_none()
 
     assert deleted_record is not None, "Record should exist after soft delete"
     assert (
-        getattr(deleted_record, "is_deleted") is True
+        getattr(deleted_record, "is_deleted") == True  # noqa
     ), "Record should be marked as soft deleted"
     assert (
         getattr(deleted_record, "deleted_at") is not None

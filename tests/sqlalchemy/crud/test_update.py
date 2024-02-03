@@ -1,6 +1,7 @@
 import pytest
 
 from sqlalchemy import select
+from sqlalchemy.exc import MultipleResultsFound
 
 from fastcrud.crud.fast_crud import FastCRUD
 from ...sqlalchemy.conftest import ModelTest
@@ -91,3 +92,61 @@ async def test_update_additional_fields(async_session, test_data):
         await crud.update(db=async_session, object=updated_data, id=some_existing_id)
 
     assert "Extra fields provided" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_update_with_advanced_filters(async_session, test_data):
+    for item in test_data:
+        async_session.add(ModelTest(**item))
+    await async_session.commit()
+
+    advanced_filter = {"id__gt": 5}
+    updated_data = {"name": "Updated for Advanced Filter"}
+
+    crud = FastCRUD(ModelTest)
+    await crud.update(
+        db=async_session, object=updated_data, allow_multiple=True, **advanced_filter
+    )
+
+    updated_records = await async_session.execute(
+        select(ModelTest).where(ModelTest.id > 5)
+    )
+    assert all(
+        record.name == "Updated for Advanced Filter"
+        for record in updated_records.scalars()
+    )
+
+
+@pytest.mark.asyncio
+async def test_update_multiple_records(async_session, test_data):
+    for item in test_data:
+        async_session.add(ModelTest(**item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+    updated_data = {"name": "Updated Multiple"}
+    await crud.update(
+        db=async_session, object=updated_data, allow_multiple=True, tier_id=2
+    )
+
+    updated_records = await async_session.execute(
+        select(ModelTest).where(ModelTest.tier_id == 2)
+    )
+    assert all(
+        record.name == "Updated Multiple" for record in updated_records.scalars()
+    )
+
+
+@pytest.mark.asyncio
+async def test_update_multiple_records_restriction(async_session, test_data):
+    for item in test_data:
+        async_session.add(ModelTest(**item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+    updated_data = {"name": "Should Fail"}
+
+    with pytest.raises(MultipleResultsFound) as exc_info:
+        await crud.update(db=async_session, object=updated_data, id__lt=10)
+
+    assert "Expected exactly one record to update" in str(exc_info.value)

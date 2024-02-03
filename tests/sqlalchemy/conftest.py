@@ -40,6 +40,12 @@ class CreateSchemaTest(BaseModel):
     tier_id: int
 
 
+class ReadSchemaTest(BaseModel):
+    id: int
+    name: str
+    tier_id: int
+
+
 class UpdateSchemaTest(BaseModel):
     name: str
 
@@ -99,6 +105,7 @@ def test_data() -> list[dict]:
         {"id": 8, "name": "Hannah", "tier_id": 2},
         {"id": 9, "name": "Ivan", "tier_id": 1},
         {"id": 10, "name": "Judy", "tier_id": 2},
+        {"id": 11, "name": "Alice", "tier_id": 1},
     ]
 
 
@@ -120,6 +127,11 @@ def tier_model():
 @pytest.fixture
 def create_schema():
     return CreateSchemaTest
+
+
+@pytest.fixture
+def read_schema():
+    return ReadSchemaTest
 
 
 @pytest.fixture

@@ -51,7 +51,9 @@ nav:
     - Automatic Endpoints: usage/endpoint.md
     - CRUD Utilities: usage/crud.md
   - Advanced:
+    - Overview: advanced/overview.md
     - Custom Endpoints: advanced/endpoint.md
+    - Advanced CRUD Usage: advanced/crud.md
   - API Reference: 
     - Overview: api/overview.md
     - FastCRUD: api/fastcrud.md

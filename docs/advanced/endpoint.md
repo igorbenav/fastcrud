@@ -1,4 +1,3 @@
-
 # Advanced Use of EndpointCreator
 
 In FastCRUD, the `EndpointCreator` class simplifies the process of creating standard CRUD endpoints. However, for more advanced use cases, you might want to add custom routes that go beyond the basic CRUD operations. This can be achieved by extending the `EndpointCreator` class.
@@ -8,12 +7,13 @@ In FastCRUD, the `EndpointCreator` class simplifies the process of creating stan
 You can control which CRUD operations are exposed by using `included_methods` and `deleted_methods`. These parameters allow you to specify exactly which CRUD methods should be included or excluded when setting up the router.
 
 ### Using `included_methods`
+
 Using `included_methods` you may define exactly the methods you want to be included.
 
 ```python hl_lines="10"
 # Using crud_router with selective CRUD methods
 my_router = crud_router(
-    session=async_session,
+    session=get_session,
     model=MyModel,
     crud=FastCRUD(MyModel),
     create_schema=CreateMyModel,
@@ -27,12 +27,13 @@ app.include_router(my_router)
 ```
 
 ### Using `deleted_methods`
+
 Using `deleted_methods` you define the methods that will not be included.
 
 ```python hl_lines="10"
 # Using crud_router with selective CRUD methods
 my_router = crud_router(
-    session=async_session,
+    session=get_session,
     model=MyModel,
     crud=FastCRUD(MyModel),
     create_schema=CreateMyModel,
@@ -46,6 +47,7 @@ app.include_router(my_router)
 ```
 
 !!! WARNING
+
         If `included_methods` and `deleted_methods` are both provided, a ValueError will be raised.
 
 ## Extending EndpointCreator
@@ -151,7 +153,7 @@ class MyCustomEndpointCreator(EndpointCreator):
 
 # Use the custom EndpointCreator with crud_router
 my_router = crud_router(
-    session=async_session,
+    session=get_session,
     model=MyModel,
     crud=FastCRUD(MyModel),
     create_schema=CreateMyModel,

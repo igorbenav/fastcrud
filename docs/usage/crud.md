@@ -1,9 +1,9 @@
-
 # Using FastCRUD for Enhanced CRUD Operations
 
 FastCRUD is a versatile tool for handling CRUD (Create, Read, Update, Delete) operations in FastAPI applications with SQLAlchemy models. It leverages Pydantic schemas for data validation and serialization, offering a streamlined approach to database interactions.
 
 ## Key Features
+
 - Simplified CRUD operations with SQLAlchemy models.
 - Data validation and serialization using Pydantic.
 - Support for complex queries including joins and pagination.
@@ -11,6 +11,7 @@ FastCRUD is a versatile tool for handling CRUD (Create, Read, Update, Delete) op
 ## Getting Started
 
 ### Step 1: Define Models and Schemas
+
 Define your SQLAlchemy models and Pydantic schemas for data representation.
 
 ```python
@@ -18,6 +19,7 @@ Define your SQLAlchemy models and Pydantic schemas for data representation.
 ```
 
 ### Step 2: Initialize FastCRUD
+
 Create a FastCRUD instance for your model to handle CRUD operations.
 
 ```python
@@ -38,7 +40,8 @@ new_record = await my_model_crud.create(db_session, create_schema_instance)
 
 More on available methods below.
 
-___
+---
+
 ## Understanding FastCRUD Methods
 
 FastCRUD offers a comprehensive suite of methods for CRUD operations, each designed to handle different aspects of database interactions efficiently.
@@ -47,7 +50,7 @@ FastCRUD offers a comprehensive suite of methods for CRUD operations, each desig
 
 ```python
 create(
-    db: AsyncSession, 
+    db: AsyncSession,
     object: CreateSchemaType
 ) -> ModelType
 ```
@@ -63,7 +66,7 @@ new_item = await item_crud.create(db, ItemCreateSchema(name="New Item"))
 
 ```python
 get(
-    db: AsyncSession, 
+    db: AsyncSession,
     schema_to_select: Optional[type[BaseModel]] = None,
     **kwargs: Any
 ) -> Optional[dict]
@@ -80,7 +83,7 @@ item = await item_crud.get(db, id=item_id)
 
 ```python
 exists(
-    db: AsyncSession, 
+    db: AsyncSession,
     **kwargs: Any
 ) -> bool
 ```
@@ -96,7 +99,7 @@ exists = await item_crud.exists(db, name="Existing Item")
 
 ```python
 count(
-    db: AsyncSession, 
+    db: AsyncSession,
     **kwargs: Any
 ) -> int
 ```
@@ -112,15 +115,15 @@ count = await item_crud.count(db, category="Books")
 
 ```python
 get_multi(
-    db: AsyncSession, 
-    offset: int = 0, 
-    limit: int = 100, 
-    schema_to_select: Optional[type[BaseModel]] = None, 
-    sort_columns: Optional[Union[str, list[str]]] = None, 
-    sort_orders: Optional[Union[str, list[str]]] = None, 
-    return_as_model: bool = False, 
+    db: AsyncSession,
+    offset: int = 0,
+    limit: int = 100,
+    schema_to_select: Optional[type[BaseModel]] = None,
+    sort_columns: Optional[Union[str, list[str]]] = None,
+    sort_orders: Optional[Union[str, list[str]]] = None,
+    return_as_model: bool = False,
     **kwargs: Any
-) -> dict[str, Any]</
+) -> dict[str, Any]
 ```
 
 **Purpose**: To fetch multiple records with optional sorting, pagination, and model conversion.  
@@ -134,8 +137,8 @@ items = await item_crud.get_multi(db, offset=10, limit=5)
 
 ```python
 update(
-    db: AsyncSession, 
-    object: Union[UpdateSchemaType, dict[str, Any]], 
+    db: AsyncSession,
+    object: Union[UpdateSchemaType, dict[str, Any]],
     **kwargs: Any
 ) -> None
 ```
@@ -151,8 +154,8 @@ await item_crud.update(db, ItemUpdateSchema(description="Updated"), id=item_id)
 
 ```python
 delete(
-    db: AsyncSession, 
-    db_row: Optional[Row] = None, 
+    db: AsyncSession,
+    db_row: Optional[Row] = None,
     **kwargs: Any
 ) -> None
 ```
@@ -168,7 +171,7 @@ await item_crud.delete(db, id=item_id)
 
 ```python
 db_delete(
-    db: AsyncSession, 
+    db: AsyncSession,
     **kwargs: Any
 ) -> None
 ```
@@ -180,7 +183,8 @@ db_delete(
 await item_crud.db_delete(db, id=item_id)
 ```
 
-___
+---
+
 ## Advanced Methods for Complex Queries and Joins
 
 FastCRUD extends its functionality with advanced methods tailored for complex query operations and handling joins. These methods cater to specific use cases where more sophisticated data retrieval and manipulation are required.
@@ -189,13 +193,13 @@ FastCRUD extends its functionality with advanced methods tailored for complex qu
 
 ```python
 get_multi(
-    db: AsyncSession, 
-    offset: int = 0, 
-    limit: int = 100, 
-    schema_to_select: Optional[type[BaseModel]] = None, 
-    sort_columns: Optional[Union[str, list[str]]] = None, 
-    sort_orders: Optional[Union[str, list[str]]] = None, 
-    return_as_model: bool = False, 
+    db: AsyncSession,
+    offset: int = 0,
+    limit: int = 100,
+    schema_to_select: Optional[type[BaseModel]] = None,
+    sort_columns: Optional[Union[str, list[str]]] = None,
+    sort_orders: Optional[Union[str, list[str]]] = None,
+    return_as_model: bool = False,
     **kwargs: Any
 ) -> dict[str, Any]
 ```
@@ -211,12 +215,12 @@ items = await item_crud.get_multi(db, offset=0, limit=10, sort_columns=['name'],
 
 ```python
 get_joined(
-    db: AsyncSession, 
-    join_model: type[ModelType], 
-    join_prefix: Optional[str] = None, 
-    join_on: Optional[Union[Join, None]] = None, 
-    schema_to_select: Optional[type[BaseModel]] = None, 
-    join_schema_to_select: Optional[type[BaseModel]] = None, 
+    db: AsyncSession,
+    join_model: type[ModelType],
+    join_prefix: Optional[str] = None,
+    join_on: Optional[Union[Join, None]] = None,
+    schema_to_select: Optional[type[BaseModel]] = None,
+    join_schema_to_select: Optional[type[BaseModel]] = None,
     join_type: str = "left", **kwargs: Any
 ) -> Optional[dict[str, Any]]
 ```
@@ -226,10 +230,10 @@ get_joined(
 
 ```python
 order_details = await order_crud.get_joined(
-    db, 
-    join_model=Customer, 
-    schema_to_select=OrderSchema, 
-    join_schema_to_select=CustomerSchema, 
+    db,
+    join_model=Customer,
+    schema_to_select=OrderSchema,
+    join_schema_to_select=CustomerSchema,
     id=order_id
 )
 ```
@@ -238,18 +242,18 @@ order_details = await order_crud.get_joined(
 
 ```python
 get_multi_joined(
-    db: AsyncSession, 
-    join_model: type[ModelType], 
-    join_prefix: Optional[str] = None, 
-    join_on: Optional[Join] = None, 
-    schema_to_select: Optional[type[BaseModel]] = None, 
-    join_schema_to_select: Optional[type[BaseModel]] = None, 
-    join_type: str = "left", 
-    offset: int = 0, 
-    limit: int = 100, 
-    sort_columns: Optional[Union[str, list[str]]] = None, 
-    sort_orders: Optional[Union[str, list[str]]] = None, 
-    return_as_model: bool = False, 
+    db: AsyncSession,
+    join_model: type[ModelType],
+    join_prefix: Optional[str] = None,
+    join_on: Optional[Join] = None,
+    schema_to_select: Optional[type[BaseModel]] = None,
+    join_schema_to_select: Optional[type[BaseModel]] = None,
+    join_type: str = "left",
+    offset: int = 0,
+    limit: int = 100,
+    sort_columns: Optional[Union[str, list[str]]] = None,
+    sort_orders: Optional[Union[str, list[str]]] = None,
+    return_as_model: bool = False,
     **kwargs: Any
 ) -> dict[str, Any]
 ```
@@ -259,11 +263,11 @@ get_multi_joined(
 
 ```python
 orders = await order_crud.get_multi_joined(
-    db, 
-    join_model=Customer, 
-    offset=0, 
-    limit=5, 
-    schema_to_select=OrderSchema, 
+    db,
+    join_model=Customer,
+    offset=0,
+    limit=5,
+    schema_to_select=OrderSchema,
     join_schema_to_select=CustomerSchema
 )
 ```
@@ -272,12 +276,12 @@ orders = await order_crud.get_multi_joined(
 
 ```python
 get_multi_by_cursor(
-    db: AsyncSession, 
-    cursor: Any = None, 
-    limit: int = 100, 
-    schema_to_select: Optional[type[BaseModel]] = None, 
-    sort_column: str = "id", 
-    sort_order: str = "asc", 
+    db: AsyncSession,
+    cursor: Any = None,
+    limit: int = 100,
+    schema_to_select: Optional[type[BaseModel]] = None,
+    sort_column: str = "id",
+    sort_order: str = "asc",
     **kwargs: Any
 ) -> dict[str, Any]
 ```
@@ -287,13 +291,14 @@ get_multi_by_cursor(
 
 ```python
 paginated_items = await item_crud.get_multi_by_cursor(
-    db, 
-    cursor=last_cursor, 
-    limit=10, 
-    sort_column='created_at', 
+    db,
+    cursor=last_cursor,
+    limit=10,
+    sort_column='created_at',
     sort_order='desc'
 )
 ```
 
 ## Error Handling
+
 FastCRUD provides mechanisms to handle common database errors, ensuring robust API behavior.

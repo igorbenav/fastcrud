@@ -65,8 +65,9 @@ new_item = await item_crud.create(db, ItemCreateSchema(name="New Item"))
 get(
     db: AsyncSession, 
     schema_to_select: Optional[type[BaseModel]] = None,
+    return_as_model: bool = False,
     **kwargs: Any
-) -> Optional[dict]
+) -> Optional[Union[dict, BaseModel]]
 ```
 
 **Purpose**: To fetch a single record based on filters, with an option to select specific columns using a Pydantic schema.  
@@ -136,6 +137,7 @@ items = await item_crud.get_multi(db, offset=10, limit=5)
 update(
     db: AsyncSession, 
     object: Union[UpdateSchemaType, dict[str, Any]], 
+    allow_multiple: bool = False,
     **kwargs: Any
 ) -> None
 ```
@@ -153,6 +155,7 @@ await item_crud.update(db, ItemUpdateSchema(description="Updated"), id=item_id)
 delete(
     db: AsyncSession, 
     db_row: Optional[Row] = None, 
+    allow_multiple: bool = False,
     **kwargs: Any
 ) -> None
 ```
@@ -169,6 +172,7 @@ await item_crud.delete(db, id=item_id)
 ```python
 db_delete(
     db: AsyncSession, 
+    allow_multiple: bool = False,
     **kwargs: Any
 ) -> None
 ```
@@ -217,7 +221,8 @@ get_joined(
     join_on: Optional[Union[Join, None]] = None, 
     schema_to_select: Optional[type[BaseModel]] = None, 
     join_schema_to_select: Optional[type[BaseModel]] = None, 
-    join_type: str = "left", **kwargs: Any
+    join_type: str = "left", 
+    **kwargs: Any
 ) -> Optional[dict[str, Any]]
 ```
 

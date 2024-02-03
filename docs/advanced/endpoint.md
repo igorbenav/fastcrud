@@ -165,6 +165,70 @@ my_router = crud_router(
 app.include_router(my_router)
 ```
 
+## Custom Soft Delete
+
+To implement custom soft delete columns using `EndpointCreator` and `crud_router` in FastCRUD, you need to specify the names of the columns used for indicating deletion status and the deletion timestamp in your model. FastCRUD provides flexibility in handling soft deletes by allowing you to configure these column names directly when setting up CRUD operations or API endpoints.
+
+Here's how to specify custom soft delete columns when utilizing `EndpointCreator` and `crud_router`:
+
+### Defining Models with Custom Soft Delete Columns
+
+First, ensure your SQLAlchemy model is equipped with the custom soft delete columns. Here's an example model with custom columns for soft deletion:
+
+```python
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
+
+Base = declarative_base()
+
+class MyModel(Base):
+    __tablename__ = 'my_model'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    archived = Column(Boolean, default=False)  # Custom soft delete column
+    archived_at = Column(DateTime)  # Custom timestamp column for soft delete
+```
+
+### Using `EndpointCreator` and `crud_router` with Custom Soft Delete Columns
+
+When initializing `crud_router` or creating a custom `EndpointCreator`, you can pass the names of your custom soft delete columns through the `FastCRUD` initialization. This informs FastCRUD which columns to check and update for soft deletion operations.
+
+Here's an example of using `crud_router` with custom soft delete columns:
+
+```python
+from fastapi import FastAPI
+from fastcrud import FastCRUD, crud_router
+from sqlalchemy.ext.asyncio import AsyncSession
+
+app = FastAPI()
+
+# Assuming async_session is your AsyncSession generator
+# and MyModel is your SQLAlchemy model
+
+# Initialize FastCRUD with custom soft delete columns
+my_model_crud = FastCRUD(MyModel,
+                         is_deleted_column='archived',  # Custom 'is_deleted' column name
+                         deleted_at_column='archived_at'  # Custom 'deleted_at' column name
+                        )
+
+# Setup CRUD router with the FastCRUD instance
+app.include_router(crud_router(
+    session=async_session,
+    model=MyModel,
+    crud=my_model_crud,
+    create_schema=CreateMyModelSchema,
+    update_schema=UpdateMyModelSchema,
+    delete_schema=DeleteMyModelSchema,
+    path="/mymodel",
+    tags=["MyModel"]
+))
+```
+
+This setup ensures that the soft delete functionality within your application utilizes the `archived` and `archived_at` columns for marking records as deleted, rather than the default `is_deleted` and `deleted_at` fields.
+
+By specifying custom column names for soft deletion, you can adapt FastCRUD to fit the design of your database models, providing a flexible solution for handling deleted records in a way that best suits your application's needs.
+
 ## Conclusion
 
 The `EndpointCreator` class in FastCRUD offers flexibility and control over CRUD operations and custom endpoint creation. By extending this class or using the `included_methods` and `deleted_methods` parameters, you can tailor your API's functionality to your specific requirements, ensuring a more customizable and streamlined experience.

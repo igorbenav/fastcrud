@@ -1,7 +1,12 @@
 import pytest
 from sqlalchemy import and_
 from fastcrud.crud.fast_crud import FastCRUD
-from ..conftest import ModelTest, TierModel, CreateSchemaTest, TierSchemaTest
+from ...sqlalchemy.conftest import (
+    ModelTest,
+    TierModel,
+    CreateSchemaTest,
+    TierSchemaTest,
+)
 
 
 @pytest.mark.asyncio
@@ -133,3 +138,39 @@ async def test_get_joined_with_filters(async_session, test_data, test_data_tier)
 
     assert result is not None
     assert result["name"] == "Alice"
+
+
+@pytest.mark.asyncio
+async def test_update_multiple_records_allow_multiple(
+    async_session, test_model, test_data
+):
+    for item in test_data:
+        async_session.add(test_model(**item))
+    await async_session.commit()
+
+    crud = FastCRUD(test_model)
+    await crud.update(
+        db=async_session,
+        object={"name": "Updated Name"},
+        allow_multiple=True,
+        name="Alice",
+    )
+
+    updated_records = await crud.get_multi(db=async_session, name="Updated Name")
+    assert (
+        len(updated_records["data"]) > 1
+    ), "Should update multiple records when allow_multiple is True"
+
+
+@pytest.mark.asyncio
+async def test_count_with_advanced_filters(async_session, test_model, test_data):
+    for item in test_data:
+        async_session.add(test_model(**item))
+    await async_session.commit()
+
+    crud = FastCRUD(test_model)
+    count_gt = await crud.count(async_session, id__gt=1)
+    assert count_gt > 0, "Should count records with ID greater than 1"
+
+    count_lt = await crud.count(async_session, id__lt=10)
+    assert count_lt > 0, "Should count records with ID less than 10"

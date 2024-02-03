@@ -1,6 +1,6 @@
 import pytest
 from fastcrud.crud.fast_crud import FastCRUD
-from ..conftest import ModelTest
+from ...sqlalchemy.conftest import ModelTest
 
 
 @pytest.mark.asyncio
@@ -86,3 +86,55 @@ async def test_get_multi_by_cursor_edge_cases(async_session, test_data):
     zero_limit_result = await crud.get_multi_by_cursor(db=async_session, limit=0)
     assert len(zero_limit_result["data"]) == 0
     assert zero_limit_result["next_cursor"] is None
+
+
+@pytest.mark.asyncio
+async def test_get_multi_by_cursor_with_advanced_filters(async_session, test_data):
+    for item in test_data:
+        async_session.add(ModelTest(**item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+    advanced_filter_gt = await crud.get_multi_by_cursor(
+        db=async_session, limit=5, id__gt=5
+    )
+
+    assert len(advanced_filter_gt["data"]) <= 5
+    assert all(
+        item["id"] > 5 for item in advanced_filter_gt["data"]
+    ), "All fetched records should have ID greater than 5"
+
+    advanced_filter_lt = await crud.get_multi_by_cursor(
+        db=async_session, limit=5, id__lt=5
+    )
+    assert (
+        len(advanced_filter_lt["data"]) <= 5
+    ), "Should correctly paginate records with ID less than 5"
+
+
+@pytest.mark.asyncio
+async def test_get_multi_by_cursor_pagination_integrity(async_session, test_data):
+    for item in test_data:
+        async_session.add(ModelTest(**item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+    first_batch = await crud.get_multi_by_cursor(db=async_session, limit=5)
+
+    await crud.update(
+        db=async_session,
+        object={"name": "Updated Name"},
+        allow_multiple=True,
+        name="SpecificName",
+    )
+
+    second_batch = await crud.get_multi_by_cursor(
+        db=async_session, cursor=first_batch["next_cursor"], limit=5
+    )
+
+    assert (
+        len(second_batch["data"]) == 5
+    ), "Pagination should fetch the correct number of records despite updates"
+    assert (
+        first_batch["data"][-1]["id"] < second_batch["data"][0]["id"]
+    ), "Pagination should maintain order across batches"

@@ -2,17 +2,18 @@ from typing import Any, Generic, TypeVar, Union, Optional
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, ValidationError
-import sqlalchemy.sql.selectable
-from sqlalchemy import select, update, delete, func, and_, inspect, asc, desc, true
-from sqlalchemy.exc import ArgumentError
+from sqlalchemy import select, update, delete, func, inspect, asc, desc
+from sqlalchemy.exc import ArgumentError, MultipleResultsFound, NoResultFound
+
 from sqlalchemy.sql import Join
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine.row import Row
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.sql.elements import BinaryExpression
+from sqlalchemy.sql.selectable import Select
 
 from .helper import (
     _extract_matching_columns_from_schema,
-    _extract_matching_columns_from_kwargs,
     _auto_detect_join_condition,
     _add_column_with_prefix,
 )
@@ -41,50 +42,42 @@ class FastCRUD(
 
     Args:
         model: The SQLAlchemy model type.
+        is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to "is_deleted".
+        deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to "deleted_at".
 
     Methods:
-        create(db: AsyncSession, object: CreateSchemaType) -> ModelType:
-            Creates a new record in the database. The 'object' parameter is a Pydantic schema
-            containing the data to be saved.
+        create:
+            Creates a new record in the database from the provided Pydantic schema.
 
-        get(db: AsyncSession, schema_to_select: Optional[Union[type[BaseModel], list]] = None, **kwargs: Any) -> Optional[dict]:
-            Retrieves a single record based on filters. You can specify a Pydantic schema to
-            select specific columns, and pass filter conditions as keyword arguments.
+        get:
+            Retrieves a single record based on filters. Supports advanced filtering through comparison operators like '__gt', '__lt', etc.
 
-        exists(db: AsyncSession, **kwargs: Any) -> bool:
-            Checks if a record exists based on the provided filters. Returns True if the record
-            exists, False otherwise.
+        exists:
+            Checks if a record exists based on the provided filters.
 
-        count(db: AsyncSession, **kwargs: Any) -> int:
-            Counts the number of records matching the provided filters. Useful for pagination
-            and analytics.
+        count:
+            Counts the number of records matching the provided filters.
 
-        get_multi(db: AsyncSession, offset: int = 0, limit: int = 100, schema_to_select: Optional[type[BaseModel]] = None, sort_columns: Optional[Union[str, list[str]]] = None, sort_orders: Optional[Union[str, list[str]]] = None, return_as_model: bool = False, **kwargs: Any) -> dict[str, Any]:
+        get_multi:
             Fetches multiple records with optional sorting, pagination, and model conversion.
-            Filters, sorting, and pagination parameters can be provided.
 
-        get_joined(db: AsyncSession, join_model: type[ModelType], join_prefix: Optional[str] = None, join_on: Optional[Union[Join, None]] = None, schema_to_select: Optional[Union[type[BaseModel], list]] = None, join_schema_to_select: Optional[Union[type[BaseModel], list]] = None, join_type: str = "left", **kwargs: Any) -> Optional[dict[str, Any]]:
-            Performs a join operation with another model. Supports custom join conditions and
-            selection of specific columns using Pydantic schemas.
+        get_joined:
+            Performs a join operation with another model, supporting custom join conditions and selection of specific columns.
 
-        get_multi_joined(db: AsyncSession, join_model: type[ModelType], join_prefix: Optional[str] = None, join_on: Optional[Join] = None, schema_to_select: Optional[type[BaseModel]] = None, join_schema_to_select: Optional[type[BaseModel]] = None, join_type: str = "left", offset: int = 0, limit: int = 100, sort_columns: Optional[Union[str, list[str]]] = None, sort_orders: Optional[Union[str, list[str]]] = None, return_as_model: bool = False, **kwargs: Any) -> dict[str, Any]:
-            Similar to 'get_joined', but for fetching multiple records. Offers pagination and
-            sorting functionalities for the joined tables.
+        get_multi_joined:
+            Fetches multiple records with a join on another model, offering pagination and sorting for the joined tables.
 
-        get_multi_by_cursor(db: AsyncSession, cursor: Any = None, limit: int = 100, schema_to_select: Optional[type[BaseModel]] = None, sort_column: str = "id", sort_order: str = "asc", **kwargs: Any) -> dict[str, Any]:
-            Implements cursor-based pagination for fetching records. Useful for large datasets
-            and infinite scrolling features.
+        get_multi_by_cursor:
+            Implements cursor-based pagination for fetching records, ideal for large datasets and infinite scrolling features.
 
-        update(db: AsyncSession, object: Union[UpdateSchemaType, dict[str, Any]], **kwargs: Any) -> None:
-            Updates an existing record. The 'object' can be a Pydantic schema or dictionary
-            containing update data.
+        update:
+            Updates an existing record or multiple records based on specified filters.
 
-        db_delete(db: AsyncSession, **kwargs: Any) -> None:
-            Hard deletes a record from the database based on provided filters.
+        db_delete:
+            Hard deletes a record or multiple records from the database based on provided filters.
 
-        delete(db: AsyncSession, db_row: Optional[Row] = None, **kwargs: Any) -> None:
-            Soft deletes a record if it has an "is_deleted" attribute; otherwise, performs a
-            hard delete. Filters or an existing database row can be provided for deletion.
+        delete:
+            Soft deletes a record if it has an "is_deleted" attribute; otherwise, performs a hard delete.
 
     Examples:
         Example 1: Basic Usage
@@ -145,17 +138,58 @@ class FastCRUD(
             completed_tasks = await task_crud.get_multi(db, status='completed')
             high_priority_task_count = await task_crud.count(db, priority='high')
         ```
+
+        Example 6: Using Custom Column Names for Soft Delete
+        ----------------------------------------------------
+        If your model uses different column names for indicating a soft delete and its timestamp, you can specify these when creating the FastCRUD instance.
+        ```python
+        custom_user_crud = FastCRUD(User, UserCreateSchema, UserUpdateSchema, is_deleted_column="archived", deleted_at_column="archived_at")
+        # Now 'archived' and 'archived_at' will be used for soft delete operations.
+        ```
     """
 
-    def __init__(self, model: type[ModelType]) -> None:
+    def __init__(
+        self,
+        model: type[ModelType],
+        is_deleted_column: str = "is_deleted",
+        deleted_at_column: str = "deleted_at",
+    ) -> None:
         self.model = model
+        self.is_deleted_column = is_deleted_column
+        self.deleted_at_column = deleted_at_column
+
+    def _parse_filters(self, **kwargs) -> list[BinaryExpression]:
+        filters = []
+        for key, value in kwargs.items():
+            if "__" in key:
+                field_name, op = key.rsplit("__", 1)
+                column = getattr(self.model, field_name, None)
+                if column is None:
+                    raise ValueError(f"Invalid filter column: {field_name}")
+
+                if op == "gt":
+                    filters.append(column > value)
+                elif op == "lt":
+                    filters.append(column < value)
+                elif op == "gte":
+                    filters.append(column >= value)
+                elif op == "lte":
+                    filters.append(column <= value)
+                elif op == "ne":
+                    filters.append(column != value)
+            else:
+                column = getattr(self.model, key, None)
+                if column is not None:
+                    filters.append(column == value)
+
+        return filters
 
     def _apply_sorting(
         self,
-        stmt: sqlalchemy.sql.selectable.Select,
+        stmt: Select,
         sort_columns: Union[str, list[str]],
         sort_orders: Optional[Union[str, list[str]]] = None,
-    ) -> sqlalchemy.sql.selectable.Select:
+    ) -> Select:
         """
         Apply sorting to a SQLAlchemy query based on specified column names and sort orders.
 
@@ -246,79 +280,159 @@ class FastCRUD(
         self,
         db: AsyncSession,
         schema_to_select: Optional[type[BaseModel]] = None,
+        return_as_model: bool = False,
         **kwargs: Any,
-    ) -> Optional[dict]:
+    ) -> Optional[Union[dict, BaseModel]]:
         """
-        Fetch a single record based on filters.
+        Fetches a single record based on specified filters.
+        This method allows for advanced filtering through comparison operators, enabling queries to be refined beyond simple equality checks.
+        Supported operators include:
+            '__gt' (greater than),
+            '__lt' (less than),
+            '__gte' (greater than or equal to),
+            '__lte' (less than or equal to), and
+            '__ne' (not equal).
 
         Args:
-            db: The SQLAlchemy async session.
-            schema_to_select: Pydantic schema for selecting specific columns.
-                Default is None to select all columns.
-            **kwargs: Filters to apply to the query.
+            db: The database session to use for the operation.
+            schema_to_select: Optional Pydantic schema for selecting specific columns.
+            **kwargs: Filters to apply to the query, using field names for direct matches or appending comparison operators for advanced queries.
+
+        Raises:
+            ValueError: If return_as_model is True but schema_to_select is not provided.
 
         Returns:
-            The fetched database row or None if not found.
+            A dictionary or a Pydantic model instance of the fetched database row, or None if no match is found.
+
+        Examples:
+            Fetch a user by ID:
+            ```python
+            user = await crud.get(db, id=1)
+            ```
+
+            Fetch a user with an age greater than 30:
+            ```python
+            user = await crud.get(db, age__gt=30)
+            ```
+
+            Fetch a user with a registration date before Jan 1, 2020:
+            ```python
+            user = await crud.get(db, registration_date__lt=datetime(2020, 1, 1))
+            ```
+
+            Fetch a user not equal to a specific username:
+            ```python
+            user = await crud.get(db, username__ne='admin')
+            ```
         """
         to_select = _extract_matching_columns_from_schema(
             model=self.model, schema=schema_to_select
         )
-        stmt = select(*to_select).filter_by(**kwargs)
+        filters = self._parse_filters(**kwargs)
+        stmt = select(*to_select).filter(*filters)
 
         db_row = await db.execute(stmt)
         result: Row = db_row.first()
         if result is not None:
             out: dict = dict(result._mapping)
+            if return_as_model:
+                if not schema_to_select:
+                    raise ValueError(
+                        "schema_to_select must be provided when return_as_model is True."
+                    )
+                return schema_to_select(**out)
             return out
 
         return None
 
     async def exists(self, db: AsyncSession, **kwargs: Any) -> bool:
         """
-        Check if a record exists based on filters.
+        Checks if any records exist that match the given filter conditions.
+        This method supports advanced filtering with comparison operators:
+            '__gt' (greater than),
+            '__lt' (less than),
+            '__gte' (greater than or equal to),
+            '__lte' (less than or equal to), and
+            '__ne' (not equal).
 
         Args:
-            db: The SQLAlchemy async session.
-            **kwargs: Filters to apply to the query.
+            db: The database session to use for the operation.
+            **kwargs: Filters to apply to the query, supporting both direct matches and advanced comparison operators for refined search criteria.
 
         Returns:
-            True if a record exists, False otherwise.
+            True if at least one record matches the filter conditions, False otherwise.
+
+        Examples:
+            Fetch a user by ID exists:
+            ```python
+            exists = await crud.exists(db, id=1)
+            ```
+
+            Check if any user is older than 30:
+            ```python
+            exists = await crud.exists(db, age__gt=30)
+            ```
+
+            Check if any user registered before Jan 1, 2020:
+            ```python
+            exists = await crud.exists(db, registration_date__lt=datetime(2020, 1, 1))
+            ```
+
+            Check if a username other than 'admin' exists:
+            ```python
+            exists = await crud.exists(db, username__ne='admin')
+            ```
         """
-        to_select = _extract_matching_columns_from_kwargs(
-            model=self.model, kwargs=kwargs
-        )
-        stmt = select(*to_select).filter_by(**kwargs).limit(1)
+        filters = self._parse_filters(**kwargs)
+        stmt = select(self.model).filter(*filters).limit(1)
 
         result = await db.execute(stmt)
         return result.first() is not None
 
     async def count(self, db: AsyncSession, **kwargs: Any) -> int:
         """
-        Count the records based on filters.
+        Counts records that match specified filters, supporting advanced filtering through comparison operators:
+            '__gt' (greater than),
+            '__lt' (less than),
+            '__gte' (greater than or equal to),
+            '__lte' (less than or equal to), and
+            '__ne' (not equal).
 
         Args:
-            db: The SQLAlchemy async session.
-            **kwargs: Filters to apply to the query.
+            db: The database session to use for the operation.
+            **kwargs: Filters to apply for the count, including field names for equality checks or with comparison operators for advanced queries.
 
         Returns:
-            Total count of records that match the applied filters.
+            The total number of records matching the filter conditions.
 
-        Note:
-            This method provides a quick way to get the count of records without retrieving the actual data.
+        Examples:
+            Count users by ID:
+            ```python
+            exists = await crud.count(db, id=1)
+            ```
+
+            Count users older than 30:
+            ```python
+            exists = await crud.count(db, age__gt=30)
+            ```
+
+            Count users who registered before Jan 1, 2020:
+            ```python
+            exists = await crud.count(db, registration_date__lt=datetime(2020, 1, 1))
+            ```
+
+            Count users with a username other than 'admin':
+            ```python
+            exists = await crud.count(db, username__ne='admin')
+            ```
         """
-        conditions = [
-            getattr(self.model, key) == value for key, value in kwargs.items()
-        ]
-        if conditions:
-            combined_conditions = and_(*conditions)
+        filters = self._parse_filters(**kwargs)
+        if filters:
+            count_query = select(func.count()).select_from(self.model).filter(*filters)
         else:
-            combined_conditions = true()
+            count_query = select(func.count()).select_from(self.model)
 
-        count_query = (
-            select(func.count()).select_from(self.model).where(combined_conditions)
-        )
         total_count: int = await db.scalar(count_query)
-
         return total_count
 
     async def get_multi(
@@ -333,20 +447,25 @@ class FastCRUD(
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
-        Fetch multiple records based on filters, with optional sorting, pagination, and model conversion.
+        Fetches multiple records based on filters, supporting sorting, pagination, and advanced filtering with comparison operators:
+            '__gt' (greater than),
+            '__lt' (less than),
+            '__gte' (greater than or equal to),
+            '__lte' (less than or equal to), and
+            '__ne' (not equal).
 
         Args:
-            db: The SQLAlchemy async session.
-            offset: Number of rows to skip before fetching. Must be non-negative.
-            limit: Maximum number of rows to fetch. Must be non-negative.
-            schema_to_select: Pydantic schema for selecting specific columns.
-            sort_columns: Single column name or a list of column names for sorting.
-            sort_orders: Single sort direction ('asc' or 'desc') or a list of directions corresponding to the columns in sort_columns. Defaults to 'asc'.
-            return_as_model: If True, returns the data as instances of the Pydantic model.
-            **kwargs: Filters to apply to the query.
+            db: The database session to use for the operation.
+            offset: Starting index for records to fetch, useful for pagination.
+            limit: Maximum number of records to fetch in one call.
+            schema_to_select: Optional Pydantic schema for selecting specific columns. Required if `return_as_model` is True.
+            sort_columns: Column names to sort the results by.
+            sort_orders: Corresponding sort orders ('asc', 'desc') for each column in sort_columns.
+            return_as_model: If True, returns data as instances of the specified Pydantic model.
+            **kwargs: Filters to apply to the query, including advanced comparison operators for more detailed querying.
 
         Returns:
-            A dictionary containing the fetched rows under 'data' key and total count under 'total_count'.
+            A dictionary containing 'data' with fetched records and 'total_count' indicating the total number of records matching the filters.
 
         Raises:
             ValueError: If limit or offset is negative, or if schema_to_select is required but not provided or invalid.
@@ -357,9 +476,24 @@ class FastCRUD(
             users = await crud.get_multi(db, 0, 10)
             ```
 
-            Fetch next 10 users with sorting:
+            Fetch next 10 users with sorted by username:
             ```python
             users = await crud.get_multi(db, 10, 10, sort_columns='username', sort_orders='desc')
+            ```
+
+            Fetch 10 users older than 30, sorted by age in descending order:
+            ```python
+            get_multi(db, offset=0, limit=10, age__gt=30, sort_columns='age', sort_orders='desc')
+            ```
+
+            Fetch 10 users with a registration date before Jan 1, 2020:
+            ```python
+            get_multi(db, offset=0, limit=10, registration_date__lt=datetime(2020, 1, 1))
+            ```
+
+            Fetch 10 users with a username other than 'admin', returning as model instances (ensure appropriate schema is passed):
+            ```python
+            get_multi(db, offset=0, limit=10, username__ne='admin', schema_to_select=UserSchema, return_as_model=True)
             ```
 
             Fetch users with filtering and multiple column sorting:
@@ -371,7 +505,8 @@ class FastCRUD(
             raise ValueError("Limit and offset must be non-negative.")
 
         to_select = _extract_matching_columns_from_schema(self.model, schema_to_select)
-        stmt = select(*to_select).filter_by(**kwargs)
+        filters = self._parse_filters(**kwargs)
+        stmt = select(*to_select).filter(*filters)
 
         if sort_columns:
             stmt = self._apply_sorting(stmt, sort_columns, sort_orders)
@@ -408,7 +543,12 @@ class FastCRUD(
     ) -> Optional[dict[str, Any]]:
         """
         Fetches a single record with a join on another model. If 'join_on' is not provided, the method attempts
-        to automatically detect the join condition using foreign key relationships.
+        to automatically detect the join condition using foreign key relationships. Advanced filters supported:
+            '__gt' (greater than),
+            '__lt' (less than),
+            '__gte' (greater than or equal to),
+            '__lte' (less than or equal to), and
+            '__ne' (not equal).
 
         Args:
             db: The SQLAlchemy async session.
@@ -416,13 +556,13 @@ class FastCRUD(
             join_prefix: Optional prefix to be added to all columns of the joined model. If None, no prefix is added.
             join_on: SQLAlchemy Join object for specifying the ON clause of the join. If None, the join condition is
                 auto-detected based on foreign keys.
-            schema_to_select: Pydantic schema for selecting specific columns from the primary model.
+            schema_to_select: Pydantic schema for selecting specific columns from the primary model. Required if `return_as_model` is True.
             join_schema_to_select: Pydantic schema for selecting specific columns from the joined model.
             join_type: Specifies the type of join operation to perform. Can be "left" for a left outer join or "inner" for an inner join.
-            **kwargs: Filters to apply to the query.
+            **kwargs: Filters to apply to the primary model query, supporting advanced comparison operators for refined searching.
 
         Returns:
-            The fetched database row or None if not found.
+            A dictionary representing the joined record, or None if no record matches the criteria.
 
         Examples:
             Simple example: Joining User and Tier models without explicitly providing join_on
@@ -433,6 +573,21 @@ class FastCRUD(
                 schema_to_select=UserSchema,
                 join_schema_to_select=TierSchema
             )
+            ```
+
+            Fetch a user and their associated tier, filtering by user ID:
+            ```python
+            get_joined(db, User, Tier, schema_to_select=UserSchema, join_schema_to_select=TierSchema, id=1)
+            ```
+
+            Fetch a user and their associated tier, where the user's age is greater than 30:
+            ```python
+            get_joined(db, User, Tier, schema_to_select=UserSchema, join_schema_to_select=TierSchema, age__gt=30)
+            ```
+
+            Fetch a user and their associated tier, excluding users with the 'admin' username:
+            ```python
+            get_joined(db, User, Tier, schema_to_select=UserSchema, join_schema_to_select=TierSchema, username__ne='admin')
             ```
 
             Complex example: Joining with a custom join condition, additional filter parameters, and a prefix
@@ -502,9 +657,9 @@ class FastCRUD(
                 f"Invalid join type: {join_type}. Only 'left' or 'inner' are valid."
             )
 
-        for key, value in kwargs.items():
-            if hasattr(self.model, key):
-                stmt = stmt.where(getattr(self.model, key) == value)
+        filters = self._parse_filters(**kwargs)
+        if filters:
+            stmt = stmt.filter(*filters)
 
         db_row = await db.execute(stmt)
         result: Row = db_row.first()
@@ -531,14 +686,20 @@ class FastCRUD(
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
-        Fetch multiple records with a join on another model, allowing for pagination, optional sorting, and model conversion.
+        Fetch multiple records with a join on another model, allowing for pagination, optional sorting, and model conversion,
+        supporting advanced filtering with comparison operators:
+            '__gt' (greater than),
+            '__lt' (less than),
+            '__gte' (greater than or equal to),
+            '__lte' (less than or equal to), and
+            '__ne' (not equal).
 
         Args:
             db: The SQLAlchemy async session.
             join_model: The model to join with.
             join_prefix: Optional prefix to be added to all columns of the joined model. If None, no prefix is added.
             join_on: SQLAlchemy Join object for specifying the ON clause of the join. If None, the join condition is auto-detected based on foreign keys.
-            schema_to_select: Pydantic schema for selecting specific columns from the primary model.
+            schema_to_select: Pydantic schema for selecting specific columns from the primary model. Required if `return_as_model` is True.
             join_schema_to_select: Pydantic schema for selecting specific columns from the joined model.
             join_type: Specifies the type of join operation to perform. Can be "left" for a left outer join or "inner" for an inner join.
             offset: The offset (number of records to skip) for pagination.
@@ -546,7 +707,7 @@ class FastCRUD(
             sort_columns: A single column name or a list of column names on which to apply sorting.
             sort_orders: A single sort order ('asc' or 'desc') or a list of sort orders corresponding to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
             return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
-            **kwargs: Filters to apply to the primary query.
+            **kwargs: Filters to apply to the primary query, including advanced comparison operators for refined searching.
 
         Returns:
             A dictionary containing the fetched rows under 'data' key and total count under 'total_count'.
@@ -556,43 +717,76 @@ class FastCRUD(
 
         Examples:
             Fetching multiple User records joined with Tier records, using left join, returning raw data:
-            >>> users = await crud_user.get_multi_joined(
-                    db=session,
-                    join_model=Tier,
-                    join_prefix="tier_",
-                    schema_to_select=UserSchema,
-                    join_schema_to_select=TierSchema,
-                    offset=0,
-                    limit=10
-                )
+            ```python
+            users = await crud_user.get_multi_joined(
+                db=session,
+                join_model=Tier,
+                join_prefix="tier_",
+                schema_to_select=UserSchema,
+                join_schema_to_select=TierSchema,
+                offset=0,
+                limit=10
+            )
+            ```
+
+            Fetch users joined with their tiers, sorted by username, where user's age is greater than 30:
+            ```python
+            users = get_multi_joined(
+                db,
+                User,
+                Tier,
+                schema_to_select=UserSchema,
+                join_schema_to_select=TierSchema,
+                age__gt=30,
+                sort_columns='username',
+                sort_orders='asc'
+            )
+            ```
+
+            Fetch users joined with their tiers, excluding users with 'admin' username, returning as model instances:
+            ```python
+            users = get_multi_joined(
+                db,
+                User,
+                Tier,
+                schema_to_select=UserSchema,
+                join_schema_to_select=TierSchema,
+                username__ne='admin',
+                return_as_model=True
+            )
+            ```
 
             Fetching and sorting by username in descending order, returning as Pydantic model:
-            >>> users = await crud_user.get_multi_joined(
-                    db=session,
-                    join_model=Tier,
-                    join_prefix="tier_",
-                    schema_to_select=UserSchema,
-                    join_schema_to_select=TierSchema,
-                    offset=0,
-                    limit=10,
-                    sort_columns=['username'],
-                    sort_orders=['desc'],
-                    return_as_model=True
-                )
+            ```python
+            users = await crud_user.get_multi_joined(
+                db=session,
+                join_model=Tier,
+                join_prefix="tier_",
+                schema_to_select=UserSchema,
+                join_schema_to_select=TierSchema,
+                offset=0,
+                limit=10,
+                sort_columns=['username'],
+                sort_orders=['desc'],
+                return_as_model=True
+            )
+            ```
 
             Fetching with complex conditions and custom join, returning as Pydantic model:
-            >>> users = await crud_user.get_multi_joined(
-                    db=session,
-                    join_model=Tier,
-                    join_prefix="tier_",
-                    join_on=User.tier_id == Tier.id,
-                    schema_to_select=UserSchema,
-                    join_schema_to_select=TierSchema,
-                    offset=0,
-                    limit=10,
-                    is_active=True,
-                    return_as_model=True
-                )
+            ```python
+            users = await crud_user.get_multi_joined(
+                db=session,
+                join_model=Tier,
+                join_prefix="tier_",
+                join_on=User.tier_id == Tier.id,
+                schema_to_select=UserSchema,
+                join_schema_to_select=TierSchema,
+                offset=0,
+                limit=10,
+                is_active=True,
+                return_as_model=True
+            )
+            ```
         """
         if limit < 0 or offset < 0:
             raise ValueError("Limit and offset must be non-negative.")
@@ -628,23 +822,22 @@ class FastCRUD(
                 f"Invalid join type: {join_type}. Only 'left' or 'inner' are valid."
             )
 
-        for key, value in kwargs.items():
-            if hasattr(self.model, key):
-                stmt = stmt.where(getattr(self.model, key) == value)
+        filters = self._parse_filters(**kwargs)
+        if filters:
+            stmt = stmt.filter(*filters)
 
         if sort_columns:
             stmt = self._apply_sorting(stmt, sort_columns, sort_orders)
 
         stmt = stmt.offset(offset).limit(limit)
 
-        db_rows = await db.execute(stmt)
-        data = [dict(row._mapping) for row in db_rows]
+        result = await db.execute(stmt)
+        data = result.mappings().all()
 
         if return_as_model and schema_to_select:
             data = [schema_to_select.model_construct(**row) for row in data]
 
         total_count = await self.count(db=db, **kwargs)
-
         return {"data": data, "total_count": total_count}
 
     async def get_multi_by_cursor(
@@ -658,7 +851,13 @@ class FastCRUD(
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
-        Fetch multiple records based on a cursor for pagination, with optional sorting.
+        Implements cursor-based pagination for fetching records. This method is designed for efficient data retrieval in large datasets and is ideal for features like infinite scrolling.
+        It supports advanced filtering with comparison operators:
+            '__gt' (greater than),
+            '__lt' (less than),
+            '__gte' (greater than or equal to),
+            '__lte' (less than or equal to), and
+            '__ne' (not equal).
 
         Args:
             db: The SQLAlchemy async session.
@@ -667,18 +866,30 @@ class FastCRUD(
             schema_to_select: Pydantic schema for selecting specific columns.
             sort_column: Column name to use for sorting and cursor pagination.
             sort_order: Sorting direction, either 'asc' or 'desc'.
-            **kwargs: Additional filters to apply to the query.
+            **kwargs: Filters to apply to the query, including advanced comparison operators for detailed querying.
 
         Returns:
             A dictionary containing the fetched rows under 'data' key and the next cursor value under 'next_cursor'.
 
-        Usage Examples:
-            # Fetch the first set of records (e.g., the first page in an infinite scrolling scenario)
-            >>> first_page = await crud.get_multi_by_cursor(db, limit=10, sort_column='created_at', sort_order='desc')
+        Examples:
+            Fetch the first set of records (e.g., the first page in an infinite scrolling scenario)
+            ```python
+            first_page = await crud.get_multi_by_cursor(db, limit=10, sort_column='created_at', sort_order='desc')
 
-            # Fetch the next set of records using the cursor from the first page
-            >>> next_cursor = first_page['next_cursor']
-            >>> second_page = await crud.get_multi_by_cursor(db, cursor=next_cursor, limit=10, sort_column='created_at', sort_order='desc')
+            Fetch the next set of records using the cursor from the first page
+            next_cursor = first_page['next_cursor']
+            second_page = await crud.get_multi_by_cursor(db, cursor=next_cursor, limit=10, sort_column='created_at', sort_order='desc')
+            ```
+
+            Fetch records with age greater than 30 using cursor-based pagination:
+            ```python
+            get_multi_by_cursor(db, limit=10, sort_column='age', sort_order='asc', age__gt=30)
+            ```
+
+            Fetch records excluding a specific username using cursor-based pagination:
+            ```python
+            get_multi_by_cursor(db, limit=10, sort_column='username', sort_order='asc', username__ne='admin')
+            ```
 
         Note:
             This method is designed for efficient pagination in large datasets and is ideal for infinite scrolling features.
@@ -689,13 +900,17 @@ class FastCRUD(
             return {"data": [], "next_cursor": None}
 
         to_select = _extract_matching_columns_from_schema(self.model, schema_to_select)
-        stmt = select(*to_select).filter_by(**kwargs)
+        filters = self._parse_filters(**kwargs)
+
+        stmt = select(*to_select)
+        if filters:
+            stmt = stmt.filter(*filters)
 
         if cursor:
             if sort_order == "asc":
-                stmt = stmt.where(getattr(self.model, sort_column) > cursor)
+                stmt = stmt.filter(getattr(self.model, sort_column) > cursor)
             else:
-                stmt = stmt.where(getattr(self.model, sort_column) < cursor)
+                stmt = stmt.filter(getattr(self.model, sort_column) < cursor)
 
         stmt = stmt.order_by(
             asc(getattr(self.model, sort_column))
@@ -709,7 +924,10 @@ class FastCRUD(
 
         next_cursor = None
         if len(data) == limit:
-            next_cursor = data[-1][sort_column]
+            if sort_order == "asc":
+                next_cursor = data[-1][sort_column]
+            else:
+                data[0][sort_column]
 
         return {"data": data, "next_cursor": next_cursor}
 
@@ -717,22 +935,53 @@ class FastCRUD(
         self,
         db: AsyncSession,
         object: Union[UpdateSchemaType, dict[str, Any]],
+        allow_multiple: bool = False,
         **kwargs: Any,
     ) -> None:
         """
-        Update an existing record in the database.
+        Updates an existing record or multiple records in the database based on specified filters. This method allows for precise targeting of records to update.
+        It supports advanced filtering through comparison operators:
+            '__gt' (greater than),
+            '__lt' (less than),
+            '__gte' (greater than or equal to),
+            '__lte' (less than or equal to), and
+            '__ne' (not equal).
 
         Args:
-            db: The SQLAlchemy async session.
-            object: The Pydantic schema or dictionary containing the data to be updated.
-            **kwargs: Filters for the update.
+            db: The database session to use for the operation.
+            object: A Pydantic schema or dictionary containing the update data.
+            allow_multiple: If True, allows updating multiple records that match the filters. If False, raises an error if more than one record matches the filters.
+            **kwargs: Filters to identify the record(s) to update, supporting advanced comparison operators for refined querying.
 
         Returns:
             None
 
         Raises:
+            MultipleResultsFound: If `allow_multiple` is False and more than one record matches the filters.
             ValueError: If extra fields not present in the model are provided in the update data.
+
+        Examples:
+            Update a user's email based on their ID:
+            ```python
+            update(db, {'email': 'new_email@example.com'}, id=1)
+            ```
+
+            Update users' statuses to 'inactive' where age is greater than 30 and allow updates to multiple records:
+            ```python
+            update(db, {'status': 'inactive'}, allow_multiple=True, age__gt=30)
+            ```
+
+            Update a user's username excluding specific user ID and prevent multiple updates:
+            ```python
+            update(db, {'username': 'new_username'}, id__ne=1, allow_multiple=False)
+            ```
         """
+        total_count = await self.count(db, **kwargs)
+        if not allow_multiple and total_count > 1:
+            raise MultipleResultsFound(
+                f"Expected exactly one record to update, found {total_count}."
+            )
+
         if isinstance(object, dict):
             update_data = object
         else:
@@ -746,53 +995,141 @@ class FastCRUD(
         if extra_fields:
             raise ValueError(f"Extra fields provided: {extra_fields}")
 
-        stmt = update(self.model).filter_by(**kwargs).values(update_data)
+        filters = self._parse_filters(**kwargs)
+        stmt = update(self.model).filter(*filters).values(update_data)
 
         await db.execute(stmt)
         await db.commit()
 
-    async def db_delete(self, db: AsyncSession, **kwargs: Any) -> None:
+    async def db_delete(
+        self, db: AsyncSession, allow_multiple: bool = False, **kwargs: Any
+    ) -> None:
         """
-        Delete a record in the database.
+        Deletes a record or multiple records from the database based on specified filters, with support for advanced filtering through comparison operators:
+            '__gt' (greater than),
+            '__lt' (less than),
+            '__gte' (greater than or equal to),
+            '__lte' (less than or equal to), and
+            '__ne' (not equal).
 
         Args:
-            db: The SQLAlchemy async session.
-            **kwargs: Filters for the delete.
+            db: The database session to use for the operation.
+            allow_multiple: If True, allows deleting multiple records that match the filters. If False, raises an error if more than one record matches the filters.
+            **kwargs: Filters to identify the record(s) to delete, including advanced comparison operators for detailed querying.
 
         Returns:
             None
+
+        Raises:
+            MultipleResultsFound: If `allow_multiple` is False and more than one record matches the filters.
+
+        Examples:
+            Delete a user based on their ID:
+            ```python
+            db_delete(db, id=1)
+            ```
+
+            Delete users older than 30 years and allow deletion of multiple records:
+            ```python
+            db_delete(db, allow_multiple=True, age__gt=30)
+            ```
+
+            Delete a user with a specific username, ensuring only one record is deleted:
+            ```python
+            db_delete(db, username='unique_username', allow_multiple=False)
+            ```
         """
-        stmt = delete(self.model).filter_by(**kwargs)
+        total_count = await self.count(db, **kwargs)
+        if not allow_multiple and total_count > 1:
+            raise MultipleResultsFound(
+                f"Expected exactly one record to delete, found {total_count}."
+            )
+
+        filters = self._parse_filters(**kwargs)
+        stmt = delete(self.model).filter(*filters)
         await db.execute(stmt)
         await db.commit()
 
     async def delete(
-        self, db: AsyncSession, db_row: Optional[Row] = None, **kwargs: Any
+        self,
+        db: AsyncSession,
+        db_row: Optional[Row] = None,
+        allow_multiple: bool = False,
+        **kwargs: Any,
     ) -> None:
         """
-        Soft delete a record if it has "is_deleted" attribute, otherwise perform a hard delete.
+        Soft deletes a record or optionally multiple records if it has an "is_deleted" attribute, otherwise performs a hard delete, based on specified filters.
+        Supports advanced filtering through comparison operators:
+            '__gt' (greater than),
+            '__lt' (less than),
+            '__gte' (greater than or equal to),
+            '__lte' (less than or equal to), and
+            '__ne' (not equal).
 
         Args:
-            db: The SQLAlchemy async session.
-            db_row: Existing database row to delete. If None, it will be fetched based on `kwargs`. Default is None.
-            **kwargs: Filters for fetching the database row if not provided.
+            db: The database session to use for the operation.
+            db_row: Optional existing database row to delete. If provided, the method will attempt to delete this specific row, ignoring other filters.
+            allow_multiple: If True, allows deleting multiple records that match the filters. If False, raises an error if more than one record matches the filters.
+            **kwargs: Filters to identify the record(s) to delete, supporting advanced comparison operators for refined querying.
+
+        Raises:
+            MultipleResultsFound: If `allow_multiple` is False and more than one record matches the filters.
+            NoResultFound: If no record matches the filters.
 
         Returns:
             None
+
+        Examples:
+            Soft delete a specific user by ID:
+            ```python
+            delete(db, id=1)
+            ```
+
+            Hard delete users with account creation dates before 2020, allowing deletion of multiple records:
+            ```python
+            delete(db, allow_multiple=True, creation_date__lt=datetime(2020, 1, 1))
+            ```
+
+            Soft delete a user with a specific email, ensuring only one record is deleted:
+            ```python
+            delete(db, email='unique@example.com', allow_multiple=False)
+            ```
         """
-        db_row = db_row or await self.exists(db=db, **kwargs)
+        filters = self._parse_filters(**kwargs)
         if db_row:
-            if "is_deleted" in self.model.__table__.columns:
-                object_dict = {
-                    "is_deleted": True,
-                    "deleted_at": datetime.now(timezone.utc),
+            if hasattr(db_row, self.is_deleted_column):
+                is_deleted_col = getattr(self.model, self.is_deleted_column)
+                deleted_at_col = getattr(self.model, self.deleted_at_column, None)
+
+                update_values = {
+                    is_deleted_col: True,
+                    deleted_at_col: datetime.now(timezone.utc),
                 }
-                stmt = update(self.model).filter_by(**kwargs).values(object_dict)
-
-                await db.execute(stmt)
-                await db.commit()
-
+                update_stmt = (
+                    update(self.model).filter(*filters).values(**update_values)
+                )
+                await db.execute(update_stmt)
             else:
-                stmt = delete(self.model).filter_by(**kwargs)
-                await db.execute(stmt)
+                await db.delete(db_row)
                 await db.commit()
+
+        total_count = await self.count(db, **kwargs)
+        if total_count == 0:
+            raise NoResultFound("No record found to delete.")
+        if not allow_multiple and total_count > 1:
+            raise MultipleResultsFound(
+                f"Expected exactly one record to delete, found {total_count}."
+            )
+
+        if self.is_deleted_column in self.model.__table__.columns:
+            update_stmt = (
+                update(self.model)
+                .filter(*filters)
+                .values(is_deleted=True, deleted_at=datetime.now(timezone.utc))
+            )
+            await db.execute(update_stmt)
+        else:
+            delete_stmt = delete(self.model).filter(*filters)
+            await db.execute(delete_stmt)
+
+        await db.commit()

@@ -30,6 +30,8 @@ def crud_router(
     included_methods: Optional[list[str]] = None,
     deleted_methods: Optional[list[str]] = None,
     endpoint_creator: Optional[Type[EndpointCreator]] = None,
+    is_deleted_column: str = "is_deleted",
+    deleted_at_column: str = "deleted_at",
 ) -> APIRouter:
     """
     Creates and configures a FastAPI router with CRUD endpoints for a given model.
@@ -57,6 +59,8 @@ def crud_router(
         included_methods: Optional list of CRUD methods to include. If None, all methods are included.
         deleted_methods: Optional list of CRUD methods to exclude.
         endpoint_creator: Optional custom class derived from EndpointCreator for advanced customization.
+        is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to "is_deleted".
+        deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to "deleted_at".
 
     Returns:
         Configured APIRouter instance with the CRUD endpoints.
@@ -210,6 +214,8 @@ def crud_router(
         delete_schema=delete_schema,
         path=path,
         tags=tags,
+        is_deleted_column=is_deleted_column,
+        deleted_at_column=deleted_at_column,
     )
 
     endpoint_creator_instance.add_routes_to_router(

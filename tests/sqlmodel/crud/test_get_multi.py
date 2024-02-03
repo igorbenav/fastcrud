@@ -112,3 +112,73 @@ async def test_get_multi_return_model(
     )
 
     assert all(isinstance(item, create_schema) for item in result["data"])
+
+
+@pytest.mark.asyncio
+async def test_get_multi_advanced_filtering(async_session, test_model, test_data):
+    for item in test_data:
+        async_session.add(test_model(**item))
+    await async_session.commit()
+
+    crud = FastCRUD(test_model)
+    filtered_results = await crud.get_multi(async_session, id__gt=5)
+
+    assert all(
+        item["id"] > 5 for item in filtered_results["data"]
+    ), "Should only include records with ID greater than 5"
+
+
+@pytest.mark.asyncio
+async def test_get_multi_multiple_sorting(async_session, test_model, test_data):
+    for item in test_data:
+        async_session.add(test_model(**item))
+    await async_session.commit()
+
+    crud = FastCRUD(test_model)
+    result = await crud.get_multi(
+        async_session, sort_columns=["tier_id", "name"], sort_orders=["asc", "desc"]
+    )
+
+    assert len(result["data"]) > 0, "Should fetch sorted records"
+
+    tier_ids = [item["tier_id"] for item in result["data"]]
+    assert tier_ids == sorted(tier_ids), "tier_id should be sorted in ascending order"
+
+    current_tier_id = None
+    names_in_current_tier = []
+    for item in result["data"]:
+        if item["tier_id"] != current_tier_id:
+            if names_in_current_tier:
+                assert (
+                    names_in_current_tier == sorted(names_in_current_tier, reverse=True)
+                ), f"Names within tier_id {current_tier_id} should be sorted in descending order"
+            current_tier_id = item["tier_id"]
+            names_in_current_tier = [item["name"]]
+        else:
+            names_in_current_tier.append(item["name"])
+
+    if names_in_current_tier:
+        assert (
+            names_in_current_tier == sorted(names_in_current_tier, reverse=True)
+        ), f"Names within tier_id {current_tier_id} should be sorted in descending order"
+
+
+@pytest.mark.asyncio
+async def test_get_multi_advanced_filtering_return_model(
+    async_session, test_model, test_data, read_schema
+):
+    for item in test_data:
+        async_session.add(test_model(**item))
+    await async_session.commit()
+
+    crud = FastCRUD(test_model)
+    result = await crud.get_multi(
+        async_session, id__lte=5, return_as_model=True, schema_to_select=read_schema
+    )
+
+    assert all(
+        isinstance(item, read_schema) for item in result["data"]
+    ), "All items should be instances of the schema"
+    assert all(
+        item.id <= 5 for item in result["data"]
+    ), "Should only include records with ID less than or equal to 5"

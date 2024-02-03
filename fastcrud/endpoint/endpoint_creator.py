@@ -35,6 +35,8 @@ class EndpointCreator:
         include_in_schema: Whether to include the created endpoints in the OpenAPI schema.
         path: Base path for the CRUD endpoints.
         tags: List of tags for grouping endpoints in the documentation.
+        is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to "is_deleted".
+        deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to "deleted_at".
 
     Raises:
         ValueError: If both `included_methods` and `deleted_methods` are provided.
@@ -122,10 +124,16 @@ class EndpointCreator:
         delete_schema: Optional[Type[DeleteSchemaType]] = None,
         path: str = "",
         tags: Optional[list[str]] = None,
+        is_deleted_column: str = "is_deleted",
+        deleted_at_column: str = "deleted_at",
     ) -> None:
         self.primary_key_name = _get_primary_key(model)
         self.session = session
-        self.crud = crud
+        self.crud = crud or FastCRUD(
+            model=model,
+            is_deleted_column=is_deleted_column,
+            deleted_at_column=deleted_at_column,
+        )
         self.model = model
         self.create_schema = create_schema
         self.update_schema = update_schema
@@ -134,6 +142,8 @@ class EndpointCreator:
         self.path = path
         self.tags = tags or []
         self.router = APIRouter()
+        self.is_deleted_column = is_deleted_column
+        self.deleted_at_column = deleted_at_column
 
     def _create_item(self):
         """Creates an endpoint for creating items in the database."""

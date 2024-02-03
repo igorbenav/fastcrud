@@ -7,9 +7,10 @@ This section of the documentation explains how to use the `crud_router` utility 
 Before proceeding, ensure you have FastAPI and FastCRUD installed in your environment. FastCRUD streamlines interactions with the database using SQLAlchemy models and Pydantic schemas.
 
 !!! WARNING
-        For now, your primary column in the database model must be named `id`. 
 
-___
+        For now, your primary column in the database model must be named `id`.
+
+---
 
 ## Using `crud_router`
 
@@ -45,6 +46,8 @@ class ItemUpdateSchema(BaseModel):
 Next, set up your FastAPI application and FastCRUD instances. This involves configuring the database connection and creating a CRUD instance for your model.
 
 ```python
+from typing import AsyncGenerator
+
 from fastapi import FastAPI
 from fastcrud import FastCRUD, crud_router
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -55,8 +58,19 @@ DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
+# Database session dependency
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session() as session:
+        yield session
+
+# Create tables before the app start
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
 # FastAPI app
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 # CRUD operations setup
 crud = FastCRUD(Item)
@@ -67,7 +81,7 @@ crud = FastCRUD(Item)
 ```python
 # CRUD router setup
 item_router = crud_router(
-    session=async_session,
+    session=get_session,
     model=Item,
     crud=crud,
     create_schema=ItemCreateSchema,
@@ -83,7 +97,7 @@ app.include_router(item_router)
 
 Once the application is running, you can test the automatically created endpoints using tools like Swagger UI, which FastAPI provides by default. The endpoints for creating, reading, updating, and deleting Item instances are now accessible at /items.
 
-___
+---
 
 ## Using `EndpointCreator` Directly
 
@@ -121,6 +135,8 @@ class ItemUpdateSchema(BaseModel):
 Next, set up your FastAPI application and FastCRUD instances. This involves configuring the database connection and creating a CRUD instance for your model.
 
 ```python
+from typing import AsyncGenerator
+
 from fastapi import FastAPI
 from fastcrud import FastCRUD, crud_router
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -131,14 +147,26 @@ DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
+# Database session dependency
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session() as session:
+        yield session
+
+# Create tables before the app start
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
 # FastAPI app
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 # CRUD operations setup
 crud = FastCRUD(Item)
 ```
 
 ### Step 3: Initialize `EndpointCreator`
+
 Create an instance of EndpointCreator by passing the necessary parameters, including your model, session, CRUD instance, and schemas.
 
 ```python
@@ -146,7 +174,7 @@ from fastcrud import EndpointCreator
 
 # Initialize EndpointCreator
 endpoint_creator = EndpointCreator(
-    session=async_session,
+    session=get_session,
     model=YourModel,
     crud=your_crud_instance,
     create_schema=YourCreateSchema,
@@ -171,6 +199,7 @@ endpoint_creator.add_routes_to_router(
 ```
 
 ### Step 5: Include the Router in Your Application
+
 Finally, include the router from the EndpointCreator in your FastAPI application.
 
 ```python
@@ -181,7 +210,6 @@ app.include_router(endpoint_creator.router)
 ## Advanced Customization
 
 You can override the default methods in EndpointCreator for more control over the CRUD operations. You can also specify the operations you want to include. Read more in the [advanced section](../advanced/endpoint.md).
-
 
 ## Conclusion
 

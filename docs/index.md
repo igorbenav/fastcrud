@@ -44,6 +44,7 @@
 - **Auto-generated Endpoints**: Streamlines the process of adding CRUD endpoints with custom dependencies and configurations.
 
 ## Minimal Example
+
 Assuming you have your model, schemas and database connection:
 
 ```python
@@ -62,7 +63,7 @@ class ItemSchema(BaseModel):
 # database connection
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL, echo=True)
-session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 ```
 
 Use `crud_router` and include it in your `FastAPI` application
@@ -70,10 +71,20 @@ Use `crud_router` and include it in your `FastAPI` application
 ```python
 from fastcrud import FastCRUD, crud_router
 
-app = FastAPI()
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session() as session:
+        yield session
+
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
+# FastAPI app
+app = FastAPI(lifespan=lifespan)
 
 item_router = crud_router(
-    session=session,
+    session=get_session,
     model=Item,
     crud=FastCRUD(Item),
     create_schema=ItemSchema,
@@ -88,6 +99,7 @@ app.include_router(item_router)
 And it's all done, just go to `/docs` and the crud endpoints are created.
 
 ## Requirements
+
 <p>Before installing FastCRUD, ensure you have the following prerequisites:</p>
 <ul>
   <li><b>Python:</b> Version 3.9 or newer.</li>
@@ -98,10 +110,11 @@ And it's all done, just go to `/docs` and the crud endpoints are created.
 
 ## Installing
 
- To install, just run:
- ```sh
- pip install fastcrud
- ```
+To install, just run:
+
+```sh
+pip install fastcrud
+```
 
 Or, if using poetry:
 
@@ -111,7 +124,7 @@ poetry add fastcrud
 
 ## Usage
 
-FastCRUD offers two primary ways to use its functionalities: 
+FastCRUD offers two primary ways to use its functionalities:
 
 1. By using `crud_router` for automatic endpoint creation.
 2. By integrating `FastCRUD` directly into your FastAPI endpoints for more control.
@@ -121,6 +134,7 @@ Below are examples demonstrating both approaches:
 ### Using crud_router for Automatic Endpoint Creation
 
 !!! WARNING
+
     For now, your primary column must be named `id` or automatic endpoint creation will not work.
 
 Here's a quick example to get you started:
@@ -154,6 +168,8 @@ class ItemUpdateSchema(BaseModel):
 #### Set Up FastAPI and FastCRUD
 
 ```python title="main.py"
+from typing import AsyncGenerator
+
 from fastapi import FastAPI
 from fastcrud import FastCRUD, crud_router
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -164,15 +180,26 @@ DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
+# Database session dependency
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session() as session:
+        yield session
+
+# Create tables before the app start
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
 # FastAPI app
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 # CRUD operations setup
 crud = FastCRUD(Item)
 
 # CRUD router setup
 item_router = crud_router(
-    session=async_session,
+    session=get_session,
     model=Item,
     crud=crud,
     create_schema=ItemCreateSchema,
@@ -201,11 +228,11 @@ from yourapp.schemas import ItemCreateSchema, ItemUpdateSchema
 item_crud = FastCRUD(Item)
 
 @app.post("/custom/items/")
-async def create_item(item_data: ItemCreateSchema, db: AsyncSession = Depends(async_session)):
+async def create_item(item_data: ItemCreateSchema, db: AsyncSession = Depends(get_session)):
     return await item_crud.create(db, item_data)
 
 @app.get("/custom/items/{item_id}")
-async def read_item(item_id: int, db: AsyncSession = Depends(async_session)):
+async def read_item(item_id: int, db: AsyncSession = Depends(get_session)):
     item = await item_crud.get(db, id=item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")

@@ -1,4 +1,3 @@
-
 # Using FastCRUD with SQLModel
 
 Since SQLModel is just a combination of SQLAlchemy and Pydantic, the process simplifies as SQLModel combines the model and schema definitions.
@@ -22,7 +21,7 @@ class ItemCreateSchema(SQLModel):
 
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL, echo=True)
-session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 ```
 
 Then your schemas
@@ -42,7 +41,7 @@ class ItemCreateSchema(SQLModel):
 
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL, echo=True)
-session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 ```
 
 And, finally, your database connection
@@ -62,18 +61,30 @@ class ItemCreateSchema(SQLModel):
 
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL, echo=True)
-session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 ```
 
 Use `crud_router` and include it in your `FastAPI` application
 
-```python title="main.py" hl_lines="5-13 15"
+```python title="main.py" hl_lines="17-25 27"
 from fastcrud import FastCRUD, crud_router
 
-app = FastAPI()
+# Database session dependency
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session() as session:
+        yield session
+
+# Create tables before the app start
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
+# FastAPI app
+app = FastAPI(lifespan=lifespan)
 
 item_router = crud_router(
-    session=session,
+    session=get_session,
     model=Item,
     crud=FastCRUD(Item),
     create_schema=ItemSchema,

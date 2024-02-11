@@ -1224,7 +1224,7 @@
 </span></span></code></pre></div>
 <h3 id="using-fastcrud">Using FastCRUD<a class="headerlink" href="#using-fastcrud" title="Permanent link">&para;</a></h3>
 <p>Use <code>crud_router</code> and include it in your <code>FastAPI</code> application</p>
-<div class="language-python highlight"><span class="filename">main.py</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FastCRUD</span><span class="p">,</span> <span class="n">crud_router</span>
+<div class="language-python highlight"><span class="filename">main.py</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">crud_router</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Database session dependency</span>
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">async</span> <span class="k">def</span> <span class="nf">get_session</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AsyncGenerator</span><span class="p">[</span><span class="n">AsyncSession</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
@@ -1243,14 +1243,13 @@
 </span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="hll"><span class="n">item_router</span> <span class="o">=</span> <span class="n">crud_router</span><span class="p">(</span>
 </span></span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="hll">    <span class="n">session</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
 </span></span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="hll">    <span class="n">model</span><span class="o">=</span><span class="n">Item</span><span class="p">,</span>
-</span></span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="hll">    <span class="n">crud</span><span class="o">=</span><span class="n">FastCRUD</span><span class="p">(</span><span class="n">Item</span><span class="p">),</span>
-</span></span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="hll">    <span class="n">create_schema</span><span class="o">=</span><span class="n">ItemSchema</span><span class="p">,</span>
-</span></span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="hll">    <span class="n">update_schema</span><span class="o">=</span><span class="n">ItemSchema</span><span class="p">,</span>
-</span></span><span id="__span-3-23"><a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="hll">    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/items&quot;</span><span class="p">,</span>
-</span></span><span id="__span-3-24"><a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="hll">    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Items&quot;</span><span class="p">]</span>
-</span></span><span id="__span-3-25"><a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="hll"><span class="p">)</span>
-</span></span><span id="__span-3-26"><a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>
-</span><span id="__span-3-27"><a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="hll"><span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">item_router</span><span class="p">)</span>
+</span></span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="hll">    <span class="n">create_schema</span><span class="o">=</span><span class="n">ItemSchema</span><span class="p">,</span>
+</span></span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="hll">    <span class="n">update_schema</span><span class="o">=</span><span class="n">ItemSchema</span><span class="p">,</span>
+</span></span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="hll">    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/items&quot;</span><span class="p">,</span>
+</span></span><span id="__span-3-23"><a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="hll">    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Items&quot;</span><span class="p">]</span>
+</span></span><span id="__span-3-24"><a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="hll"><span class="p">)</span>
+</span></span><span id="__span-3-25"><a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>
+</span><span id="__span-3-26"><a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="hll"><span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">item_router</span><span class="p">)</span>
 </span></span></code></pre></div>
 <p>And it's all done, just go to <code>/docs</code> and the crud endpoints are created.</p>
 

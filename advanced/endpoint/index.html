@@ -836,9 +836,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#using-endpointcreator-and-crud_router-with-custom-soft-delete-columns" class="md-nav__link">
+  <a href="#using-endpointcreator-and-crud_router-with-custom-soft-delete-or-update-columns" class="md-nav__link">
     <span class="md-ellipsis">
-      Using EndpointCreator and crud_router with Custom Soft Delete Columns
+      Using EndpointCreator and crud_router with Custom Soft Delete or Update Columns
     </span>
   </a>
   
@@ -1307,9 +1307,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#using-endpointcreator-and-crud_router-with-custom-soft-delete-columns" class="md-nav__link">
+  <a href="#using-endpointcreator-and-crud_router-with-custom-soft-delete-or-update-columns" class="md-nav__link">
     <span class="md-ellipsis">
-      Using EndpointCreator and crud_router with Custom Soft Delete Columns
+      Using EndpointCreator and crud_router with Custom Soft Delete or Update Columns
     </span>
   </a>
   
@@ -1510,7 +1510,7 @@
 </span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="n">archived</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Custom soft delete column</span>
 </span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>    <span class="n">archived_at</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">DateTime</span><span class="p">)</span>  <span class="c1"># Custom timestamp column for soft delete</span>
 </span></code></pre></div>
-<h3 id="using-endpointcreator-and-crud_router-with-custom-soft-delete-columns">Using <code>EndpointCreator</code> and <code>crud_router</code> with Custom Soft Delete Columns<a class="headerlink" href="#using-endpointcreator-and-crud_router-with-custom-soft-delete-columns" title="Permanent link">&para;</a></h3>
+<h3 id="using-endpointcreator-and-crud_router-with-custom-soft-delete-or-update-columns">Using <code>EndpointCreator</code> and <code>crud_router</code> with Custom Soft Delete or Update Columns<a class="headerlink" href="#using-endpointcreator-and-crud_router-with-custom-soft-delete-or-update-columns" title="Permanent link">&para;</a></h3>
 <p>When initializing <code>crud_router</code> or creating a custom <code>EndpointCreator</code>, you can pass the names of your custom soft delete columns through the <code>FastCRUD</code> initialization. This informs FastCRUD which columns to check and update for soft deletion operations.</p>
 <p>Here's an example of using <code>crud_router</code> with custom soft delete columns:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span>
@@ -1523,22 +1523,47 @@
 </span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="c1"># and MyModel is your SQLAlchemy model</span>
 </span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
 </span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># Initialize FastCRUD with custom soft delete columns</span>
-</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="n">my_model_crud</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">MyModel</span><span class="p">,</span>
-</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>                         <span class="n">is_deleted_column</span><span class="o">=</span><span class="s1">&#39;archived&#39;</span><span class="p">,</span>  <span class="c1"># Custom &#39;is_deleted&#39; column name</span>
-</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>                         <span class="n">deleted_at_column</span><span class="o">=</span><span class="s1">&#39;archived_at&#39;</span>  <span class="c1"># Custom &#39;deleted_at&#39; column name</span>
-</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>                        <span class="p">)</span>
-</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="hll"><span class="n">my_model_crud</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">MyModel</span><span class="p">,</span>
+</span></span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="hll">                         <span class="n">is_deleted_column</span><span class="o">=</span><span class="s1">&#39;archived&#39;</span><span class="p">,</span>  <span class="c1"># Custom &#39;is_deleted&#39; column name</span>
+</span></span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="hll">                         <span class="n">deleted_at_column</span><span class="o">=</span><span class="s1">&#39;archived_at&#39;</span>  <span class="c1"># Custom &#39;deleted_at&#39; column name</span>
+</span></span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="hll">                        <span class="p">)</span>
+</span></span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
 </span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="c1"># Setup CRUD router with the FastCRUD instance</span>
 </span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">crud_router</span><span class="p">(</span>
 </span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>    <span class="n">session</span><span class="o">=</span><span class="n">async_session</span><span class="p">,</span>
 </span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    <span class="n">model</span><span class="o">=</span><span class="n">MyModel</span><span class="p">,</span>
-</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>    <span class="n">crud</span><span class="o">=</span><span class="n">my_model_crud</span><span class="p">,</span>
-</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>    <span class="n">create_schema</span><span class="o">=</span><span class="n">CreateMyModelSchema</span><span class="p">,</span>
+</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="hll">    <span class="n">crud</span><span class="o">=</span><span class="n">my_model_crud</span><span class="p">,</span>
+</span></span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>    <span class="n">create_schema</span><span class="o">=</span><span class="n">CreateMyModelSchema</span><span class="p">,</span>
 </span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>    <span class="n">update_schema</span><span class="o">=</span><span class="n">UpdateMyModelSchema</span><span class="p">,</span>
 </span><span id="__span-7-23"><a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a>    <span class="n">delete_schema</span><span class="o">=</span><span class="n">DeleteMyModelSchema</span><span class="p">,</span>
 </span><span id="__span-7-24"><a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/mymodel&quot;</span><span class="p">,</span>
 </span><span id="__span-7-25"><a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;MyModel&quot;</span><span class="p">]</span>
 </span><span id="__span-7-26"><a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="p">))</span>
+</span></code></pre></div>
+<p>You may also directly pass the names of the columns to crud_router or EndpointCreator:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">endpoint_creator</span><span class="p">(</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="n">session</span><span class="o">=</span><span class="n">async_session</span><span class="p">,</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">model</span><span class="o">=</span><span class="n">MyModel</span><span class="p">,</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">create_schema</span><span class="o">=</span><span class="n">CreateMyModelSchema</span><span class="p">,</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">update_schema</span><span class="o">=</span><span class="n">UpdateMyModelSchema</span><span class="p">,</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">delete_schema</span><span class="o">=</span><span class="n">DeleteMyModelSchema</span><span class="p">,</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/mymodel&quot;</span><span class="p">,</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;MyModel&quot;</span><span class="p">],</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="hll">    <span class="n">is_deleted_column</span><span class="o">=</span><span class="s1">&#39;archived&#39;</span><span class="p">,</span>
+</span></span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="hll">    <span class="n">deleted_at_column</span><span class="o">=</span><span class="s1">&#39;archived_at&#39;</span>
+</span></span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="p">))</span>
+</span></code></pre></div>
+<p>You can also customize your <code>updated_at</code> column:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">endpoint_creator</span><span class="p">(</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">session</span><span class="o">=</span><span class="n">async_session</span><span class="p">,</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">model</span><span class="o">=</span><span class="n">MyModel</span><span class="p">,</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">create_schema</span><span class="o">=</span><span class="n">CreateMyModelSchema</span><span class="p">,</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="n">update_schema</span><span class="o">=</span><span class="n">UpdateMyModelSchema</span><span class="p">,</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="n">delete_schema</span><span class="o">=</span><span class="n">DeleteMyModelSchema</span><span class="p">,</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/mymodel&quot;</span><span class="p">,</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;MyModel&quot;</span><span class="p">],</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="hll">    <span class="n">updated_at_column</span><span class="o">=</span><span class="s1">&#39;date_updated&#39;</span>
+</span></span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="p">))</span>
 </span></code></pre></div>
 <p>This setup ensures that the soft delete functionality within your application utilizes the <code>archived</code> and <code>archived_at</code> columns for marking records as deleted, rather than the default <code>is_deleted</code> and <code>deleted_at</code> fields.</p>
 <p>By specifying custom column names for soft deletion, you can adapt FastCRUD to fit the design of your database models, providing a flexible solution for handling deleted records in a way that best suits your application's needs.</p>

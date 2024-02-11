@@ -208,7 +208,7 @@ def crud_router(
         deleted_at_column=deleted_at_column,
         updated_at_column=updated_at_column,
     )
-    
+
     endpoint_creator_class = endpoint_creator or EndpointCreator
     endpoint_creator_instance = endpoint_creator_class(
         session=session,
@@ -222,7 +222,7 @@ def crud_router(
         tags=tags,
         is_deleted_column=is_deleted_column,
         deleted_at_column=deleted_at_column,
-        updated_at_column=updated_at_column
+        updated_at_column=updated_at_column,
     )
 
     endpoint_creator_instance.add_routes_to_router(

@@ -154,7 +154,7 @@ class FastCRUD(
         model: type[ModelType],
         is_deleted_column: str = "is_deleted",
         deleted_at_column: str = "deleted_at",
-        updated_at_column: str = "updated_at"
+        updated_at_column: str = "updated_at",
     ) -> None:
         self.model = model
         self.is_deleted_column = is_deleted_column

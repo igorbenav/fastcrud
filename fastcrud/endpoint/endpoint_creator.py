@@ -28,7 +28,7 @@ class EndpointCreator:
     Attributes:
         session: The SQLAlchemy async session.
         model: The SQLAlchemy model.
-        crud: The CRUD base instance.
+        crud: An optional FastCRUD instance. If not provided, uses FastCRUD(model).
         create_schema: Pydantic schema for creating an item.
         update_schema: Pydantic schema for updating an item.
         delete_schema: Optional Pydantic schema for deleting an item.
@@ -37,6 +37,7 @@ class EndpointCreator:
         tags: List of tags for grouping endpoints in the documentation.
         is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to "is_deleted".
         deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to "deleted_at".
+        updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to "updated_at".
 
     Raises:
         ValueError: If both `included_methods` and `deleted_methods` are provided.
@@ -49,15 +50,12 @@ class EndpointCreator:
 
         from myapp.models import MyModel
         from myapp.schemas import CreateMyModel, UpdateMyModel
-        from myapp.crud import CRUDMyModel
         from myapp.database import async_session
 
         app = FastAPI()
-        my_model_crud = CRUDMyModel(MyModel)
         endpoint_creator = EndpointCreator(
             session=async_session,
             model=MyModel,
-            crud=my_model_crud,
             create_schema=CreateMyModel,
             update_schema=UpdateMyModel
         )
@@ -117,15 +115,16 @@ class EndpointCreator:
         self,
         session: AsyncSession,
         model: DeclarativeBase,
-        crud: FastCRUD,
         create_schema: Type[CreateSchemaType],
         update_schema: Type[UpdateSchemaType],
+        crud: Optional[FastCRUD] = None,
         include_in_schema: bool = True,
         delete_schema: Optional[Type[DeleteSchemaType]] = None,
         path: str = "",
         tags: Optional[list[str]] = None,
         is_deleted_column: str = "is_deleted",
         deleted_at_column: str = "deleted_at",
+        updated_at_column: str = "updated_at",
     ) -> None:
         self.primary_key_name = _get_primary_key(model)
         self.session = session
@@ -133,6 +132,7 @@ class EndpointCreator:
             model=model,
             is_deleted_column=is_deleted_column,
             deleted_at_column=deleted_at_column,
+            updated_at_column=updated_at_column,
         )
         self.model = model
         self.create_schema = create_schema
@@ -144,6 +144,7 @@ class EndpointCreator:
         self.router = APIRouter()
         self.is_deleted_column = is_deleted_column
         self.deleted_at_column = deleted_at_column
+        self.updated_at_column = updated_at_column
 
     def _create_item(self):
         """Creates an endpoint for creating items in the database."""

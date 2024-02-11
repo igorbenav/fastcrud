@@ -192,13 +192,13 @@ class MyModel(Base):
     archived_at = Column(DateTime)  # Custom timestamp column for soft delete
 ```
 
-### Using `EndpointCreator` and `crud_router` with Custom Soft Delete Columns
+### Using `EndpointCreator` and `crud_router` with Custom Soft Delete or Update Columns
 
 When initializing `crud_router` or creating a custom `EndpointCreator`, you can pass the names of your custom soft delete columns through the `FastCRUD` initialization. This informs FastCRUD which columns to check and update for soft deletion operations.
 
 Here's an example of using `crud_router` with custom soft delete columns:
 
-```python
+```python hl_lines="11-14 20"
 from fastapi import FastAPI
 from fastcrud import FastCRUD, crud_router
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -224,6 +224,37 @@ app.include_router(crud_router(
     delete_schema=DeleteMyModelSchema,
     path="/mymodel",
     tags=["MyModel"]
+))
+```
+
+You may also directly pass the names of the columns to crud_router or EndpointCreator:
+
+```python hl_lines="9 10"
+app.include_router(endpoint_creator(
+    session=async_session,
+    model=MyModel,
+    create_schema=CreateMyModelSchema,
+    update_schema=UpdateMyModelSchema,
+    delete_schema=DeleteMyModelSchema,
+    path="/mymodel",
+    tags=["MyModel"],
+    is_deleted_column='archived',
+    deleted_at_column='archived_at'
+))
+```
+
+You can also customize your `updated_at` column:
+
+```python hl_lines="9"
+app.include_router(endpoint_creator(
+    session=async_session,
+    model=MyModel,
+    create_schema=CreateMyModelSchema,
+    update_schema=UpdateMyModelSchema,
+    delete_schema=DeleteMyModelSchema,
+    path="/mymodel",
+    tags=["MyModel"],
+    updated_at_column='date_updated'
 ))
 ```
 

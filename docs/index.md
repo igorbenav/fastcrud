@@ -69,7 +69,7 @@ async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False
 Use `crud_router` and include it in your `FastAPI` application
 
 ```python
-from fastcrud import FastCRUD, crud_router
+from fastcrud import crud_router
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
@@ -86,7 +86,6 @@ app = FastAPI(lifespan=lifespan)
 item_router = crud_router(
     session=get_session,
     model=Item,
-    crud=FastCRUD(Item),
     create_schema=ItemSchema,
     update_schema=ItemSchema,
     path="/items",
@@ -171,7 +170,7 @@ class ItemUpdateSchema(BaseModel):
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
-from fastcrud import FastCRUD, crud_router
+from fastcrud import crud_router
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -201,7 +200,6 @@ crud = FastCRUD(Item)
 item_router = crud_router(
     session=get_session,
     model=Item,
-    crud=crud,
     create_schema=ItemCreateSchema,
     update_schema=ItemUpdateSchema,
     path="/items",

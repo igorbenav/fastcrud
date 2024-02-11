@@ -14,9 +14,9 @@ DeleteSchemaType = TypeVar("DeleteSchemaType", bound=BaseModel)
 def crud_router(
     session: AsyncSession,
     model: DeclarativeBase,
-    crud: FastCRUD,
     create_schema: Type[CreateSchemaType],
     update_schema: Type[UpdateSchemaType],
+    crud: Optional[FastCRUD] = None,
     delete_schema: Optional[Type[DeleteSchemaType]] = None,
     path: str = "",
     tags: Optional[List[str]] = None,
@@ -32,6 +32,7 @@ def crud_router(
     endpoint_creator: Optional[Type[EndpointCreator]] = None,
     is_deleted_column: str = "is_deleted",
     deleted_at_column: str = "deleted_at",
+    updated_at_column: str = "updated_at",
 ) -> APIRouter:
     """
     Creates and configures a FastAPI router with CRUD endpoints for a given model.
@@ -43,7 +44,7 @@ def crud_router(
     Args:
         session: The SQLAlchemy async session.
         model: The SQLAlchemy model.
-        crud: The FastCRUD instance.
+        crud: An optional FastCRUD instance. If not provided, uses FastCRUD(model).
         create_schema: Pydantic schema for creating an item.
         update_schema: Pydantic schema for updating an item.
         delete_schema: Optional Pydantic schema for deleting an item.
@@ -61,6 +62,7 @@ def crud_router(
         endpoint_creator: Optional custom class derived from EndpointCreator for advanced customization.
         is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to "is_deleted".
         deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to "deleted_at".
+        updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to "updated_at".
 
     Returns:
         Configured APIRouter instance with the CRUD endpoints.
@@ -74,7 +76,6 @@ def crud_router(
         router = crud_router(
             session=async_session,
             model=MyModel,
-            crud=CRUDMyModel(MyModel),
             create_schema=CreateMyModelSchema,
             update_schema=UpdateMyModelSchema,
             path="/mymodel",
@@ -91,7 +92,6 @@ def crud_router(
         router = crud_router(
             session=async_session,
             model=UserModel,
-            crud=CRUDUserModel(UserModel),
             create_schema=CreateUserSchema,
             update_schema=UpdateUserSchema,
             read_deps=[get_current_user],
@@ -106,7 +106,6 @@ def crud_router(
         router = crud_router(
             session=async_session,
             model=ProductModel,
-            crud=CRUDProductModel(ProductModel),
             create_schema=CreateProductSchema,
             update_schema=UpdateProductSchema,
             delete_schema=DeleteProductSchema,
@@ -203,6 +202,13 @@ def crud_router(
         app.include_router(my_router)
         ```
     """
+    crud = crud or FastCRUD(
+        model=model,
+        is_deleted_column=is_deleted_column,
+        deleted_at_column=deleted_at_column,
+        updated_at_column=updated_at_column,
+    )
+
     endpoint_creator_class = endpoint_creator or EndpointCreator
     endpoint_creator_instance = endpoint_creator_class(
         session=session,
@@ -216,6 +222,7 @@ def crud_router(
         tags=tags,
         is_deleted_column=is_deleted_column,
         deleted_at_column=deleted_at_column,
+        updated_at_column=updated_at_column,
     )
 
     endpoint_creator_instance.add_routes_to_router(

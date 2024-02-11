@@ -44,6 +44,7 @@ class FastCRUD(
         model: The SQLAlchemy model type.
         is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to "is_deleted".
         deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to "deleted_at".
+        updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to "updated_at".
 
     Methods:
         create:
@@ -153,10 +154,12 @@ class FastCRUD(
         model: type[ModelType],
         is_deleted_column: str = "is_deleted",
         deleted_at_column: str = "deleted_at",
+        updated_at_column: str = "updated_at"
     ) -> None:
         self.model = model
         self.is_deleted_column = is_deleted_column
         self.deleted_at_column = deleted_at_column
+        self.updated_at_column = updated_at_column
 
     def _parse_filters(self, **kwargs) -> list[BinaryExpression]:
         filters = []
@@ -987,8 +990,9 @@ class FastCRUD(
         else:
             update_data = object.model_dump(exclude_unset=True)
 
-        if "updated_at" in update_data.keys():
-            update_data["updated_at"] = datetime.now(timezone.utc)
+        updated_at_col = getattr(self.model, self.updated_at_column, None)
+        if updated_at_col and updated_at_col in update_data.keys():
+            update_data[updated_at_col] = datetime.now(timezone.utc)
 
         model_columns = {column.name for column in inspect(self.model).c}
         extra_fields = set(update_data) - model_columns

@@ -66,8 +66,8 @@ async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False
 
 Use `crud_router` and include it in your `FastAPI` application
 
-```python title="main.py" hl_lines="17-25 27"
-from fastcrud import FastCRUD, crud_router
+```python title="main.py" hl_lines="17-24 26"
+from fastcrud import crud_router
 
 # Database session dependency
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
@@ -86,7 +86,6 @@ app = FastAPI(lifespan=lifespan)
 item_router = crud_router(
     session=get_session,
     model=Item,
-    crud=FastCRUD(Item),
     create_schema=ItemSchema,
     update_schema=ItemSchema,
     path="/items",

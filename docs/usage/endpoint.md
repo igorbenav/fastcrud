@@ -43,7 +43,7 @@ class ItemUpdateSchema(BaseModel):
 
 ### Step 2: Set Up FastAPI and FastCRUD
 
-Next, set up your FastAPI application and FastCRUD instances. This involves configuring the database connection and creating a CRUD instance for your model.
+Next, set up your FastAPI application, you can optionally set up a custom FastCRUD instance as well. This involves configuring the database connection.
 
 ```python
 from typing import AsyncGenerator
@@ -71,9 +71,6 @@ async def lifespan(app: FastAPI):
 
 # FastAPI app
 app = FastAPI(lifespan=lifespan)
-
-# CRUD operations setup
-crud = FastCRUD(Item)
 ```
 
 ### Step 3: Use `crud_router` to Create Endpoints
@@ -83,7 +80,6 @@ crud = FastCRUD(Item)
 item_router = crud_router(
     session=get_session,
     model=Item,
-    crud=crud,
     create_schema=ItemCreateSchema,
     update_schema=ItemUpdateSchema,
     path="/items",
@@ -176,7 +172,6 @@ from fastcrud import EndpointCreator
 endpoint_creator = EndpointCreator(
     session=get_session,
     model=YourModel,
-    crud=your_crud_instance,
     create_schema=YourCreateSchema,
     update_schema=YourUpdateSchema,
     delete_schema=YourDeleteSchema,

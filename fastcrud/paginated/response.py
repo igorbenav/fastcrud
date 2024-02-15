@@ -1,6 +1,9 @@
 from typing import Any
 
-def paginated_response(crud_data: dict, page: int, items_per_page: int) -> dict[str, Any]:
+
+def paginated_response(
+    crud_data: dict, page: int, items_per_page: int
+) -> dict[str, Any]:
     """Create a paginated response based on the provided data and pagination parameters.
 
     Parameters

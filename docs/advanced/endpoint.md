@@ -1,10 +1,72 @@
 # Advanced Use of EndpointCreator
 
-In FastCRUD, the `EndpointCreator` class simplifies the process of creating standard CRUD endpoints. However, for more advanced use cases, you might want to add custom routes that go beyond the basic CRUD operations. This can be achieved by extending the `EndpointCreator` class.
+## Available Automatic Endpoints
+FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints for your FastAPI application. Here's an overview of the available automatic endpoints and how they work:
+
+### Create
+
+- **Endpoint**: `/create`
+- **Method**: `POST`
+- **Description**: Creates a new item in the database.
+- **Request Body**: JSON object based on the `create_schema`.
+- **Example Request**: `POST /yourmodel/create` with JSON body.
+
+### Read
+
+- **Endpoint**: `/get/{id}`
+- **Method**: `GET`
+- **Description**: Retrieves a single item by its ID.
+- **Path Parameters**: `id` - The ID of the item to retrieve.
+- **Example Request**: `GET /yourmodel/get/1`.
+
+### Read Multiple
+
+- **Endpoint**: `/get_multi`
+- **Method**: `GET`
+- **Description**: Retrieves multiple items with optional pagination.
+- **Query Parameters**:
+  - `offset` (optional): The offset from where to start fetching items.
+  - `limit` (optional): The maximum number of items to return.
+- **Example Request**: `GET /yourmodel/get_multi?offset=0&limit=10`.
+
+### Read Paginated
+
+- **Endpoint**: `/get_paginated`
+- **Method**: `GET`
+- **Description**: Retrieves multiple items with pagination.
+- **Query Parameters**:
+  - `page`: The page number, starting from 1.
+  - `itemsPerPage`: The number of items per page.
+- **Example Request**: `GET /yourmodel/get_paginated?page=1&itemsPerPage=10`.
+
+### Update
+
+- **Endpoint**: `/update/{id}`
+- **Method**: `PATCH`
+- **Description**: Updates an existing item by its ID.
+- **Path Parameters**: `id` - The ID of the item to update.
+- **Request Body**: JSON object based on the `update_schema`.
+- **Example Request**: `PATCH /yourmodel/update/1` with JSON body.
+
+### Delete
+
+- **Endpoint**: `/delete/{id}`
+- **Method**: `DELETE`
+- **Description**: Deletes (soft delete if configured) an item by its ID.
+- **Path Parameters**: `id` - The ID of the item to delete.
+- **Example Request**: `DELETE /yourmodel/delete/1`.
+
+### DB Delete (Hard Delete)
+
+- **Endpoint**: `/db_delete/{id}` (Available if a `delete_schema` is provided)
+- **Method**: `DELETE`
+- **Description**: Permanently deletes an item by its ID, bypassing the soft delete mechanism.
+- **Path Parameters**: `id` - The ID of the item to hard delete.
+- **Example Request**: `DELETE /yourmodel/db_delete/1`.
 
 ## Selective CRUD Operations
 
-You can control which CRUD operations are exposed by using `included_methods` and `deleted_methods`. These parameters allow you to specify exactly which CRUD methods should be included or excluded when setting up the router.
+You can control which CRUD operations are exposed by using `included_methods` and `deleted_methods`. These parameters allow you to specify exactly which CRUD methods should be included or excluded when setting up the router. By default, all CRUD endpoints are included.
 
 ### Using `included_methods`
 

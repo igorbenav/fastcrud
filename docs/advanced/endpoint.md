@@ -18,6 +18,14 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Description**: Retrieves a single item by its ID.
 - **Path Parameters**: `id` - The ID of the item to retrieve.
 - **Example Request**: `GET /yourmodel/get/1`.
+- **Example Return**:
+```javascript
+{
+    "id": 1,
+    "name": "Item 1",
+    "description": "Description of item 1"
+}
+```
 
 ### Read Multiple
 
@@ -27,7 +35,20 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Query Parameters**:
   - `offset` (optional): The offset from where to start fetching items.
   - `limit` (optional): The maximum number of items to return.
-- **Example Request**: `GET /yourmodel/get_multi?offset=0&limit=10`.
+- **Example Request**: `GET /yourmodel/get_multi?offset=3&limit=4`.
+- **Example Return**:
+```javascript
+{
+  "data": [
+    {"id": 4, "name": "Item 4", "description": "Description of item 4"},
+    {"id": 5, "name": "Item 5", "description": "Description of item 5"},
+    {"id": 6, "name": "Item 6", "description": "Description of item 6"},
+    {"id": 7, "name": "Item 7", "description": "Description of item 7"}
+  ],
+  "total_count": 50
+}
+
+```
 
 ### Read Paginated
 
@@ -37,7 +58,21 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Query Parameters**:
   - `page`: The page number, starting from 1.
   - `itemsPerPage`: The number of items per page.
-- **Example Request**: `GET /yourmodel/get_paginated?page=1&itemsPerPage=10`.
+- **Example Request**: `GET /yourmodel/get_paginated?page=1&itemsPerPage=3`.
+- **Example Return**:
+```javascript
+{
+  "data": [
+    {"id": 1, "name": "Item 1", "description": "Description of item 1"},
+    {"id": 2, "name": "Item 2", "description": "Description of item 2"},
+    {"id": 3, "name": "Item 3", "description": "Description of item 3"}
+  ],
+  "total_count": 50,
+  "has_more": true,
+  "page": 1,
+  "items_per_page": 3
+}
+```
 
 ### Update
 
@@ -47,6 +82,7 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Path Parameters**: `id` - The ID of the item to update.
 - **Request Body**: JSON object based on the `update_schema`.
 - **Example Request**: `PATCH /yourmodel/update/1` with JSON body.
+- **Example Return**: `None`
 
 ### Delete
 
@@ -55,6 +91,7 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Description**: Deletes (soft delete if configured) an item by its ID.
 - **Path Parameters**: `id` - The ID of the item to delete.
 - **Example Request**: `DELETE /yourmodel/delete/1`.
+- **Example Return**: `None`
 
 ### DB Delete (Hard Delete)
 
@@ -63,6 +100,7 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Description**: Permanently deletes an item by its ID, bypassing the soft delete mechanism.
 - **Path Parameters**: `id` - The ID of the item to hard delete.
 - **Example Request**: `DELETE /yourmodel/db_delete/1`.
+- **Example Return**: `None`
 
 ## Selective CRUD Operations
 

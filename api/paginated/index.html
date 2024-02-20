@@ -12,13 +12,13 @@
         <meta name="author" content="Igor Magalhaes">
       
       
-        <link rel="canonical" href="https://github.com/igorbenav/fastcrud/api/overview/">
+        <link rel="canonical" href="https://github.com/igorbenav/fastcrud/api/paginated/">
       
       
-        <link rel="prev" href="../../advanced/crud/">
+        <link rel="prev" href="../crud_router/">
       
       
-        <link rel="next" href="../fastcrud/">
+        <link rel="next" href="../../community/overview/">
       
       
       <link rel="icon" href="../../assets/logo.png">
@@ -26,7 +26,7 @@
     
     
       
-        <title>Overview - FastCRUD</title>
+        <title>paginated - FastCRUD</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#api-reference-overview" class="md-skip">
+        <a href="#paginated-module-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Overview
+              paginated
             
           </span>
         </div>
@@ -334,7 +334,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../overview/" class="md-tabs__link">
           
   
     
@@ -785,30 +785,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Overview
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -817,62 +797,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#key-components" class="md-nav__link">
-    <span class="md-ellipsis">
-      Key Components
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Usage
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#contribution" class="md-nav__link">
-    <span class="md-ellipsis">
-      Contribution
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#feedback" class="md-nav__link">
-    <span class="md-ellipsis">
-      Feedback
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -945,10 +869,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../paginated/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    paginated
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -957,6 +901,128 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#function-definition" class="md-nav__link">
+    <span class="md-ellipsis">
+      Function Definition
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fastcrud.paginated" class="md-nav__link">
+    <span class="md-ellipsis">
+      paginated
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fastcrud.paginated.compute_offset" class="md-nav__link">
+    <span class="md-ellipsis">
+      compute_offset
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="compute_offset">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fastcrud.paginated.compute_offset--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fastcrud.paginated.compute_offset--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Returns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fastcrud.paginated.compute_offset--examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fastcrud.paginated.paginated_response" class="md-nav__link">
+    <span class="md-ellipsis">
+      paginated_response
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="paginated_response">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fastcrud.paginated.paginated_response--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fastcrud.paginated.paginated_response--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Returns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fastcrud.paginated.paginated_response--note" class="md-nav__link">
+    <span class="md-ellipsis">
+      Note
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1137,38 +1203,104 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#key-components" class="md-nav__link">
+  <a href="#function-definition" class="md-nav__link">
     <span class="md-ellipsis">
-      Key Components
+      Function Definition
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+  <a href="#fastcrud.paginated" class="md-nav__link">
     <span class="md-ellipsis">
-      Usage
+      paginated
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#contribution" class="md-nav__link">
+  <a href="#fastcrud.paginated.compute_offset" class="md-nav__link">
     <span class="md-ellipsis">
-      Contribution
+      compute_offset
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="compute_offset">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fastcrud.paginated.compute_offset--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#feedback" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#fastcrud.paginated.compute_offset--returns" class="md-nav__link">
     <span class="md-ellipsis">
-      Feedback
+      Returns
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fastcrud.paginated.compute_offset--examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fastcrud.paginated.paginated_response" class="md-nav__link">
+    <span class="md-ellipsis">
+      paginated_response
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="paginated_response">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fastcrud.paginated.paginated_response--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fastcrud.paginated.paginated_response--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Returns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fastcrud.paginated.paginated_response--note" class="md-nav__link">
+    <span class="md-ellipsis">
+      Note
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1190,44 +1322,229 @@
   
 
 
-<h1 id="api-reference-overview">API Reference Overview<a class="headerlink" href="#api-reference-overview" title="Permanent link">&para;</a></h1>
-<p>Welcome to the API Reference section of our documentation. This section provides detailed information about the various classes, functions, and modules that make up our application. Whether you are looking to extend the application, integrate with it, or simply explore its capabilities, this section will guide you through the intricacies of our codebase.</p>
-<h2 id="key-components">Key Components<a class="headerlink" href="#key-components" title="Permanent link">&para;</a></h2>
-<p>Our application's API is comprised of several key components, each serving a specific purpose:</p>
-<ol>
-<li>
-<p><strong>FastCRUD Class</strong>: This class is at the heart of our CRUD (Create, Read, Update, Delete) operations. It provides a convenient and efficient way to interact with our database models.</p>
-<ul>
-<li><a href="../fastcrud/">FastCRUD Class Reference</a></li>
-</ul>
-</li>
-<li>
-<p><strong>EndpointCreator Class</strong>: A utility class for creating and registering CRUD endpoints in a FastAPI application. It simplifies the addition of standard CRUD endpoints to your FastAPI router.</p>
-<ul>
-<li><a href="../endpoint_creator/">EndpointCreator Class Reference</a></li>
-</ul>
-</li>
-<li>
-<p><strong>crud_router Function</strong>: A function that creates and configures a FastAPI router with CRUD endpoints for a specific model. It's a quick way to add standard CRUD operations to your models.</p>
-<ul>
-<li><a href="../crud_router/">CRUD Router Function Reference</a></li>
-</ul>
-</li>
-<li>
-<p><strong>paginated Module</strong>: A a utility module for offset pagination related functions.</p>
-<ul>
-<li><a href="../paginated/">Pagination Module Reference</a></li>
-</ul>
-</li>
-</ol>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<p>Each component is documented with its own dedicated page, where you can find detailed information about its methods, parameters, return types, and usage examples. These pages are designed to provide you with all the information you need to understand and work with our API effectively.</p>
-<h2 id="contribution">Contribution<a class="headerlink" href="#contribution" title="Permanent link">&para;</a></h2>
-<p>If you wish to contribute to the development of our API, please refer to our <a href="../../community/CONTRIBUTING/">Contributing Guidelines</a>. We welcome contributions of all forms, from bug fixes to feature development.</p>
-<h2 id="feedback">Feedback<a class="headerlink" href="#feedback" title="Permanent link">&para;</a></h2>
-<p>Your feedback is crucial in helping us improve this documentation. If you have any suggestions, corrections, or queries, please reach out to us.</p>
-<hr />
-<p>Navigate through each section for detailed documentation of our API components.</p>
+<h1 id="paginated-module-reference">Paginated Module Reference<a class="headerlink" href="#paginated-module-reference" title="Permanent link">&para;</a></h1>
+<p><code>paginated</code> is a utility module for offset pagination related functions.</p>
+<h2 id="function-definition">Function Definition<a class="headerlink" href="#function-definition" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="fastcrud.paginated"></a>
+  <div class="doc doc-contents first">
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="fastcrud.paginated.compute_offset" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">compute_offset</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">items_per_page</span><span class="p">)</span></code>
+
+<a href="#fastcrud.paginated.compute_offset" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Calculate the offset for pagination based on the given page number and items per page.</p>
+<p>The offset represents the starting point in a dataset for the items on a given page.
+For example, if each page displays 10 items and you want to display page 3, the offset will be 20,
+meaning the display should start with the 21st item.</p>
+<h4 id="fastcrud.paginated.compute_offset--parameters">Parameters<a class="headerlink" href="#fastcrud.paginated.compute_offset--parameters" title="Permanent link">&para;</a></h4>
+<p>page : int
+    The current page number. Page numbers should start from 1.
+items_per_page : int
+    The number of items to be displayed on each page.</p>
+<h4 id="fastcrud.paginated.compute_offset--returns">Returns<a class="headerlink" href="#fastcrud.paginated.compute_offset--returns" title="Permanent link">&para;</a></h4>
+<p>int
+    The calculated offset.</p>
+<h4 id="fastcrud.paginated.compute_offset--examples">Examples<a class="headerlink" href="#fastcrud.paginated.compute_offset--examples" title="Permanent link">&para;</a></h4>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>offset(1, 10)
+0
+offset(3, 10)
+20</p>
+</blockquote>
+</blockquote>
+</blockquote>
+
+          <details class="quote">
+            <summary>Source code in <code>fastcrud/paginated/helper.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-0-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-0-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-0-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-0-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-0-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-0-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-0-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-0-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-0-10">10</a></span>
+<span class="normal"><a href="#__codelineno-0-11">11</a></span>
+<span class="normal"><a href="#__codelineno-0-12">12</a></span>
+<span class="normal"><a href="#__codelineno-0-13">13</a></span>
+<span class="normal"><a href="#__codelineno-0-14">14</a></span>
+<span class="normal"><a href="#__codelineno-0-15">15</a></span>
+<span class="normal"><a href="#__codelineno-0-16">16</a></span>
+<span class="normal"><a href="#__codelineno-0-17">17</a></span>
+<span class="normal"><a href="#__codelineno-0-18">18</a></span>
+<span class="normal"><a href="#__codelineno-0-19">19</a></span>
+<span class="normal"><a href="#__codelineno-0-20">20</a></span>
+<span class="normal"><a href="#__codelineno-0-21">21</a></span>
+<span class="normal"><a href="#__codelineno-0-22">22</a></span>
+<span class="normal"><a href="#__codelineno-0-23">23</a></span>
+<span class="normal"><a href="#__codelineno-0-24">24</a></span>
+<span class="normal"><a href="#__codelineno-0-25">25</a></span>
+<span class="normal"><a href="#__codelineno-0-26">26</a></span>
+<span class="normal"><a href="#__codelineno-0-27">27</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="k">def</span> <span class="nf">compute_offset</span><span class="p">(</span><span class="n">page</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">items_per_page</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the offset for pagination based on the given page number and items per page.</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="sd">    The offset represents the starting point in a dataset for the items on a given page.</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="sd">    For example, if each page displays 10 items and you want to display page 3, the offset will be 20,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="sd">    meaning the display should start with the 21st item.</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7"></a>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="sd">    Parameters</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="sd">    ----------</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="sd">    page : int</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="sd">        The current page number. Page numbers should start from 1.</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="sd">    items_per_page : int</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="sd">        The number of items to be displayed on each page.</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14"></a>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="sd">    Returns</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="sd">    -------</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="sd">    int</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18"></a><span class="sd">        The calculated offset.</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19"></a>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="sd">    Examples</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="sd">    --------</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="sd">    &gt;&gt;&gt; offset(1, 10)</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="sd">    0</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="sd">    &gt;&gt;&gt; offset(3, 10)</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="sd">    20</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="k">return</span> <span class="p">(</span><span class="n">page</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">items_per_page</span>
+</span></code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="fastcrud.paginated.paginated_response" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">paginated_response</span><span class="p">(</span><span class="n">crud_data</span><span class="p">,</span> <span class="n">page</span><span class="p">,</span> <span class="n">items_per_page</span><span class="p">)</span></code>
+
+<a href="#fastcrud.paginated.paginated_response" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Create a paginated response based on the provided data and pagination parameters.</p>
+<h4 id="fastcrud.paginated.paginated_response--parameters">Parameters<a class="headerlink" href="#fastcrud.paginated.paginated_response--parameters" title="Permanent link">&para;</a></h4>
+<p>crud_data : ListResponse[SchemaType]
+    Data to be paginated, including the list of items and total count.
+page : int
+    Current page number.
+items_per_page : int
+    Number of items per page.</p>
+<h4 id="fastcrud.paginated.paginated_response--returns">Returns<a class="headerlink" href="#fastcrud.paginated.paginated_response--returns" title="Permanent link">&para;</a></h4>
+<p>dict[str, Any]
+    A structured paginated response dict containing the list of items, total count, pagination flags, and numbers.</p>
+<h4 id="fastcrud.paginated.paginated_response--note">Note<a class="headerlink" href="#fastcrud.paginated.paginated_response--note" title="Permanent link">&para;</a></h4>
+<p>The function does not actually paginate the data but formats the response to indicate pagination metadata.</p>
+
+          <details class="quote">
+            <summary>Source code in <code>fastcrud/paginated/response.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-0-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-0-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-0-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-0-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-0-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-0-10">10</a></span>
+<span class="normal"><a href="#__codelineno-0-11">11</a></span>
+<span class="normal"><a href="#__codelineno-0-12">12</a></span>
+<span class="normal"><a href="#__codelineno-0-13">13</a></span>
+<span class="normal"><a href="#__codelineno-0-14">14</a></span>
+<span class="normal"><a href="#__codelineno-0-15">15</a></span>
+<span class="normal"><a href="#__codelineno-0-16">16</a></span>
+<span class="normal"><a href="#__codelineno-0-17">17</a></span>
+<span class="normal"><a href="#__codelineno-0-18">18</a></span>
+<span class="normal"><a href="#__codelineno-0-19">19</a></span>
+<span class="normal"><a href="#__codelineno-0-20">20</a></span>
+<span class="normal"><a href="#__codelineno-0-21">21</a></span>
+<span class="normal"><a href="#__codelineno-0-22">22</a></span>
+<span class="normal"><a href="#__codelineno-0-23">23</a></span>
+<span class="normal"><a href="#__codelineno-0-24">24</a></span>
+<span class="normal"><a href="#__codelineno-0-25">25</a></span>
+<span class="normal"><a href="#__codelineno-0-26">26</a></span>
+<span class="normal"><a href="#__codelineno-0-27">27</a></span>
+<span class="normal"><a href="#__codelineno-0-28">28</a></span>
+<span class="normal"><a href="#__codelineno-0-29">29</a></span>
+<span class="normal"><a href="#__codelineno-0-30">30</a></span>
+<span class="normal"><a href="#__codelineno-0-31">31</a></span>
+<span class="normal"><a href="#__codelineno-0-32">32</a></span>
+<span class="normal"><a href="#__codelineno-0-33">33</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="k">def</span> <span class="nf">paginated_response</span><span class="p">(</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5"></a>    <span class="n">crud_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">page</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">items_per_page</span><span class="p">:</span> <span class="nb">int</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a paginated response based on the provided data and pagination parameters.</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8"></a>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="sd">    Parameters</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="sd">    ----------</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="sd">    crud_data : ListResponse[SchemaType]</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="sd">        Data to be paginated, including the list of items and total count.</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="sd">    page : int</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="sd">        Current page number.</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="sd">    items_per_page : int</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="sd">        Number of items per page.</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17"></a>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18"></a><span class="sd">    Returns</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="sd">    -------</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="sd">    dict[str, Any]</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="sd">        A structured paginated response dict containing the list of items, total count, pagination flags, and numbers.</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22"></a>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="sd">    Note</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="sd">    ----</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="sd">    The function does not actually paginate the data but formats the response to indicate pagination metadata.</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="k">return</span> <span class="p">{</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>        <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">crud_data</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">],</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>        <span class="s2">&quot;total_count&quot;</span><span class="p">:</span> <span class="n">crud_data</span><span class="p">[</span><span class="s2">&quot;total_count&quot;</span><span class="p">],</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>        <span class="s2">&quot;has_more&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">page</span> <span class="o">*</span> <span class="n">items_per_page</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">crud_data</span><span class="p">[</span><span class="s2">&quot;total_count&quot;</span><span class="p">],</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a>        <span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="n">page</span><span class="p">,</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a>        <span class="s2">&quot;items_per_page&quot;</span><span class="p">:</span> <span class="n">items_per_page</span><span class="p">,</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a>    <span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
 
 
 

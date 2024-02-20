@@ -18,6 +18,10 @@ Our application's API is comprised of several key components, each serving a spe
 
     - [CRUD Router Function Reference](crud_router.md)
 
+4. **paginated Module**: A a utility module for offset pagination related functions.
+
+    - [Pagination Module Reference](paginated.md)
+
 ## Usage
 
 Each component is documented with its own dedicated page, where you can find detailed information about its methods, parameters, return types, and usage examples. These pages are designed to provide you with all the information you need to understand and work with our API effectively.

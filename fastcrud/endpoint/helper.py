@@ -11,7 +11,15 @@ class CRUDMethods(BaseModel):
     valid_methods: Annotated[
         List[str],
         Field(
-            default=["create", "read", "read_multi", "update", "delete", "db_delete"]
+            default=[
+                "create",
+                "read",
+                "read_multi",
+                "read_paginated",
+                "update",
+                "delete",
+                "db_delete",
+            ]
         ),
     ]
 
@@ -21,6 +29,7 @@ class CRUDMethods(BaseModel):
             "create",
             "read",
             "read_multi",
+            "read_paginated",
             "update",
             "delete",
             "db_delete",

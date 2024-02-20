@@ -9,6 +9,8 @@ from ..exceptions.http_exceptions import NotFoundException
 from ..crud.fast_crud import FastCRUD
 from ..exceptions.http_exceptions import DuplicateValueException
 from .helper import CRUDMethods, _get_primary_key, _extract_unique_columns
+from ..paginated.response import paginated_response
+from ..paginated.helper import compute_offset
 
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
@@ -181,7 +183,7 @@ class EndpointCreator:
         return endpoint
 
     def _read_items(self):
-        """Creates an endpoint for reading multiple items from the database with optional pagination."""
+        """Creates an endpoint for reading multiple items from the database."""
 
         async def endpoint(
             db: AsyncSession = Depends(self.session),
@@ -189,6 +191,29 @@ class EndpointCreator:
             limit: int = Query(100),
         ):
             return await self.crud.get_multi(db, offset=offset, limit=limit)
+
+        return endpoint
+
+    def _read_paginated(self):
+        """Creates an endpoint for reading multiple items from the database with pagination."""
+
+        async def endpoint(
+            db: AsyncSession = Depends(self.session),
+            page: int = Query(
+                1, alias="page", description="Page number, starting from 1"
+            ),
+            items_per_page: int = Query(
+                10, alias="itemsPerPage", description="Number of items per page"
+            ),
+        ):
+            offset = compute_offset(page=page, items_per_page=items_per_page)
+            crud_data = await self.crud.get_multi(
+                db, offset=offset, limit=items_per_page
+            )
+
+            return paginated_response(
+                crud_data=crud_data, page=page, items_per_page=items_per_page
+            )
 
         return endpoint
 
@@ -233,6 +258,7 @@ class EndpointCreator:
         create_deps: list[Callable] = [],
         read_deps: list[Callable] = [],
         read_multi_deps: list[Callable] = [],
+        read_paginated_deps: list[Callable] = [],
         update_deps: list[Callable] = [],
         delete_deps: list[Callable] = [],
         db_delete_deps: list[Callable] = [],
@@ -303,6 +329,7 @@ class EndpointCreator:
                 "create",
                 "read",
                 "read_multi",
+                "read_paginated",
                 "update",
                 "delete",
                 "db_delete",
@@ -359,7 +386,20 @@ class EndpointCreator:
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
                 dependencies=read_multi_deps,
-                description=f"Read multiple {self.model.__name__} rows from the database with optional pagination.",
+                description=f"Read multiple {self.model.__name__} rows from the database with a limit and an offset.",
+            )
+
+        if ("read_paginated" in included_methods) and (
+            "read_paginated" not in deleted_methods
+        ):
+            self.router.add_api_route(
+                f"{self.path}/get_paginated",
+                self._read_paginated(),
+                methods=["GET"],
+                include_in_schema=self.include_in_schema,
+                tags=self.tags,
+                dependencies=read_paginated_deps,
+                description=f"Read multiple {self.model.__name__} rows from the database with pagination.",
             )
 
         if ("update" in included_methods) and ("update" not in deleted_methods):

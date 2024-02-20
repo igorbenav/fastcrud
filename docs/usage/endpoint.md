@@ -89,6 +89,10 @@ item_router = crud_router(
 app.include_router(item_router)
 ```
 
+### Available Endpoints
+
+For a comprehensive list of all available endpoints, read the [advanced section](../advanced/endpoint.md).
+
 ## Usage and Testing
 
 Once the application is running, you can test the automatically created endpoints using tools like Swagger UI, which FastAPI provides by default. The endpoints for creating, reading, updating, and deleting Item instances are now accessible at /items.

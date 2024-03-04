@@ -150,6 +150,82 @@ app.include_router(my_router)
 
         If `included_methods` and `deleted_methods` are both provided, a ValueError will be raised.
 
+## Customizing Endpoint Names
+
+You can customize the names of the auto generated endpoints by passing an `endpoint_names` dictionary when initializing the `EndpointCreator` or calling the `crud_router` function. This dictionary should map the CRUD operation names (`create`, `read`, `update`, `delete`, `db_delete`, `read_multi`, `read_paginated`) to your desired endpoint names.
+
+### Example: Using `crud_router`
+
+Here's how you can customize endpoint names using the `crud_router` function:
+
+```python
+from fastapi import FastAPI
+from yourapp.crud import crud_router
+from yourapp.models import YourModel
+from yourapp.schemas import CreateYourModelSchema, UpdateYourModelSchema
+from yourapp.database import async_session
+
+app = FastAPI()
+
+# Custom endpoint names
+custom_endpoint_names = {
+    "create": "add",
+    "read": "fetch",
+    "update": "modify",
+    "delete": "remove",
+    "read_multi": "list",
+    "read_paginated": "paginate"
+}
+
+# Setup CRUD router with custom endpoint names
+app.include_router(crud_router(
+    session=async_session,
+    model=YourModel,
+    create_schema=CreateYourModelSchema,
+    update_schema=UpdateYourModelSchema,
+    path="/yourmodel",
+    tags=["YourModel"],
+    endpoint_names=custom_endpoint_names
+))
+```
+
+In this example, the standard CRUD endpoints will be replaced with `/add`, `/fetch/{id}`, `/modify/{id}`, `/remove/{id}`, `/list`, and `/paginate`.
+
+### Example: Using `EndpointCreator`
+
+If you are using `EndpointCreator`, you can also pass the `endpoint_names` dictionary to customize the endpoint names similarly:
+
+```python
+# Custom endpoint names
+custom_endpoint_names = {
+    "create": "add_new",
+    "read": "get_single",
+    "update": "change",
+    "delete": "erase",
+    "db_delete": "hard_erase",
+    "read_multi": "get_all",
+    "read_paginated": "get_page"
+}
+
+# Initialize and use the custom EndpointCreator
+endpoint_creator = EndpointCreator(
+    session=async_session,
+    model=YourModel,
+    create_schema=CreateYourModelSchema,
+    update_schema=UpdateYourModelSchema,
+    path="/yourmodel",
+    tags=["YourModel"],
+    endpoint_names=custom_endpoint_names
+)
+
+endpoint_creator.add_routes_to_router()
+app.include_router(endpoint_creator.router)
+```
+
+!!! TIP
+
+    You only need to pass the names of the endpoints you want to change in the endpoint_names dict.
+
 ## Extending EndpointCreator
 
 You can create a subclass of `EndpointCreator` and override or add new methods to define custom routes. Here's an example:

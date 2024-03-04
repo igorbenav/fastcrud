@@ -66,7 +66,7 @@ def crud_router(
         deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to "deleted_at".
         updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to "updated_at".
         endpoint_names: Optional dictionary to customize endpoint names for CRUD operations. Keys are operation types
-                        ("create", "read", "update", "delete", "db_delete", "read_multi", "read_paginated"), and 
+                        ("create", "read", "update", "delete", "db_delete", "read_multi", "read_paginated"), and
                         values are the custom names to use. Unspecified operations will use default names.
 
     Returns:

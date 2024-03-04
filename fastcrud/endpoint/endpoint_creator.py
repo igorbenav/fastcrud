@@ -41,7 +41,7 @@ class EndpointCreator:
         deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to "deleted_at".
         updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to "updated_at".
         endpoint_names: Optional dictionary to customize endpoint names for CRUD operations. Keys are operation types
-                        ("create", "read", "update", "delete", "db_delete", "read_multi", "read_paginated"), and 
+                        ("create", "read", "update", "delete", "db_delete", "read_multi", "read_paginated"), and
                         values are the custom names to use. Unspecified operations will use default names.
 
     Raises:
@@ -177,7 +177,7 @@ class EndpointCreator:
             "delete": "delete",
             "db_delete": "db_delete",
             "read_multi": "get_multi",
-            "read_paginated": "get_paginated"
+            "read_paginated": "get_paginated",
         }
         self.endpoint_names = {**self.default_endpoint_names, **(endpoint_names or {})}
 
@@ -285,10 +285,12 @@ class EndpointCreator:
             return {"message": "Item permanently deleted from the database"}
 
         return endpoint
-    
+
     def _get_endpoint_name(self, operation: str) -> str:
         """Get the endpoint name for a given CRUD operation, using defaults if not overridden by the user."""
-        return self.endpoint_names.get(operation, self.default_endpoint_names.get(operation))
+        return self.endpoint_names.get(
+            operation, self.default_endpoint_names.get(operation, operation)
+        )
 
     def add_routes_to_router(
         self,

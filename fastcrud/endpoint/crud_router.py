@@ -34,6 +34,7 @@ def crud_router(
     is_deleted_column: str = "is_deleted",
     deleted_at_column: str = "deleted_at",
     updated_at_column: str = "updated_at",
+    endpoint_names: Optional[dict[str, str]] = None,
 ) -> APIRouter:
     """
     Creates and configures a FastAPI router with CRUD endpoints for a given model.
@@ -64,6 +65,9 @@ def crud_router(
         is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to "is_deleted".
         deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to "deleted_at".
         updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to "updated_at".
+        endpoint_names: Optional dictionary to customize endpoint names for CRUD operations. Keys are operation types
+                        ("create", "read", "update", "delete", "db_delete", "read_multi", "read_paginated"), and 
+                        values are the custom names to use. Unspecified operations will use default names.
 
     Returns:
         Configured APIRouter instance with the CRUD endpoints.
@@ -202,6 +206,27 @@ def crud_router(
 
         app.include_router(my_router)
         ```
+
+        Customizing Endpoint Names:
+        ```python
+        router = crud_router(
+            session=async_session,
+            model=TaskModel,
+            create_schema=CreateTaskSchema,
+            update_schema=UpdateTaskSchema,
+            path="/tasks",
+            tags=["Task Management"],
+            endpoint_names={
+                "create": "add_task",
+                "read": "get_task",
+                "update": "modify_task",
+                "delete": "remove_task",
+                "db_delete": "permanently_remove_task",
+                "read_multi": "list_tasks",
+                "read_paginated": "paginate_tasks"
+            }
+        )
+        ```
     """
     crud = crud or FastCRUD(
         model=model,
@@ -224,6 +249,7 @@ def crud_router(
         is_deleted_column=is_deleted_column,
         deleted_at_column=deleted_at_column,
         updated_at_column=updated_at_column,
+        endpoint_names=endpoint_names,
     )
 
     endpoint_creator_instance.add_routes_to_router(

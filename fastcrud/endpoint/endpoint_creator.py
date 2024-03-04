@@ -40,6 +40,9 @@ class EndpointCreator:
         is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to "is_deleted".
         deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to "deleted_at".
         updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to "updated_at".
+        endpoint_names: Optional dictionary to customize endpoint names for CRUD operations. Keys are operation types
+                        ("create", "read", "update", "delete", "db_delete", "read_multi", "read_paginated"), and 
+                        values are the custom names to use. Unspecified operations will use default names.
 
     Raises:
         ValueError: If both `included_methods` and `deleted_methods` are provided.
@@ -111,6 +114,25 @@ class EndpointCreator:
         other_endpoint_creator.add_routes_to_router()
         app.include_router(other_endpoint_creator.router, prefix="/othermodel")
         ```
+
+        Customizing Endpoint Names:
+        ```python
+        endpoint_creator = EndpointCreator(
+            session=async_session,
+            model=MyModel,
+            create_schema=CreateMyModel,
+            update_schema=UpdateMyModel,
+            path="/mymodel",
+            tags=["MyModel"],
+            endpoint_names={
+                "create": "add",  # Custom endpoint name for creating items
+                "read": "fetch",  # Custom endpoint name for reading a single item
+                "update": "change",  # Custom endpoint name for updating items
+                # The delete operation will use the default name "delete"
+            }
+        )
+        endpoint_creator.add_routes_to_router()
+        ```
     """
 
     def __init__(
@@ -127,6 +149,7 @@ class EndpointCreator:
         is_deleted_column: str = "is_deleted",
         deleted_at_column: str = "deleted_at",
         updated_at_column: str = "updated_at",
+        endpoint_names: Optional[dict[str, str]] = None,
     ) -> None:
         self.primary_key_name = _get_primary_key(model)
         self.session = session
@@ -147,6 +170,16 @@ class EndpointCreator:
         self.is_deleted_column = is_deleted_column
         self.deleted_at_column = deleted_at_column
         self.updated_at_column = updated_at_column
+        self.default_endpoint_names = {
+            "create": "create",
+            "read": "get",
+            "update": "update",
+            "delete": "delete",
+            "db_delete": "db_delete",
+            "read_multi": "get_multi",
+            "read_paginated": "get_paginated"
+        }
+        self.endpoint_names = {**self.default_endpoint_names, **(endpoint_names or {})}
 
     def _create_item(self):
         """Creates an endpoint for creating items in the database."""
@@ -252,6 +285,10 @@ class EndpointCreator:
             return {"message": "Item permanently deleted from the database"}
 
         return endpoint
+    
+    def _get_endpoint_name(self, operation: str) -> str:
+        """Get the endpoint name for a given CRUD operation, using defaults if not overridden by the user."""
+        return self.endpoint_names.get(operation, self.default_endpoint_names.get(operation))
 
     def add_routes_to_router(
         self,
@@ -357,8 +394,9 @@ class EndpointCreator:
             delete_description = "Soft delete a"
 
         if ("create" in included_methods) and ("create" not in deleted_methods):
+            endpoint_name = self._get_endpoint_name("create")
             self.router.add_api_route(
-                f"{self.path}/create",
+                f"{self.path}/{endpoint_name}",
                 self._create_item(),
                 methods=["POST"],
                 include_in_schema=self.include_in_schema,
@@ -368,8 +406,9 @@ class EndpointCreator:
             )
 
         if ("read" in included_methods) and ("read" not in deleted_methods):
+            endpoint_name = self._get_endpoint_name("read")
             self.router.add_api_route(
-                f"{self.path}/get/{{{self.primary_key_name}}}",
+                f"{self.path}/{endpoint_name}/{{{self.primary_key_name}}}",
                 self._read_item(),
                 methods=["GET"],
                 include_in_schema=self.include_in_schema,
@@ -379,8 +418,9 @@ class EndpointCreator:
             )
 
         if ("read_multi" in included_methods) and ("read_multi" not in deleted_methods):
+            endpoint_name = self._get_endpoint_name("read_multi")
             self.router.add_api_route(
-                f"{self.path}/get_multi",
+                f"{self.path}/{endpoint_name}",
                 self._read_items(),
                 methods=["GET"],
                 include_in_schema=self.include_in_schema,
@@ -392,8 +432,9 @@ class EndpointCreator:
         if ("read_paginated" in included_methods) and (
             "read_paginated" not in deleted_methods
         ):
+            endpoint_name = self._get_endpoint_name("read_paginated")
             self.router.add_api_route(
-                f"{self.path}/get_paginated",
+                f"{self.path}/{endpoint_name}",
                 self._read_paginated(),
                 methods=["GET"],
                 include_in_schema=self.include_in_schema,
@@ -403,8 +444,9 @@ class EndpointCreator:
             )
 
         if ("update" in included_methods) and ("update" not in deleted_methods):
+            endpoint_name = self._get_endpoint_name("update")
             self.router.add_api_route(
-                f"{self.path}/update/{{{self.primary_key_name}}}",
+                f"{self.path}/{endpoint_name}/{{{self.primary_key_name}}}",
                 self._update_item(),
                 methods=["PATCH"],
                 include_in_schema=self.include_in_schema,
@@ -414,8 +456,9 @@ class EndpointCreator:
             )
 
         if ("delete" in included_methods) and ("delete" not in deleted_methods):
+            endpoint_name = self._get_endpoint_name("delete")
             self.router.add_api_route(
-                f"{self.path}/delete/{{{self.primary_key_name}}}",
+                f"{self.path}/{endpoint_name}/{{{self.primary_key_name}}}",
                 self._delete_item(),
                 methods=["DELETE"],
                 include_in_schema=self.include_in_schema,
@@ -429,8 +472,9 @@ class EndpointCreator:
             and ("db_delete" not in deleted_methods)
             and self.delete_schema
         ):
+            endpoint_name = self._get_endpoint_name("db_delete")
             self.router.add_api_route(
-                f"{self.path}/db_delete/{{{self.primary_key_name}}}",
+                f"{self.path}/{endpoint_name}/{{{self.primary_key_name}}}",
                 self._db_delete(),
                 methods=["DELETE"],
                 include_in_schema=self.include_in_schema,

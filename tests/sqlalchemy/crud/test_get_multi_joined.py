@@ -1,11 +1,13 @@
 import pytest
-from fastcrud.crud.fast_crud import FastCRUD
+from fastcrud import FastCRUD, JoinConfig
 from ...sqlalchemy.conftest import (
     ModelTest,
     TierModel,
     CreateSchemaTest,
     TierSchemaTest,
     ReadSchemaTest,
+    CategoryModel,
+    CategorySchemaTest,
 )
 
 
@@ -67,7 +69,6 @@ async def test_get_multi_joined_sorting(async_session, test_data, test_data_tier
 
 @pytest.mark.asyncio
 async def test_get_multi_joined_filtering(async_session, test_data, test_data_tier):
-    # Assuming there's a user with a specific name in test_data
     specific_user_name = "Charlie"
     for tier_item in test_data_tier:
         async_session.add(TierModel(**tier_item))
@@ -84,7 +85,7 @@ async def test_get_multi_joined_filtering(async_session, test_data, test_data_ti
         join_prefix="tier_",
         schema_to_select=CreateSchemaTest,
         join_schema_to_select=TierSchemaTest,
-        name=specific_user_name,  # Filter based on ModelTest attribute
+        name=specific_user_name,
         offset=0,
         limit=10,
     )
@@ -256,3 +257,50 @@ async def test_get_multi_joined_advanced_filtering(
     assert all(
         item["id"] > 5 for item in advanced_filter_result["data"]
     ), "All fetched records should meet the advanced filter condition"
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_with_additional_join_model(
+    async_session, test_data, test_data_tier, test_data_category
+):
+    for category_item in test_data_category:
+        async_session.add(CategoryModel(**category_item))
+    await async_session.commit()
+
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    await async_session.commit()
+
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+    result = await crud.get_multi_joined(
+        db=async_session,
+        joins_config=[
+            JoinConfig(
+                model=TierModel,
+                join_prefix="tier_",
+                schema_to_select=TierSchemaTest,
+                join_on=ModelTest.tier_id == TierModel.id,
+                join_type="left",
+            ),
+            JoinConfig(
+                model=CategoryModel,
+                join_prefix="category_",
+                schema_to_select=CategorySchemaTest,
+                join_on=ModelTest.category_id == CategoryModel.id,
+                join_type="left",
+            ),
+        ],
+        schema_to_select=ReadSchemaTest,
+        offset=0,
+        limit=10,
+    )
+
+    assert len(result["data"]) == min(10, len(test_data))
+    assert result["total_count"] == len(test_data)
+    assert all(
+        "tier_name" in item and "category_name" in item for item in result["data"]
+    )

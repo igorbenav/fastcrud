@@ -1,11 +1,13 @@
 import pytest
 from sqlalchemy import and_
-from fastcrud.crud.fast_crud import FastCRUD
+from fastcrud import FastCRUD, JoinConfig
 from ...sqlalchemy.conftest import (
     ModelTest,
     TierModel,
     CreateSchemaTest,
     TierSchemaTest,
+    CategoryModel,
+    CategorySchemaTest,
 )
 
 
@@ -174,3 +176,49 @@ async def test_count_with_advanced_filters(async_session, test_model, test_data)
 
     count_lt = await crud.count(async_session, id__lt=10)
     assert count_lt > 0, "Should count records with ID less than 10"
+
+
+@pytest.mark.asyncio
+async def test_get_joined_multiple_models(
+    async_session, test_data, test_data_tier, test_data_category
+):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    await async_session.commit()
+
+    for category_item in test_data_category:
+        async_session.add(CategoryModel(**category_item))
+    await async_session.commit()
+
+    for user_item in test_data:
+        user_item_modified = user_item.copy()
+        user_item_modified["category_id"] = 1
+        async_session.add(ModelTest(**user_item_modified))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+    result = await crud.get_joined(
+        db=async_session,
+        joins_config=[
+            JoinConfig(
+                model=TierModel,
+                join_prefix="tier_",
+                schema_to_select=TierSchemaTest,
+                join_on=ModelTest.tier_id == TierModel.id,
+                join_type="left",
+            ),
+            JoinConfig(
+                model=CategoryModel,
+                join_prefix="category_",
+                schema_to_select=CategorySchemaTest,
+                join_on=ModelTest.category_id == CategoryModel.id,
+                join_type="left",
+            ),
+        ],
+        schema_to_select=CreateSchemaTest,
+    )
+
+    assert result is not None
+    assert "name" in result
+    assert "tier_name" in result
+    assert "category_name" in result

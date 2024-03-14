@@ -670,9 +670,7 @@ class FastCRUD(
                 "Cannot use both single join parameters and joinsConfig simultaneously."
             )
         elif not joins_config and not join_model:
-            raise ValueError(
-                "You need one of join_model or joins_config."
-            )
+            raise ValueError("You need one of join_model or joins_config.")
 
         primary_select = _extract_matching_columns_from_schema(
             model=self.model, schema=schema_to_select
@@ -769,7 +767,7 @@ class FastCRUD(
             A dictionary containing the fetched rows under 'data' key and total count under 'total_count'.
 
         Raises:
-            ValueError: If limit or offset is negative, or if schema_to_select is required but not provided or invalid. 
+            ValueError: If limit or offset is negative, or if schema_to_select is required but not provided or invalid.
                         Also if both 'joins_config' and any of the single join parameters are provided or none of 'joins_config' and 'join_model' is provided.
 
         Examples:
@@ -882,9 +880,7 @@ class FastCRUD(
                 "Cannot use both single join parameters and joinsConfig simultaneously."
             )
         elif not joins_config and not join_model:
-            raise ValueError(
-                "You need one of join_model or joins_config."
-            )
+            raise ValueError("You need one of join_model or joins_config.")
 
         if limit < 0 or offset < 0:
             raise ValueError("Limit and offset must be non-negative.")

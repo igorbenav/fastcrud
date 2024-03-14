@@ -15,12 +15,21 @@ from fastcrud.crud.fast_crud import FastCRUD
 from fastcrud.endpoint.crud_router import crud_router
 
 
+class CategoryModel(SQLModel, table=True):
+    __tablename__ = "category"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    tests: list["ModelTest"] = Relationship(back_populates="category")
+
+
 class ModelTest(SQLModel, table=True):
     __tablename__ = "test"
-    id: int = Field(primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    tier_id: int = Field(foreign_key="tier.id")
+    tier_id: int = Field(default=None, foreign_key="tier.id")
+    category_id: Optional[int] = Field(default=None, foreign_key="category.id")
     tier: "TierModel" = Relationship(back_populates="tests")
+    category: "CategoryModel" = Relationship(back_populates="tests")
     is_deleted: bool = Field(default=False)
     deleted_at: Optional[datetime] = Field(default=None)
 
@@ -110,6 +119,11 @@ def test_data() -> list[dict]:
 @pytest.fixture(scope="function")
 def test_data_tier() -> list[dict]:
     return [{"id": 1, "name": "Premium"}, {"id": 2, "name": "Basic"}]
+
+
+@pytest.fixture(scope="function")
+def test_data_category() -> list[dict]:
+    return [{"id": 1, "name": "Tech"}, {"id": 2, "name": "Health"}]
 
 
 @pytest.fixture

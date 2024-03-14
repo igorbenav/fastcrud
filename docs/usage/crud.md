@@ -219,18 +219,19 @@ items = await item_crud.get_multi(db, offset=0, limit=10, sort_columns=['name'],
 
 ```python
 get_joined(
-    db: AsyncSession, 
-    join_model: type[ModelType], 
-    join_prefix: Optional[str] = None, 
-    join_on: Optional[Union[Join, None]] = None, 
-    schema_to_select: Optional[type[BaseModel]] = None, 
-    join_schema_to_select: Optional[type[BaseModel]] = None, 
-    join_type: str = "left", 
-    **kwargs: Any
+    db: AsyncSession,
+    join_model: Optional[type[DeclarativeBase]] = None,
+    join_prefix: Optional[str] = None,
+    join_on: Optional[Union[Join, BinaryExpression]] = None,
+    schema_to_select: Optional[type[BaseModel]] = None,
+    join_schema_to_select: Optional[type[BaseModel]] = None,
+    join_type: str = "left",
+    joins_config: Optional[list[JoinConfig]] = None,
+    **kwargs: Any,
 ) -> Optional[dict[str, Any]]
 ```
 
-**Purpose**: To fetch a single record while performing a join operation with another model.  
+**Purpose**: To fetch a single record with one or multiple joins on other models.
 **Usage Example**: Fetches order details for a specific order by joining with the Customer table, selecting specific columns as defined in OrderSchema and CustomerSchema.
 
 ```python
@@ -248,9 +249,9 @@ order_details = await order_crud.get_joined(
 ```python
 get_multi_joined(
     db: AsyncSession,
-    join_model: type[ModelType],
+    join_model: Optional[type[ModelType]] = None,
     join_prefix: Optional[str] = None,
-    join_on: Optional[Join] = None,
+    join_on: Optional[Any] = None,
     schema_to_select: Optional[type[BaseModel]] = None,
     join_schema_to_select: Optional[type[BaseModel]] = None,
     join_type: str = "left",
@@ -259,7 +260,8 @@ get_multi_joined(
     sort_columns: Optional[Union[str, list[str]]] = None,
     sort_orders: Optional[Union[str, list[str]]] = None,
     return_as_model: bool = False,
-    **kwargs: Any
+    joins_config: Optional[list[JoinConfig]] = None,
+    **kwargs: Any,
 ) -> dict[str, Any]
 ```
 

@@ -1,11 +1,11 @@
+from typing import Optional
+
 import pytest
 import pytest_asyncio
-
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase, relationship
 from pydantic import BaseModel, ConfigDict
-
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -17,12 +17,23 @@ class Base(DeclarativeBase):
     pass
 
 
+class CategoryModel(Base):
+    __tablename__ = "category"
+    tests = relationship("ModelTest", back_populates="category")
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+
+
 class ModelTest(Base):
     __tablename__ = "test"
     id = Column(Integer, primary_key=True)
     name = Column(String)
     tier_id = Column(Integer, ForeignKey("tier.id"))
+    category_id = Column(
+        Integer, ForeignKey("category.id"), nullable=True, default=None
+    )
     tier = relationship("TierModel", back_populates="tests")
+    category = relationship("CategoryModel", back_populates="tests")
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True, default=None)
 
@@ -38,12 +49,14 @@ class CreateSchemaTest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str
     tier_id: int
+    category_id: Optional[int] = None
 
 
 class ReadSchemaTest(BaseModel):
     id: int
     name: str
     tier_id: int
+    category_id: Optional[int]
 
 
 class UpdateSchemaTest(BaseModel):
@@ -60,6 +73,11 @@ class TierSchemaTest(BaseModel):
 
 class TierDeleteSchemaTest(BaseModel):
     pass
+
+
+class CategorySchemaTest(BaseModel):
+    id: Optional[int] = None
+    name: str
 
 
 async_engine = create_async_engine(
@@ -95,23 +113,28 @@ async def async_session() -> AsyncSession:
 @pytest.fixture(scope="function")
 def test_data() -> list[dict]:
     return [
-        {"id": 1, "name": "Charlie", "tier_id": 1},
-        {"id": 2, "name": "Alice", "tier_id": 2},
-        {"id": 3, "name": "Bob", "tier_id": 1},
-        {"id": 4, "name": "David", "tier_id": 2},
-        {"id": 5, "name": "Eve", "tier_id": 1},
-        {"id": 6, "name": "Frank", "tier_id": 2},
-        {"id": 7, "name": "Grace", "tier_id": 1},
-        {"id": 8, "name": "Hannah", "tier_id": 2},
-        {"id": 9, "name": "Ivan", "tier_id": 1},
-        {"id": 10, "name": "Judy", "tier_id": 2},
-        {"id": 11, "name": "Alice", "tier_id": 1},
+        {"id": 1, "name": "Charlie", "tier_id": 1, "category_id": 1},
+        {"id": 2, "name": "Alice", "tier_id": 2, "category_id": 1},
+        {"id": 3, "name": "Bob", "tier_id": 1, "category_id": 2},
+        {"id": 4, "name": "David", "tier_id": 2, "category_id": 1},
+        {"id": 5, "name": "Eve", "tier_id": 1, "category_id": 1},
+        {"id": 6, "name": "Frank", "tier_id": 2, "category_id": 2},
+        {"id": 7, "name": "Grace", "tier_id": 1, "category_id": 2},
+        {"id": 8, "name": "Hannah", "tier_id": 2, "category_id": 1},
+        {"id": 9, "name": "Ivan", "tier_id": 1, "category_id": 1},
+        {"id": 10, "name": "Judy", "tier_id": 2, "category_id": 2},
+        {"id": 11, "name": "Alice", "tier_id": 1, "category_id": 1},
     ]
 
 
 @pytest.fixture(scope="function")
 def test_data_tier() -> list[dict]:
     return [{"id": 1, "name": "Premium"}, {"id": 2, "name": "Basic"}]
+
+
+@pytest.fixture(scope="function")
+def test_data_category() -> list[dict]:
+    return [{"id": 1, "name": "Tech"}, {"id": 2, "name": "Health"}]
 
 
 @pytest.fixture

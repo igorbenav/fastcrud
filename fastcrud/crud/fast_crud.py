@@ -16,6 +16,7 @@ from .helper import (
     _extract_matching_columns_from_schema,
     _auto_detect_join_condition,
     _add_column_with_prefix,
+    JoinConfig,
 )
 
 ModelType = TypeVar("ModelType", bound=DeclarativeBase)
@@ -536,17 +537,19 @@ class FastCRUD(
     async def get_joined(
         self,
         db: AsyncSession,
-        join_model: type[ModelType],
+        join_model: Optional[type[DeclarativeBase]] = None,
         join_prefix: Optional[str] = None,
-        join_on: Optional[Union[Join, None]] = None,
+        join_on: Optional[Union[Join, BinaryExpression]] = None,
         schema_to_select: Optional[type[BaseModel]] = None,
         join_schema_to_select: Optional[type[BaseModel]] = None,
         join_type: str = "left",
+        joins_config: Optional[list[JoinConfig]] = None,
         **kwargs: Any,
     ) -> Optional[dict[str, Any]]:
         """
-        Fetches a single record with a join on another model. If 'join_on' is not provided, the method attempts
-        to automatically detect the join condition using foreign key relationships. Advanced filters supported:
+        Fetches a single record with one or multiple joins on other models. If 'join_on' is not provided, the method attempts
+        to automatically detect the join condition using foreign key relationships. For multiple joins, use 'joins_config' to
+        specify each join configuration. Advanced filters supported:
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
@@ -557,15 +560,20 @@ class FastCRUD(
             db: The SQLAlchemy async session.
             join_model: The model to join with.
             join_prefix: Optional prefix to be added to all columns of the joined model. If None, no prefix is added.
-            join_on: SQLAlchemy Join object for specifying the ON clause of the join. If None, the join condition is
-                auto-detected based on foreign keys.
+            join_on: SQLAlchemy Join object for specifying the ON clause of the join. If None, the join condition is auto-detected based on foreign keys.
             schema_to_select: Pydantic schema for selecting specific columns from the primary model. Required if `return_as_model` is True.
             join_schema_to_select: Pydantic schema for selecting specific columns from the joined model.
             join_type: Specifies the type of join operation to perform. Can be "left" for a left outer join or "inner" for an inner join.
+            joins_config: A list of JoinConfig instances, each specifying a model to join with, join condition, optional prefix for column names, schema for selecting specific columns, and the type of join. This parameter enables support for multiple joins.
             **kwargs: Filters to apply to the primary model query, supporting advanced comparison operators for refined searching.
 
         Returns:
             A dictionary representing the joined record, or None if no record matches the criteria.
+
+        Raises:
+            ValueError: If both single join parameters and 'joins_config' are used simultaneously.
+            ArgumentError: If any provided model in 'joins_config' is not recognized or invalid.
+            NoResultFound: If no record matches the criteria with the provided filters.
 
         Examples:
             Simple example: Joining User and Tier models without explicitly providing join_on
@@ -607,6 +615,32 @@ class FastCRUD(
             )
             ```
 
+            Example of using 'joins_config' for multiple joins:
+            ```python
+            from fastcrud import JoinConfig
+
+            result = await crud_user.get_joined(
+                db=session,
+                schema_to_select=UserSchema,
+                joins_config=[
+                    JoinConfig(
+                        model=Tier,
+                        join_on=User.tier_id == Tier.id,
+                        join_prefix="tier_",
+                        schema_to_select=TierSchema,
+                        join_type="left",
+                    ),
+                    JoinConfig(
+                        model=Department,
+                        join_on=User.department_id == Department.id,
+                        join_prefix="dept_",
+                        schema_to_select=DepartmentSchema,
+                        join_type="inner",
+                    )
+                ]
+            )
+            ```
+
             Return example: prefix added, no schema_to_select or join_schema_to_select
             ```python
             {
@@ -629,36 +663,51 @@ class FastCRUD(
             }
             ```
         """
-        if join_on is None:
-            join_on = _auto_detect_join_condition(self.model, join_model)
+        if joins_config and (
+            join_model or join_prefix or join_on or join_schema_to_select
+        ):
+            raise ValueError(
+                "Cannot use both single join parameters and joinsConfig simultaneously."
+            )
+        elif not joins_config and not join_model:
+            raise ValueError("You need one of join_model or joins_config.")
 
         primary_select = _extract_matching_columns_from_schema(
             model=self.model, schema=schema_to_select
         )
-        join_select = []
+        stmt: Select = select(*primary_select)
 
-        if join_schema_to_select:
-            columns = _extract_matching_columns_from_schema(
-                model=join_model, schema=join_schema_to_select
+        join_definitions = joins_config if joins_config else []
+        if join_model:
+            join_definitions.append(
+                JoinConfig(
+                    model=join_model,
+                    join_on=join_on,
+                    join_prefix=join_prefix,
+                    schema_to_select=join_schema_to_select,
+                    join_type=join_type,
+                )
             )
-        else:
-            columns = inspect(join_model).c
 
-        for column in columns:
-            labeled_column = _add_column_with_prefix(column, join_prefix)
-            if f"{join_prefix}{column.name}" not in [
-                col.name for col in primary_select
-            ]:
-                join_select.append(labeled_column)
-
-        if join_type == "left":
-            stmt = select(*primary_select, *join_select).outerjoin(join_model, join_on)
-        elif join_type == "inner":
-            stmt = select(*primary_select, *join_select).join(join_model, join_on)
-        else:
-            raise ValueError(
-                f"Invalid join type: {join_type}. Only 'left' or 'inner' are valid."
+        for join in join_definitions:
+            join_select = _extract_matching_columns_from_schema(
+                join.model, join.schema_to_select
             )
+
+            if join.join_prefix:
+                join_select = [
+                    _add_column_with_prefix(column, join.join_prefix)
+                    for column in join_select
+                ]
+
+            if join.join_type == "left":
+                stmt = stmt.outerjoin(join.model, join.join_on).add_columns(
+                    *join_select
+                )
+            elif join.join_type == "inner":
+                stmt = stmt.join(join.model, join.join_on).add_columns(*join_select)
+            else:
+                raise ValueError(f"Unsupported join type: {join.join_type}.")
 
         filters = self._parse_filters(**kwargs)
         if filters:
@@ -675,9 +724,9 @@ class FastCRUD(
     async def get_multi_joined(
         self,
         db: AsyncSession,
-        join_model: type[ModelType],
+        join_model: Optional[type[ModelType]] = None,
         join_prefix: Optional[str] = None,
-        join_on: Optional[Join] = None,
+        join_on: Optional[Any] = None,
         schema_to_select: Optional[type[BaseModel]] = None,
         join_schema_to_select: Optional[type[BaseModel]] = None,
         join_type: str = "left",
@@ -686,6 +735,7 @@ class FastCRUD(
         sort_columns: Optional[Union[str, list[str]]] = None,
         sort_orders: Optional[Union[str, list[str]]] = None,
         return_as_model: bool = False,
+        joins_config: Optional[list[JoinConfig]] = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
@@ -710,6 +760,7 @@ class FastCRUD(
             sort_columns: A single column name or a list of column names on which to apply sorting.
             sort_orders: A single sort order ('asc' or 'desc') or a list of sort orders corresponding to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
             return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
+            joins_config: List of JoinConfig instances for specifying multiple joins. Each instance defines a model to join with, join condition, optional prefix for column names, schema for selecting specific columns, and join type.
             **kwargs: Filters to apply to the primary query, including advanced comparison operators for refined searching.
 
         Returns:
@@ -717,6 +768,7 @@ class FastCRUD(
 
         Raises:
             ValueError: If limit or offset is negative, or if schema_to_select is required but not provided or invalid.
+                        Also if both 'joins_config' and any of the single join parameters are provided or none of 'joins_config' and 'join_model' is provided.
 
         Examples:
             Fetching multiple User records joined with Tier records, using left join, returning raw data:
@@ -790,40 +842,91 @@ class FastCRUD(
                 return_as_model=True
             )
             ```
+
+            Example using 'joins_config' for multiple joins:
+            ```python
+            from fastcrud import JoinConfig
+
+            users = await crud_user.get_multi_joined(
+                db=session,
+                schema_to_select=UserSchema,
+                joins_config=[
+                    JoinConfig(
+                        model=Tier,
+                        join_on=User.tier_id == Tier.id,
+                        join_prefix="tier_",
+                        schema_to_select=TierSchema,
+                        join_type="left",
+                    ),
+                    JoinConfig(
+                        model=Department,
+                        join_on=User.department_id == Department.id,
+                        join_prefix="dept_",
+                        schema_to_select=DepartmentSchema,
+                        join_type="inner",
+                    )
+                ],
+                offset=0,
+                limit=10,
+                sort_columns='username',
+                sort_orders='asc'
+            )
+            ```
         """
+        if joins_config and (
+            join_model or join_prefix or join_on or join_schema_to_select
+        ):
+            raise ValueError(
+                "Cannot use both single join parameters and joinsConfig simultaneously."
+            )
+        elif not joins_config and not join_model:
+            raise ValueError("You need one of join_model or joins_config.")
+
         if limit < 0 or offset < 0:
             raise ValueError("Limit and offset must be non-negative.")
 
-        if join_on is None:
-            join_on = _auto_detect_join_condition(self.model, join_model)
+        joins: list[JoinConfig] = []
+        if join_model is not None:
+            joins.append(
+                JoinConfig(
+                    model=join_model,
+                    join_on=join_on
+                    or _auto_detect_join_condition(self.model, join_model),
+                    join_prefix=join_prefix,
+                    schema_to_select=join_schema_to_select,
+                    join_type=join_type,
+                )
+            )
+        elif joins_config:
+            joins.extend(joins_config)
 
         primary_select = _extract_matching_columns_from_schema(
             model=self.model, schema=schema_to_select
         )
-        join_select = []
+        stmt: Select = select(*primary_select)
 
-        if join_schema_to_select:
-            columns = _extract_matching_columns_from_schema(
-                model=join_model, schema=join_schema_to_select
-            )
-        else:
-            columns = inspect(join_model).c
+        for join in joins:
+            if join.schema_to_select:
+                join_select = _extract_matching_columns_from_schema(
+                    join.model, join.schema_to_select
+                )
+            else:
+                join_select = inspect(join.model).c
 
-        for column in columns:
-            labeled_column = _add_column_with_prefix(column, join_prefix)
-            if f"{join_prefix}{column.name}" not in [
-                col.name for col in primary_select
-            ]:
-                join_select.append(labeled_column)
+            if join.join_prefix:
+                join_select = [
+                    _add_column_with_prefix(column, join.join_prefix)
+                    for column in join_select
+                ]
 
-        if join_type == "left":
-            stmt = select(*primary_select, *join_select).outerjoin(join_model, join_on)
-        elif join_type == "inner":
-            stmt = select(*primary_select, *join_select).join(join_model, join_on)
-        else:
-            raise ValueError(
-                f"Invalid join type: {join_type}. Only 'left' or 'inner' are valid."
-            )
+            if join.join_type == "left":
+                stmt = stmt.outerjoin(join.model, join.join_on).add_columns(
+                    *join_select
+                )
+            elif join.join_type == "inner":
+                stmt = stmt.join(join.model, join.join_on).add_columns(*join_select)
+            else:
+                raise ValueError(f"Unsupported join type: {join.join_type}.")
 
         filters = self._parse_filters(**kwargs)
         if filters:
@@ -835,7 +938,7 @@ class FastCRUD(
         stmt = stmt.offset(offset).limit(limit)
 
         result = await db.execute(stmt)
-        data = result.mappings().all()
+        data = [dict(row) for row in result.mappings().all()]
 
         if return_as_model and schema_to_select:
             data = [schema_to_select.model_construct(**row) for row in data]

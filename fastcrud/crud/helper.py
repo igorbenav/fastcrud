@@ -1,4 +1,4 @@
-from typing import Any, Union, Optional
+from typing import Any, Union, Optional, NamedTuple
 from sqlalchemy import inspect
 from sqlalchemy.orm import DeclarativeMeta
 from sqlalchemy.orm import DeclarativeBase
@@ -7,6 +7,14 @@ from sqlalchemy.sql.schema import Column
 from sqlalchemy.sql.elements import Label
 
 from pydantic import BaseModel
+
+
+class JoinConfig(NamedTuple):
+    model: Any
+    join_on: Any
+    join_prefix: Optional[str] = None
+    schema_to_select: Optional[type[BaseModel]] = None
+    join_type: str = "left"
 
 
 def _extract_matching_columns_from_schema(

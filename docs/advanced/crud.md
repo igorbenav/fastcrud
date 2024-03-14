@@ -65,6 +65,74 @@ item_count = await item_crud.count(
 )
 ```
 
+## Using `get_joined` and `get_multi_joined` for multiple models
+
+To facilitate complex data relationships, `get_joined` and `get_multi_joined` can be configured to handle joins with multiple models. This is achieved using the `joins_config` parameter, where you can specify a list of `JoinConfig` instances, each representing a distinct join configuration.
+
+#### Example: Joining User, Tier, and Department Models
+
+Consider a scenario where you want to retrieve users along with their associated tier and department information. Here's how you can achieve this using `get_multi_joined`.
+
+Start by creating a list of the multiple models to be joined:
+
+```python hl_lines="1 3-10 12-19" title="Join Configurations"
+from fastcrud import JoinConfig
+
+joins_config = [
+    JoinConfig(
+        model=Tier,
+        join_on=User.tier_id == Tier.id,
+        join_prefix="tier_",
+        schema_to_select=TierSchema,
+        join_type="left",
+    ),
+
+    JoinConfig(
+        model=Department,
+        join_on=User.department_id == Department.id,
+        join_prefix="dept_",
+        schema_to_select=DepartmentSchema,
+        join_type="inner",
+    )
+]
+
+users = await user_crud.get_multi_joined(
+    db=session,
+    schema_to_select=UserSchema,
+    joins_config=joins_config,
+    offset=0,
+    limit=10,
+    sort_columns='username',
+    sort_orders='asc'
+)
+```
+
+Then just pass this list to joins_config:
+
+```python hl_lines="10" title="Passing to get_multi_joined"
+from fastcrud import JoinConfig
+
+joins_config = [
+    ...
+]
+
+users = await user_crud.get_multi_joined(
+    db=session,
+    schema_to_select=UserSchema,
+    joins_config=joins_config,
+    offset=0,
+    limit=10,
+    sort_columns='username',
+    sort_orders='asc'
+)
+```
+
+In this example, users are joined with the `Tier` and `Department` models. The `join_on` parameter specifies the condition for the join, `join_prefix` assigns a prefix to columns from the joined models (to avoid naming conflicts), and `join_type` determines whether it's a left or inner join.
+
+!!! WARNING
+
+    If both single join parameters and `joins_config` are used simultaneously, an error will be raised.
+
 ## Conclusion
 
 The advanced features of FastCRUD, such as `allow_multiple` and support for advanced filters, empower developers to efficiently manage database records with complex conditions. By leveraging these capabilities, you can build more dynamic, robust, and scalable FastAPI applications that effectively interact with your data model.

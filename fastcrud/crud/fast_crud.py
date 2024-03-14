@@ -2,7 +2,7 @@ from typing import Any, Generic, TypeVar, Union, Optional
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import select, update, delete, func, inspect, asc, desc
+from sqlalchemy import Selectable, select, update, delete, func, inspect, asc, desc
 from sqlalchemy.exc import ArgumentError, MultipleResultsFound, NoResultFound
 
 from sqlalchemy.sql import Join
@@ -278,6 +278,40 @@ class FastCRUD(
         db.add(db_object)
         await db.commit()
         return db_object
+
+    async def raw_statement(
+        self,
+        schema_to_select: Optional[type[BaseModel]] = None,
+        sort_columns: Optional[Union[str, list[str]]] = None,
+        sort_orders: Optional[Union[str, list[str]]] = None,
+        **kwargs,
+    ) -> Selectable:
+        """Forge a raw sqlachemy statement with filtering and sorting mechanisms.
+
+        Args:
+            schema_to_select (Optional[type[BaseModel]], optional): 
+                Optional Pydantic schema for selecting specific columns. 
+                Defaults to None.
+            sort_columns (Optional[Union[str, list[str]]], optional): 
+                Column names to sort the results by. 
+                Defaults to None.
+            sort_orders (Optional[Union[str, list[str]]], optional): 
+                Corresponding sort orders ('asc', 'desc') 
+                for each column in sort_columns. 
+                Defaults to None.
+
+        Returns:
+            Selectable: The statement with applied filters and sorting
+        """
+
+        to_select = _extract_matching_columns_from_schema(
+            model=self.model, schema=schema_to_select
+        )
+        filters = self._parse_filters(**kwargs)
+        stmt = select(*to_select).filter(*filters)
+        if "sort_columns":
+            stmt = self._apply_sorting(stmt, sort_columns, sort_orders)
+        return stmt
 
     async def get(
         self,

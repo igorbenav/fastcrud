@@ -667,7 +667,11 @@ class FastCRUD(
             join_model or join_prefix or join_on or join_schema_to_select
         ):
             raise ValueError(
-                "Cannot use both single join parameters and joins_config simultaneously."
+                "Cannot use both single join parameters and joinsConfig simultaneously."
+            )
+        elif not joins_config and not join_model:
+            raise ValueError(
+                "You need one of join_model or joins_config."
             )
 
         primary_select = _extract_matching_columns_from_schema(
@@ -765,7 +769,8 @@ class FastCRUD(
             A dictionary containing the fetched rows under 'data' key and total count under 'total_count'.
 
         Raises:
-            ValueError: If limit or offset is negative, or if schema_to_select is required but not provided or invalid. Also if both 'joins_config' and any of the single join parameters are provided
+            ValueError: If limit or offset is negative, or if schema_to_select is required but not provided or invalid. 
+                        Also if both 'joins_config' and any of the single join parameters are provided or none of 'joins_config' and 'join_model' is provided.
 
         Examples:
             Fetching multiple User records joined with Tier records, using left join, returning raw data:
@@ -875,6 +880,10 @@ class FastCRUD(
         ):
             raise ValueError(
                 "Cannot use both single join parameters and joinsConfig simultaneously."
+            )
+        elif not joins_config and not join_model:
+            raise ValueError(
+                "You need one of join_model or joins_config."
             )
 
         if limit < 0 or offset < 0:

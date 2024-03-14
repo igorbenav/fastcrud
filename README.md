@@ -56,7 +56,7 @@ pip install fastcrud
 Or, if using poetry:
 
 ```sh
- poetry add fastcrud
+poetry add fastcrud
 ```
 
 <h2>Usage</h2>
@@ -141,14 +141,10 @@ async def lifespan(app: FastAPI):
 # FastAPI app
 app = FastAPI(lifespan=lifespan)
 
-# CRUD operations setup
-crud = FastCRUD(Item)
-
 # CRUD router setup
 item_router = crud_router(
     session=get_session,
     model=Item,
-    crud=crud,
     create_schema=ItemCreateSchema,
     update_schema=ItemUpdateSchema,
     path="/items",

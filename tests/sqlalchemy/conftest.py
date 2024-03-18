@@ -1,4 +1,5 @@
 from typing import Optional
+from datetime import datetime
 
 import pytest
 import pytest_asyncio
@@ -45,6 +46,16 @@ class TierModel(Base):
     tests = relationship("ModelTest", back_populates="tier")
 
 
+class BookingModel(Base):
+    __tablename__ = "booking"
+    id = Column(Integer, primary_key=True)
+    owner_id = Column(Integer, ForeignKey("test.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("test.id"), nullable=False)
+    booking_date = Column(DateTime, nullable=False)
+    owner = relationship("ModelTest", foreign_keys=[owner_id], backref="owned_bookings")
+    user = relationship("ModelTest", foreign_keys=[user_id], backref="user_bookings")
+
+
 class CreateSchemaTest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str
@@ -78,6 +89,13 @@ class TierDeleteSchemaTest(BaseModel):
 class CategorySchemaTest(BaseModel):
     id: Optional[int] = None
     name: str
+
+
+class BookingSchema(BaseModel):
+    id: Optional[int] = None
+    owner_id: int
+    user_id: int
+    booking_date: datetime
 
 
 async_engine = create_async_engine(
@@ -135,6 +153,24 @@ def test_data_tier() -> list[dict]:
 @pytest.fixture(scope="function")
 def test_data_category() -> list[dict]:
     return [{"id": 1, "name": "Tech"}, {"id": 2, "name": "Health"}]
+
+
+@pytest.fixture(scope="function")
+def test_data_booking() -> list[dict]:
+    return [
+        {
+            "id": 1,
+            "owner_id": 1,
+            "user_id": 2,
+            "booking_date": datetime(2024, 3, 10, 15, 30),
+        },
+        {
+            "id": 2,
+            "owner_id": 1,
+            "user_id": 3,
+            "booking_date": datetime(2024, 3, 11, 10, 0),
+        },
+    ]
 
 
 @pytest.fixture

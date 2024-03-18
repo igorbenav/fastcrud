@@ -279,7 +279,7 @@ class FastCRUD(
         await db.commit()
         return db_object
 
-    async def raw_statement(
+    async def select(
         self,
         schema_to_select: Optional[type[BaseModel]] = None,
         sort_columns: Optional[Union[str, list[str]]] = None,
@@ -289,15 +289,15 @@ class FastCRUD(
         """Forge a raw sqlachemy statement with filtering and sorting mechanisms.
 
         Args:
-            schema_to_select (Optional[type[BaseModel]], optional): 
-                Optional Pydantic schema for selecting specific columns. 
+            schema_to_select (Optional[type[BaseModel]], optional):
+                Optional Pydantic schema for selecting specific columns.
                 Defaults to None.
-            sort_columns (Optional[Union[str, list[str]]], optional): 
-                Column names to sort the results by. 
+            sort_columns (Optional[Union[str, list[str]]], optional):
+                Column names to sort the results by.
                 Defaults to None.
-            sort_orders (Optional[Union[str, list[str]]], optional): 
-                Corresponding sort orders ('asc', 'desc') 
-                for each column in sort_columns. 
+            sort_orders (Optional[Union[str, list[str]]], optional):
+                Corresponding sort orders ('asc', 'desc')
+                for each column in sort_columns.
                 Defaults to None.
 
         Returns:

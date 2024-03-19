@@ -47,6 +47,20 @@ class CreateSchemaTest(SQLModel):
     tier_id: int
 
 
+class BookingModel(SQLModel, table=True):
+    __tablename__ = "booking"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    owner_id: int = Field(default=None, foreign_key="test.id")
+    user_id: int = Field(default=None, foreign_key="test.id")
+    booking_date: datetime
+    owner: "ModelTest" = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "BookingModel.owner_id"}
+    )
+    user: "ModelTest" = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "BookingModel.user_id"}
+    )
+
+
 class ReadSchemaTest(SQLModel):
     id: int
     name: str
@@ -67,6 +81,18 @@ class TierSchemaTest(SQLModel):
 
 class TierDeleteSchemaTest(SQLModel):
     pass
+
+
+class CategorySchemaTest(SQLModel):
+    id: Optional[int] = None
+    name: str
+
+
+class BookingSchema(SQLModel):
+    id: Optional[int] = None
+    owner_id: int
+    user_id: int
+    booking_date: datetime
 
 
 async_engine = create_async_engine(
@@ -102,17 +128,17 @@ async def async_session() -> AsyncSession:
 @pytest.fixture(scope="function")
 def test_data() -> list[dict]:
     return [
-        {"id": 1, "name": "Charlie", "tier_id": 1},
-        {"id": 2, "name": "Alice", "tier_id": 2},
-        {"id": 3, "name": "Bob", "tier_id": 1},
-        {"id": 4, "name": "David", "tier_id": 2},
-        {"id": 5, "name": "Eve", "tier_id": 1},
-        {"id": 6, "name": "Frank", "tier_id": 2},
-        {"id": 7, "name": "Grace", "tier_id": 1},
-        {"id": 8, "name": "Hannah", "tier_id": 2},
-        {"id": 9, "name": "Ivan", "tier_id": 1},
-        {"id": 10, "name": "Judy", "tier_id": 2},
-        {"id": 11, "name": "Alice", "tier_id": 1},
+        {"id": 1, "name": "Charlie", "tier_id": 1, "category_id": 1},
+        {"id": 2, "name": "Alice", "tier_id": 2, "category_id": 1},
+        {"id": 3, "name": "Bob", "tier_id": 1, "category_id": 2},
+        {"id": 4, "name": "David", "tier_id": 2, "category_id": 1},
+        {"id": 5, "name": "Eve", "tier_id": 1, "category_id": 1},
+        {"id": 6, "name": "Frank", "tier_id": 2, "category_id": 2},
+        {"id": 7, "name": "Grace", "tier_id": 1, "category_id": 2},
+        {"id": 8, "name": "Hannah", "tier_id": 2, "category_id": 1},
+        {"id": 9, "name": "Ivan", "tier_id": 1, "category_id": 1},
+        {"id": 10, "name": "Judy", "tier_id": 2, "category_id": 2},
+        {"id": 11, "name": "Alice", "tier_id": 1, "category_id": 1},
     ]
 
 
@@ -124,6 +150,24 @@ def test_data_tier() -> list[dict]:
 @pytest.fixture(scope="function")
 def test_data_category() -> list[dict]:
     return [{"id": 1, "name": "Tech"}, {"id": 2, "name": "Health"}]
+
+
+@pytest.fixture(scope="function")
+def test_data_booking() -> list[dict]:
+    return [
+        {
+            "id": 1,
+            "owner_id": 1,
+            "user_id": 2,
+            "booking_date": datetime(2024, 3, 10, 15, 30),
+        },
+        {
+            "id": 2,
+            "owner_id": 1,
+            "user_id": 3,
+            "booking_date": datetime(2024, 3, 11, 10, 0),
+        },
+    ]
 
 
 @pytest.fixture

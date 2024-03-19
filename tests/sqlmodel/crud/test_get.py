@@ -2,8 +2,8 @@ import pytest
 from pydantic import BaseModel
 
 from fastcrud.crud.fast_crud import FastCRUD
-from ...sqlalchemy.conftest import ModelTest
-from ...sqlalchemy.conftest import CreateSchemaTest
+from ...sqlmodel.conftest import ModelTest
+from ...sqlmodel.conftest import CreateSchemaTest
 
 
 @pytest.mark.asyncio

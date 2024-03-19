@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import MultipleResultsFound
 
 from fastcrud.crud.fast_crud import FastCRUD
-from ...sqlalchemy.conftest import ModelTest
+from ...sqlmodel.conftest import ModelTest
 
 
 @pytest.mark.asyncio

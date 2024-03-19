@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy import and_
-from fastcrud import FastCRUD, JoinConfig
+from fastcrud import FastCRUD, JoinConfig, aliased
 from ...sqlalchemy.conftest import (
     ModelTest,
     TierModel,
@@ -8,6 +8,9 @@ from ...sqlalchemy.conftest import (
     TierSchemaTest,
     CategoryModel,
     CategorySchemaTest,
+    BookingModel,
+    BookingSchema,
+    ReadSchemaTest,
 )
 
 
@@ -222,3 +225,113 @@ async def test_get_joined_multiple_models(
     assert "name" in result
     assert "tier_name" in result
     assert "category_name" in result
+
+
+@pytest.mark.asyncio
+async def test_get_joined_with_aliases(
+    async_session, test_data, test_data_tier, test_data_category, test_data_booking
+):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    for category_item in test_data_category:
+        async_session.add(CategoryModel(**category_item))
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    await async_session.commit()
+
+    for booking_item in test_data_booking:
+        async_session.add(BookingModel(**booking_item))
+    await async_session.commit()
+
+    crud = FastCRUD(BookingModel)
+
+    specific_booking_id = 1
+    expected_owner_name = "Charlie"
+    expected_user_name = "Alice"
+
+    owner = aliased(ModelTest, name="owner")
+    user = aliased(ModelTest, name="user")
+
+    result = await crud.get_joined(
+        db=async_session,
+        schema_to_select=BookingSchema,
+        joins_config=[
+            JoinConfig(
+                model=ModelTest,
+                join_on=BookingModel.owner_id == owner.id,
+                join_prefix="owner_",
+                alias=owner,
+                schema_to_select=ReadSchemaTest,
+            ),
+            JoinConfig(
+                model=ModelTest,
+                join_on=BookingModel.user_id == user.id,
+                join_prefix="user_",
+                alias=user,
+                schema_to_select=ReadSchemaTest,
+            ),
+        ],
+        id=specific_booking_id,
+    )
+
+    assert result is not None
+    assert (
+        result["owner_name"] == expected_owner_name
+    ), "Owner name does not match expected value"
+    assert (
+        result["user_name"] == expected_user_name
+    ), "User name does not match expected value"
+
+
+@pytest.mark.asyncio
+async def test_get_joined_with_aliases_no_schema(
+    async_session, test_data, test_data_tier, test_data_category, test_data_booking
+):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    for category_item in test_data_category:
+        async_session.add(CategoryModel(**category_item))
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    await async_session.commit()
+
+    for booking_item in test_data_booking:
+        async_session.add(BookingModel(**booking_item))
+    await async_session.commit()
+
+    crud = FastCRUD(BookingModel)
+
+    specific_booking_id = 1
+    expected_owner_name = "Charlie"
+    expected_user_name = "Alice"
+
+    owner = aliased(ModelTest, name="owner")
+    user = aliased(ModelTest, name="user")
+
+    result = await crud.get_joined(
+        db=async_session,
+        schema_to_select=BookingSchema,
+        joins_config=[
+            JoinConfig(
+                model=ModelTest,
+                join_on=BookingModel.owner_id == owner.id,
+                join_prefix="owner_",
+                alias=owner,
+            ),
+            JoinConfig(
+                model=ModelTest,
+                join_on=BookingModel.user_id == user.id,
+                join_prefix="user_",
+                alias=user,
+            ),
+        ],
+        id=specific_booking_id,
+    )
+
+    assert result is not None
+    assert (
+        result["owner_name"] == expected_owner_name
+    ), "Owner name does not match expected value"
+    assert (
+        result["user_name"] == expected_user_name
+    ), "User name does not match expected value"

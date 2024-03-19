@@ -24,5 +24,10 @@ This topic extends the use of `EndpointCreator` and `crud_router` for advanced e
 
 - [Advanced Endpoint Management Guide](endpoint.md#advanced-use-of-endpointcreator)
 
+### 5. Using `get_joined` and `get_multi_joined` for multiple models
+Explore the use of `get_joined` and `get_multi_joined` functions for complex queries that involve joining multiple models, including self-joins and scenarios requiring multiple joins on the same model.
+
+- [Joining Multiple Models Guide](crud.md#using-get_joined-and-get_multi_joined-for-multiple-models)
+
 ## Prerequisites
 Advanced usage assumes a solid understanding of the basic features and functionalities of our application. Knowledge of FastAPI, SQLAlchemy, and Pydantic is highly recommended to fully grasp the concepts discussed.

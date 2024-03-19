@@ -1,6 +1,6 @@
 import pytest
-from fastcrud import FastCRUD, JoinConfig
-from ...sqlalchemy.conftest import (
+from fastcrud import FastCRUD, JoinConfig, aliased
+from ...sqlmodel.conftest import (
     ModelTest,
     TierModel,
     CreateSchemaTest,
@@ -8,6 +8,8 @@ from ...sqlalchemy.conftest import (
     ReadSchemaTest,
     CategoryModel,
     CategorySchemaTest,
+    BookingModel,
+    BookingSchema,
 )
 
 
@@ -69,7 +71,6 @@ async def test_get_multi_joined_sorting(async_session, test_data, test_data_tier
 
 @pytest.mark.asyncio
 async def test_get_multi_joined_filtering(async_session, test_data, test_data_tier):
-    # Assuming there's a user with a specific name in test_data
     specific_user_name = "Charlie"
     for tier_item in test_data_tier:
         async_session.add(TierModel(**tier_item))
@@ -86,7 +87,7 @@ async def test_get_multi_joined_filtering(async_session, test_data, test_data_ti
         join_prefix="tier_",
         schema_to_select=CreateSchemaTest,
         join_schema_to_select=TierSchemaTest,
-        name=specific_user_name,  # Filter based on ModelTest attribute
+        name=specific_user_name,
         offset=0,
         limit=10,
     )
@@ -305,3 +306,137 @@ async def test_get_multi_joined_with_additional_join_model(
     assert all(
         "tier_name" in item and "category_name" in item for item in result["data"]
     )
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_with_aliases(
+    async_session, test_data, test_data_tier, test_data_category, test_data_booking
+):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    for category_item in test_data_category:
+        async_session.add(CategoryModel(**category_item))
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    for booking_item in test_data_booking:
+        async_session.add(BookingModel(**booking_item))
+    await async_session.commit()
+
+    crud = FastCRUD(BookingModel)
+
+    expected_owner_name = "Charlie"
+    expected_user_name = "Alice"
+
+    owner_alias = aliased(ModelTest, name="owner")
+    user_alias = aliased(ModelTest, name="user")
+
+    result = await crud.get_multi_joined(
+        db=async_session,
+        schema_to_select=BookingSchema,
+        joins_config=[
+            JoinConfig(
+                model=ModelTest,
+                join_on=BookingModel.owner_id == owner_alias.id,
+                join_prefix="owner_",
+                alias=owner_alias,
+                schema_to_select=ReadSchemaTest,
+            ),
+            JoinConfig(
+                model=ModelTest,
+                join_on=BookingModel.user_id == user_alias.id,
+                join_prefix="user_",
+                alias=user_alias,
+                schema_to_select=ReadSchemaTest,
+            ),
+        ],
+        offset=0,
+        limit=10,
+        sort_columns=["booking_date"],
+        sort_orders=["asc"],
+    )
+
+    assert "data" in result and isinstance(
+        result["data"], list
+    ), "The result should have a 'data' key with a list of records."
+    for booking in result["data"]:
+        assert (
+            "owner_name" in booking
+        ), "Each record should include 'owner_name' from the joined owner ModelTest data."
+        assert (
+            "user_name" in booking
+        ), "Each record should include 'user_name' from the joined user ModelTest data."
+    assert result is not None
+    assert result["total_count"] >= 1, "Expected at least one booking record"
+    first_result = result["data"][0]
+    assert (
+        first_result["owner_name"] == expected_owner_name
+    ), "Owner name does not match expected value"
+    assert (
+        first_result["user_name"] == expected_user_name
+    ), "User name does not match expected value"
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_with_aliases_no_schema(
+    async_session, test_data, test_data_tier, test_data_category, test_data_booking
+):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    for category_item in test_data_category:
+        async_session.add(CategoryModel(**category_item))
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    for booking_item in test_data_booking:
+        async_session.add(BookingModel(**booking_item))
+    await async_session.commit()
+
+    crud = FastCRUD(BookingModel)
+
+    expected_owner_name = "Charlie"
+    expected_user_name = "Alice"
+
+    owner_alias = aliased(ModelTest, name="owner")
+    user_alias = aliased(ModelTest, name="user")
+
+    result = await crud.get_multi_joined(
+        db=async_session,
+        schema_to_select=BookingSchema,
+        joins_config=[
+            JoinConfig(
+                model=ModelTest,
+                join_on=BookingModel.owner_id == owner_alias.id,
+                join_prefix="owner_",
+                alias=owner_alias,
+            ),
+            JoinConfig(
+                model=ModelTest,
+                join_on=BookingModel.user_id == user_alias.id,
+                join_prefix="user_",
+                alias=user_alias,
+            ),
+        ],
+        offset=0,
+        limit=10,
+        sort_columns=["booking_date"],
+        sort_orders=["asc"],
+    )
+
+    assert "data" in result and isinstance(
+        result["data"], list
+    ), "The result should have a 'data' key with a list of records."
+    for booking in result["data"]:
+        assert (
+            "owner_name" in booking
+        ), "Each record should include 'owner_name' from the joined owner ModelTest data."
+        assert (
+            "user_name" in booking
+        ), "Each record should include 'user_name' from the joined user ModelTest data."
+    assert result is not None
+    assert result["total_count"] >= 1, "Expected at least one booking record"
+    first_result = result["data"][0]
+    assert (
+        first_result["owner_name"] == expected_owner_name
+    ), "Owner name does not match expected value"
+    assert (
+        first_result["user_name"] == expected_user_name
+    ), "User name does not match expected value"

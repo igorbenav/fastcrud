@@ -1,11 +1,9 @@
-from typing import Any, Union, Optional, NamedTuple
-from sqlalchemy import inspect
-from sqlalchemy.orm import DeclarativeMeta
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.sql import ColumnElement
-from sqlalchemy.sql.schema import Column
-from sqlalchemy.sql.elements import Label
+from typing import Any, Optional, NamedTuple
 
+from sqlalchemy import inspect
+from sqlalchemy.orm import DeclarativeBase, DeclarativeMeta
+from sqlalchemy.orm.util import AliasedClass
+from sqlalchemy.sql import ColumnElement
 from pydantic import BaseModel
 
 
@@ -15,78 +13,48 @@ class JoinConfig(NamedTuple):
     join_prefix: Optional[str] = None
     schema_to_select: Optional[type[BaseModel]] = None
     join_type: str = "left"
+    alias: Optional[AliasedClass] = None
 
 
 def _extract_matching_columns_from_schema(
-    model: type[DeclarativeBase], schema: Optional[Union[type[BaseModel], list]]
+    model: type[DeclarativeBase],
+    schema: Optional[type[BaseModel]],
+    prefix: Optional[str] = None,
+    alias: Optional[AliasedClass] = None,
 ) -> list[Any]:
     """
-    Retrieves a list of ORM column objects from a SQLAlchemy model that match the field names in a given Pydantic schema.
+    Retrieves a list of ORM column objects from a SQLAlchemy model that match the field names in a given Pydantic schema,
+    or all columns from the model if no schema is provided. When an alias is provided, columns are referenced through
+    this alias, and a prefix can be applied to column names if specified.
 
     Args:
         model: The SQLAlchemy ORM model containing columns to be matched with the schema fields.
-        schema: The Pydantic schema containing field names to be matched with the model's columns.
+        schema: Optional; a Pydantic schema containing field names to be matched with the model's columns. If None, all columns from the model are used.
+        prefix: Optional; a prefix to be added to all column names. If None, no prefix is added.
+        alias: Optional; an alias for the model, used for referencing the columns through this alias in the query. If None, the original model is used.
 
     Returns:
-        A list of ORM column objects from the model that correspond to the field names defined in the schema.
+        A list of ORM column objects (potentially labeled with a prefix) that correspond to the field names defined
+        in the schema or all columns from the model if no schema is specified. These columns are correctly referenced
+        through the provided alias if one is given.
     """
-    column_list = list(model.__table__.columns)
-    if schema is not None:
-        if isinstance(schema, list):
-            schema_fields = schema
-        else:
-            schema_fields = schema.model_fields.keys()
+    model_or_alias = alias if alias else model
+    columns = []
+    if schema:
+        for field in schema.model_fields.keys():
+            if hasattr(model_or_alias, field):
+                column = getattr(model_or_alias, field)
+                if prefix:
+                    column = column.label(f"{prefix}{field}")
+                columns.append(column)
+    else:
+        for column in model.__table__.c:
+            column = getattr(model_or_alias, column.key)
+            if prefix:
+                column = column.label(f"{prefix}{column.key}")
+            columns.append(column)
 
-        column_list = []
-        for column_name in schema_fields:
-            if hasattr(model, column_name):
-                column_list.append(getattr(model, column_name))
-
-    return column_list
-
-
-def _extract_matching_columns_from_kwargs(
-    model: type[DeclarativeBase], kwargs: dict[str, Any]
-) -> list[Any]:
-    """
-    Extracts matching ORM column objects from a SQLAlchemy model based on provided keyword arguments.
-
-    Args:
-        model: The SQLAlchemy ORM model.
-        kwargs: A dictionary containing field names as keys.
-
-    Returns:
-        A list of ORM column objects from the model that correspond to the field names provided in kwargs.
-    """
-    if kwargs is not None:
-        kwargs_fields = kwargs.keys()
-        column_list = []
-        for column_name in kwargs_fields:
-            if hasattr(model, column_name):
-                column_list.append(getattr(model, column_name))
-
-    return column_list
-
-
-def _extract_matching_columns_from_column_names(
-    model: type[DeclarativeBase], column_names: list[str]
-) -> list[Any]:
-    """
-    Extracts ORM column objects from a SQLAlchemy model based on a list of column names.
-
-    Args:
-        model: The SQLAlchemy ORM model.
-        column_names: A list of column names to extract.
-
-    Returns:
-        A list of ORM column objects from the model that match the provided column names.
-    """
-    column_list = []
-    for column_name in column_names:
-        if hasattr(model, column_name):
-            column_list.append(getattr(model, column_name))
-
-    return column_list
+    return columns
 
 
 def _auto_detect_join_condition(
@@ -126,18 +94,3 @@ def _auto_detect_join_condition(
         )
 
     return join_on
-
-
-def _add_column_with_prefix(column: Column, prefix: Optional[str]) -> Label:
-    """
-    Creates a SQLAlchemy column label with an optional prefix.
-
-    Args:
-        column: The SQLAlchemy Column object to be labeled.
-        prefix: An optional prefix to prepend to the column's name.
-
-    Returns:
-        A labeled SQLAlchemy Column object.
-    """
-    column_label = f"{prefix}{column.name}" if prefix else column.name
-    return column.label(column_label)

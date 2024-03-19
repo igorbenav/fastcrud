@@ -133,6 +133,85 @@ In this example, users are joined with the `Tier` and `Department` models. The `
 
     If both single join parameters and `joins_config` are used simultaneously, an error will be raised.
 
+### Using aliases
+
+In complex query scenarios, particularly when you need to join a table to itself or perform multiple joins on the same table for different purposes, aliasing becomes crucial. Aliasing allows you to refer to the same table in different contexts with unique identifiers, avoiding conflicts and ambiguity in your queries.
+
+For both `get_joined` and `get_multi_joined` methods, when you need to join the same model multiple times, you can utilize the `alias` parameter within your `JoinConfig` to differentiate between the joins. This parameter expects an instance of `AliasedClass`, which can be created using the `aliased` function from SQLAlchemy (also in fastcrud for convenience).
+
+#### Example: Joining the Same Model Multiple Times
+
+Consider a task management application where tasks have both an owner and an assigned user, represented by the same `UserModel`. To fetch tasks with details of both users, we use aliases to join the `UserModel` twice, distinguishing between owners and assigned users.
+
+Let's start by creating the aliases and passing them to the join configuration. Don't forget to use the alias for `join_on`:
+
+```python hl_lines="4-5 11 15 19 23" title="Join Configurations with Aliases"
+from fastcrud import FastCRUD, JoinConfig, aliased
+
+# Create aliases for UserModel to distinguish between the owner and the assigned user
+owner_alias = aliased(UserModel, name="owner")
+assigned_user_alias = aliased(UserModel, name="assigned_user")
+
+# Configure joins with aliases
+joins_config = [
+    JoinConfig(
+        model=UserModel,
+        join_on=Task.owner_id == owner_alias.id,
+        join_prefix="owner_",
+        schema_to_select=UserSchema,
+        join_type="inner",
+        alias=owner_alias  # Pass the aliased class instance
+    ),
+    JoinConfig(
+        model=UserModel,
+        join_on=Task.assigned_user_id == assigned_user_alias.id,
+        join_prefix="assigned_",
+        schema_to_select=UserSchema,
+        join_type="inner",
+        alias=assigned_user_alias  # Pass the aliased class instance
+    )
+]
+
+# Initialize your FastCRUD instance for TaskModel
+task_crud = FastCRUD(TaskModel)
+
+# Fetch tasks with joined user details
+tasks = await task_crud.get_multi_joined(
+    db=session,
+    schema_to_select=TaskSchema,
+    joins_config=joins_config,
+    offset=0,
+    limit=10
+)
+```
+
+Then just pass this joins_config to `get_multi_joined`:
+
+```python hl_lines="17" title="Passing joins_config to get_multi_joined"
+from fastcrud import FastCRUD, JoinConfig, aliased
+
+...
+
+# Configure joins with aliases
+joins_config = [
+    ...
+]
+
+# Initialize your FastCRUD instance for TaskModel
+task_crud = FastCRUD(TaskModel)
+
+# Fetch tasks with joined user details
+tasks = await task_crud.get_multi_joined(
+    db=session,
+    schema_to_select=TaskSchema,
+    joins_config=joins_config,
+    offset=0,
+    limit=10
+)
+```
+
+In this example, `owner_alias` and `assigned_user_alias` are created from `UserModel` to distinguish between the task's owner and the assigned user within the task management system. By using aliases, you can join the same model multiple times for different purposes in your queries, enhancing expressiveness and eliminating ambiguity.
+
 ## Conclusion
 
 The advanced features of FastCRUD, such as `allow_multiple` and support for advanced filters, empower developers to efficiently manage database records with complex conditions. By leveraging these capabilities, you can build more dynamic, robust, and scalable FastAPI applications that effectively interact with your data model.

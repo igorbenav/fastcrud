@@ -853,6 +853,30 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#using-aliases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using aliases
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using aliases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-joining-the-same-model-multiple-times" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example: Joining the Same Model Multiple Times
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1314,6 +1338,30 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#using-aliases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using aliases
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using aliases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-joining-the-same-model-multiple-times" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example: Joining the Same Model Multiple Times
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1447,6 +1495,73 @@
 <p class="admonition-title">Warning</p>
 <p>If both single join parameters and <code>joins_config</code> are used simultaneously, an error will be raised.</p>
 </div>
+<h3 id="using-aliases">Using aliases<a class="headerlink" href="#using-aliases" title="Permanent link">&para;</a></h3>
+<p>In complex query scenarios, particularly when you need to join a table to itself or perform multiple joins on the same table for different purposes, aliasing becomes crucial. Aliasing allows you to refer to the same table in different contexts with unique identifiers, avoiding conflicts and ambiguity in your queries.</p>
+<p>For both <code>get_joined</code> and <code>get_multi_joined</code> methods, when you need to join the same model multiple times, you can utilize the <code>alias</code> parameter within your <code>JoinConfig</code> to differentiate between the joins. This parameter expects an instance of <code>AliasedClass</code>, which can be created using the <code>aliased</code> function from SQLAlchemy (also in fastcrud for convenience).</p>
+<h4 id="example-joining-the-same-model-multiple-times">Example: Joining the Same Model Multiple Times<a class="headerlink" href="#example-joining-the-same-model-multiple-times" title="Permanent link">&para;</a></h4>
+<p>Consider a task management application where tasks have both an owner and an assigned user, represented by the same <code>UserModel</code>. To fetch tasks with details of both users, we use aliases to join the <code>UserModel</code> twice, distinguishing between owners and assigned users.</p>
+<p>Let's start by creating the aliases and passing them to the join configuration. Don't forget to use the alias for <code>join_on</code>:</p>
+<div class="language-python highlight"><span class="filename">Join Configurations with Aliases</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FastCRUD</span><span class="p">,</span> <span class="n">JoinConfig</span><span class="p">,</span> <span class="n">aliased</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># Create aliases for UserModel to distinguish between the owner and the assigned user</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="hll"><span class="n">owner_alias</span> <span class="o">=</span> <span class="n">aliased</span><span class="p">(</span><span class="n">UserModel</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;owner&quot;</span><span class="p">)</span>
+</span></span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="hll"><span class="n">assigned_user_alias</span> <span class="o">=</span> <span class="n">aliased</span><span class="p">(</span><span class="n">UserModel</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;assigned_user&quot;</span><span class="p">)</span>
+</span></span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Configure joins with aliases</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">joins_config</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">JoinConfig</span><span class="p">(</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>        <span class="n">model</span><span class="o">=</span><span class="n">UserModel</span><span class="p">,</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="hll">        <span class="n">join_on</span><span class="o">=</span><span class="n">Task</span><span class="o">.</span><span class="n">owner_id</span> <span class="o">==</span> <span class="n">owner_alias</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+</span></span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;owner_&quot;</span><span class="p">,</span>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>        <span class="n">schema_to_select</span><span class="o">=</span><span class="n">UserSchema</span><span class="p">,</span>
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
+</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="hll">        <span class="n">alias</span><span class="o">=</span><span class="n">owner_alias</span>  <span class="c1"># Pass the aliased class instance</span>
+</span></span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    <span class="p">),</span>
+</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>    <span class="n">JoinConfig</span><span class="p">(</span>
+</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>        <span class="n">model</span><span class="o">=</span><span class="n">UserModel</span><span class="p">,</span>
+</span><span id="__span-6-19"><a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="hll">        <span class="n">join_on</span><span class="o">=</span><span class="n">Task</span><span class="o">.</span><span class="n">assigned_user_id</span> <span class="o">==</span> <span class="n">assigned_user_alias</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+</span></span><span id="__span-6-20"><a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;assigned_&quot;</span><span class="p">,</span>
+</span><span id="__span-6-21"><a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>        <span class="n">schema_to_select</span><span class="o">=</span><span class="n">UserSchema</span><span class="p">,</span>
+</span><span id="__span-6-22"><a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
+</span><span id="__span-6-23"><a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="hll">        <span class="n">alias</span><span class="o">=</span><span class="n">assigned_user_alias</span>  <span class="c1"># Pass the aliased class instance</span>
+</span></span><span id="__span-6-24"><a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>    <span class="p">)</span>
+</span><span id="__span-6-25"><a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="p">]</span>
+</span><span id="__span-6-26"><a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>
+</span><span id="__span-6-27"><a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="c1"># Initialize your FastCRUD instance for TaskModel</span>
+</span><span id="__span-6-28"><a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="n">task_crud</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">TaskModel</span><span class="p">)</span>
+</span><span id="__span-6-29"><a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>
+</span><span id="__span-6-30"><a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="c1"># Fetch tasks with joined user details</span>
+</span><span id="__span-6-31"><a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="n">tasks</span> <span class="o">=</span> <span class="k">await</span> <span class="n">task_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
+</span><span id="__span-6-32"><a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>    <span class="n">db</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
+</span><span id="__span-6-33"><a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">TaskSchema</span><span class="p">,</span>
+</span><span id="__span-6-34"><a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a>    <span class="n">joins_config</span><span class="o">=</span><span class="n">joins_config</span><span class="p">,</span>
+</span><span id="__span-6-35"><a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a>    <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-6-36"><a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">10</span>
+</span><span id="__span-6-37"><a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a><span class="p">)</span>
+</span></code></pre></div>
+<p>Then just pass this joins_config to <code>get_multi_joined</code>:</p>
+<div class="language-python highlight"><span class="filename">Passing joins_config to get_multi_joined</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FastCRUD</span><span class="p">,</span> <span class="n">JoinConfig</span><span class="p">,</span> <span class="n">aliased</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="o">...</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># Configure joins with aliases</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">joins_config</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="o">...</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="p">]</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># Initialize your FastCRUD instance for TaskModel</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="n">task_crud</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">TaskModel</span><span class="p">)</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="c1"># Fetch tasks with joined user details</span>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="n">tasks</span> <span class="o">=</span> <span class="k">await</span> <span class="n">task_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>    <span class="n">db</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">TaskSchema</span><span class="p">,</span>
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="hll">    <span class="n">joins_config</span><span class="o">=</span><span class="n">joins_config</span><span class="p">,</span>
+</span></span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>    <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">10</span>
+</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="p">)</span>
+</span></code></pre></div>
+<p>In this example, <code>owner_alias</code> and <code>assigned_user_alias</code> are created from <code>UserModel</code> to distinguish between the task's owner and the assigned user within the task management system. By using aliases, you can join the same model multiple times for different purposes in your queries, enhancing expressiveness and eliminating ambiguity.</p>
 <h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
 <p>The advanced features of FastCRUD, such as <code>allow_multiple</code> and support for advanced filters, empower developers to efficiently manage database records with complex conditions. By leveraging these capabilities, you can build more dynamic, robust, and scalable FastAPI applications that effectively interact with your data model.</p>
 

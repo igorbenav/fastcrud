@@ -21,8 +21,8 @@ class Base(DeclarativeBase):
 class MultiPkModel(Base):
     __tablename__ = "multi_pk"
     # tests = relationship("ModelTest", back_populates="category")
-    id1 = Column(Integer, primary_key=True)
-    id2 = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
+    uuid = Column(String(32), primary_key=True)
     name = Column(String, unique=True)
     test_id = Column(Integer, ForeignKey("test.id"))
     test = relationship("ModelTest", back_populates="multi_pk")
@@ -133,8 +133,8 @@ class CategorySchemaTest(BaseModel):
 
 
 class MultiPkSchema(BaseModel):
-    id1: int
-    id2: int
+    id: int
+    uuid: str
     name: str
 
 
@@ -206,12 +206,15 @@ def test_data_category() -> list[dict]:
     return [{"id": 1, "name": "Tech"}, {"id": 2, "name": "Health"}]
 
 
-@pytest.fixture(scope="function")
-def test_data_multipk() -> list[dict]:
-    return [
-        {"id1": 1, "id2": 1, "name": "Tech"},
-        {"id1": 1, "id2": 2, "name": "Health"},
-    ]
+@pytest.fixture(
+    scope="function",
+    params=[
+        {"id": 1, "uuid": "a", "name": "Tech"},
+        {"id": 1, "uuid": "b", "name": "Health"},
+    ],
+)
+def test_data_multipk(request) -> list[dict]:
+    return request.param
 
 
 @pytest.fixture(scope="function")
@@ -336,8 +339,8 @@ def client(
             create_schema=multi_pk_test_create_schema,
             update_schema=multi_pk_test_schema,
             delete_schema=multi_pk_test_schema,
-            path="/multi_pk_model",
-            tags=["multi_pk_model"],
+            path="/multi_pk",
+            tags=["multi_pk"],
         )
     )
 

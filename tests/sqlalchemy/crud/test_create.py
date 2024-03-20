@@ -69,7 +69,7 @@ async def test_create_successful_multi_pk(
     async_session, multi_pk_model, multi_pk_test_create_schema
 ):
     crud = FastCRUD(multi_pk_model)
-    new_data = multi_pk_test_create_schema(name="New Record", id1=1, id2=1)
+    new_data = multi_pk_test_create_schema(name="New Record", id=1, uuid="a")
     await crud.create(async_session, new_data)
 
     stmt = select(multi_pk_model).where(multi_pk_model.name == "New Record")
@@ -78,5 +78,5 @@ async def test_create_successful_multi_pk(
 
     assert fetched_record is not None
     assert fetched_record.name == "New Record"
-    assert fetched_record.id1 == 1
-    assert fetched_record.id2 == 1
+    assert fetched_record.id == 1
+    assert fetched_record.uuid == "a"

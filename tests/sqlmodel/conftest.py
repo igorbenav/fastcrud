@@ -319,4 +319,17 @@ def client(
         )
     )
 
+    app.include_router(
+        crud_router(
+            session=get_session_local,
+            model=multi_pk_model,
+            crud=FastCRUD(multi_pk_model),
+            create_schema=multi_pk_test_create_schema,
+            update_schema=multi_pk_test_schema,
+            delete_schema=multi_pk_test_schema,
+            path="/multi_pk",
+            tags=["multi_pk"],
+        )
+    )
+
     return TestClient(app)

@@ -50,6 +50,15 @@ def _get_primary_keys(model: DeclarativeBase) -> Union[str, None]:
     """Get the primary key of a SQLAlchemy model."""
     inspector = inspect(model).mapper
     primary_key_columns = inspector.primary_key
+
+    # Some patching when using derived sa.TypeDecorator as primary keys
+    #
+    for pk in primary_key_columns:
+        try:
+            pk.type.python_type
+        except NotImplementedError:
+            pk.type.__class__.python_type = pk.type.__class__.impl.python_type
+
     return primary_key_columns
 
 

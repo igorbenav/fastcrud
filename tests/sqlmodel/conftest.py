@@ -17,8 +17,8 @@ from fastcrud.endpoint.crud_router import crud_router
 
 class MultiPKModel(SQLModel, table=True):
     __tablename__ = "multi_pk"
-    id1: Optional[int] = Field(default=None, primary_key=True)
-    id2: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    uuid: Optional[str] = Field(default=None, primary_key=True, max_length=25)
     name: str = Field(index=True)
     test_id: Optional[int] = Field(default=None, foreign_key="test.id")
     test: "ModelTest" = Relationship(back_populates="multi_pk")
@@ -132,8 +132,8 @@ class BookingSchema(SQLModel):
 
 
 class MultiPkCreate(SQLModel):
-    id1: int
-    id2: int
+    id: int
+    uuid: str
     name: str
     test_id: int = None
 
@@ -200,12 +200,15 @@ def test_data_category() -> list[dict]:
     return [{"id": 1, "name": "Tech"}, {"id": 2, "name": "Health"}]
 
 
-@pytest.fixture(scope="function")
-def test_data_multipk() -> list[dict]:
-    return [
-        {"id1": 1, "id2": 1, "name": "Tech"},
-        {"id1": 1, "id2": 2, "name": "Health"},
-    ]
+@pytest.fixture(
+    scope="function",
+    params=[
+        {"id": 1, "uuid": "a", "name": "Tech"},
+        {"id": 1, "uuid": "b", "name": "Health"},
+    ],
+)
+def test_data_multipk(request) -> list[dict]:
+    return request.param
 
 
 @pytest.fixture(scope="function")
@@ -285,11 +288,14 @@ def multi_pk_test_create_schema():
 def client(
     test_model,
     tier_model,
+    multi_pk_model,
     create_schema,
     update_schema,
     delete_schema,
     tier_schema,
     tier_delete_schema,
+    multi_pk_test_schema,
+    multi_pk_test_create_schema,
 ):
     app = FastAPI()
 

@@ -15,6 +15,15 @@ from fastcrud.crud.fast_crud import FastCRUD
 from fastcrud.endpoint.crud_router import crud_router
 
 
+class MultiPKModel(SQLModel, table=True):
+    __tablename__ = "multi_pk"
+    id1: Optional[int] = Field(default=None, primary_key=True)
+    id2: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    # tier_id: int = Field(default=None, foreign_key="tier.id")
+    # tier: "TierModel" = Relationship(back_populates="multi_pk")
+
+
 class CategoryModel(SQLModel, table=True):
     __tablename__ = "category"
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -176,6 +185,14 @@ def test_data_tier() -> list[dict]:
 @pytest.fixture(scope="function")
 def test_data_category() -> list[dict]:
     return [{"id": 1, "name": "Tech"}, {"id": 2, "name": "Health"}]
+
+
+@pytest.fixture(scope="function")
+def test_data_multipk() -> list[dict]:
+    return [
+        {"id1": 1, "id2": 1, "name": "Tech"},
+        {"id1": 1, "id2": 2, "name": "Health"},
+    ]
 
 
 @pytest.fixture(scope="function")

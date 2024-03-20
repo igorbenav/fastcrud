@@ -18,12 +18,14 @@ class Base(DeclarativeBase):
     pass
 
 
-class ModelMultiPK(Base):
+class MultiPkModel(Base):
     __tablename__ = "multi_pk"
     # tests = relationship("ModelTest", back_populates="category")
     id1 = Column(Integer, primary_key=True)
     id2 = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
+    test_id = Column(Integer, ForeignKey("test.id"))
+    test = relationship("ModelTest", back_populates="multi_pk")
 
 
 class CategoryModel(Base):
@@ -43,6 +45,7 @@ class ModelTest(Base):
     )
     tier = relationship("TierModel", back_populates="tests")
     category = relationship("CategoryModel", back_populates="tests")
+    multi_pk = relationship("MultiPkModel", back_populates="test")
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True, default=None)
 
@@ -100,12 +103,12 @@ class CategorySchemaTest(BaseModel):
 
 
 class MultiPkCreate(BaseModel):
-    name: str
-
-
-class MultiPkSchema(MultiPkCreate):
     id1: int
     id2: int
+
+
+class MultiPkSchema(BaseModel):
+    name: str
 
 
 class BookingSchema(BaseModel):
@@ -180,11 +183,6 @@ def test_data_multipk() -> list[dict]:
     ]
 
 
-@pytest.fixture
-def multi_pk_model():
-    return ModelMultiPK
-
-
 @pytest.fixture(scope="function")
 def test_data_booking() -> list[dict]:
     return [
@@ -241,6 +239,11 @@ def delete_schema():
 @pytest.fixture
 def tier_delete_schema():
     return TierDeleteSchemaTest
+
+
+@pytest.fixture
+def multi_pk_model():
+    return MultiPkModel
 
 
 @pytest.fixture

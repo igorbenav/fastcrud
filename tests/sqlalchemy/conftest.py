@@ -132,13 +132,14 @@ class CategorySchemaTest(BaseModel):
     name: str
 
 
-class MultiPkCreate(BaseModel):
+class MultiPkSchema(BaseModel):
     id1: int
     id2: int
-
-
-class MultiPkSchema(BaseModel):
     name: str
+
+
+class MultiPkCreate(MultiPkSchema):
+    pass
 
 
 class BookingSchema(BaseModel):

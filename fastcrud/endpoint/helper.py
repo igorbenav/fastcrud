@@ -52,7 +52,8 @@ def _get_primary_keys(model: DeclarativeBase) -> Union[str, None]:
     primary_key_columns = inspector.primary_key
 
     # Some patching when using derived sa.TypeDecorator as primary keys
-    #
+    # if sa.TypeDecorator.python_type is not implemented by using
+    # the sa.TypeDecorator.impl.python_type one.
     for pk in primary_key_columns:
         try:
             pk.type.python_type

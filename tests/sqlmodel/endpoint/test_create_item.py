@@ -21,6 +21,20 @@ async def test_create_item(client: TestClient, async_session, test_model, test_d
 
 
 @pytest.mark.asyncio
+async def test_create_tier_duplicate_check(client: TestClient, async_session):
+    test_tier_1 = {"name": "Premium"}
+    response = client.post("/tier/create", json=test_tier_1)
+    assert response.status_code == 200, response.text
+
+    test_tier_2 = {"name": "Premium"}
+    response = client.post("/tier/create", json=test_tier_2)
+
+    assert response.status_code == 422, response.text
+
+    assert "is already registered" in response.text, response.text
+
+
+@pytest.mark.asyncio
 async def test_create_item_with_multiple_primary_keys(
     client: TestClient, async_session, multi_pk_model, test_data_multipk
 ):
@@ -43,17 +57,3 @@ async def test_create_item_with_multiple_primary_keys(
     assert fetched_record.name == test_data_multipk["name"]
     assert fetched_record.id == test_data_multipk["id"]
     assert fetched_record.uuid == test_data_multipk["uuid"]
-
-
-@pytest.mark.asyncio
-async def test_create_tier_duplicate_check(client: TestClient, async_session):
-    test_tier_1 = {"name": "Premium"}
-    response = client.post("/tier/create", json=test_tier_1)
-    assert response.status_code == 200, response.text
-
-    test_tier_2 = {"name": "Premium"}
-    response = client.post("/tier/create", json=test_tier_2)
-
-    assert response.status_code == 422, response.text
-
-    assert "is already registered" in response.text, response.text

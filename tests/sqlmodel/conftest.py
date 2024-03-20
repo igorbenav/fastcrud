@@ -20,8 +20,8 @@ class MultiPKModel(SQLModel, table=True):
     id1: Optional[int] = Field(default=None, primary_key=True)
     id2: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True)
-    # tier_id: int = Field(default=None, foreign_key="tier.id")
-    # tier: "TierModel" = Relationship(back_populates="multi_pk")
+    test_id: Optional[int] = Field(default=None, foreign_key="test.id")
+    test: "ModelTest" = Relationship(back_populates="multi_pk")
 
 
 class CategoryModel(SQLModel, table=True):
@@ -38,6 +38,7 @@ class ModelTest(SQLModel, table=True):
     tier_id: int = Field(default=None, foreign_key="tier.id")
     category_id: Optional[int] = Field(default=None, foreign_key="category.id")
     tier: "TierModel" = Relationship(back_populates="tests")
+    multi_pk: "MultiPKModel" = Relationship(back_populates="test")
     category: "CategoryModel" = Relationship(back_populates="tests")
     is_deleted: bool = Field(default=False)
     deleted_at: Optional[datetime] = Field(default=None)
@@ -128,6 +129,18 @@ class BookingSchema(SQLModel):
     owner_id: int
     user_id: int
     booking_date: datetime
+
+
+class MultiPkCreate(SQLModel):
+    id1: int
+    id2: int
+    name: str
+    test_id: int = None
+
+
+class MultiPkSchema(SQLModel):
+    name: str
+    test_id: int = None
 
 
 async_engine = create_async_engine(
@@ -251,6 +264,21 @@ def delete_schema():
 @pytest.fixture
 def tier_delete_schema():
     return TierDeleteSchemaTest
+
+
+@pytest.fixture
+def multi_pk_model():
+    return MultiPKModel
+
+
+@pytest.fixture
+def multi_pk_test_schema():
+    return MultiPkSchema
+
+
+@pytest.fixture
+def multi_pk_test_create_schema():
+    return MultiPkCreate
 
 
 @pytest.fixture

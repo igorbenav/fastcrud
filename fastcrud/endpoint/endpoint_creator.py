@@ -1,5 +1,6 @@
 from typing import Type, TypeVar, Optional, Callable, Sequence, Union
 from enum import Enum
+import forge
 
 from fastapi import Depends, Body, Query, APIRouter, params
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +10,7 @@ from pydantic import BaseModel, ValidationError
 from ..exceptions.http_exceptions import NotFoundException
 from ..crud.fast_crud import FastCRUD
 from ..exceptions.http_exceptions import DuplicateValueException
-from .helper import CRUDMethods, _get_primary_key, _extract_unique_columns
+from .helper import CRUDMethods, _get_primary_keys, _extract_unique_columns
 from ..paginated.response import paginated_response
 from ..paginated.helper import compute_offset
 
@@ -152,7 +153,7 @@ class EndpointCreator:
         updated_at_column: str = "updated_at",
         endpoint_names: Optional[dict[str, str]] = None,
     ) -> None:
-        self.primary_key_name = _get_primary_key(model)
+        self.primary_key_names = _get_primary_keys(model)
         self.session = session
         self.crud = crud or FastCRUD(
             model=model,
@@ -207,9 +208,17 @@ class EndpointCreator:
 
     def _read_item(self):
         """Creates an endpoint for reading a single item from the database."""
+        pkeys = {
+            k: self.update_schema.model_fields[k].annotation
+            for k in self.primary_key_names
+        }
 
-        async def endpoint(id: int, db: AsyncSession = Depends(self.session)):
-            item = await self.crud.get(db, id=id)
+        @forge.sign(
+            *[forge.arg(k, type=v) for k, v in pkeys.items()],
+            forge.arg("db", type=AsyncSession, default=Depends(self.session)),
+        )
+        async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
+            item = await self.crud.get(db, **pkeys)
             if not item:
                 raise NotFoundException(detail="Item not found")
             return item
@@ -253,21 +262,38 @@ class EndpointCreator:
 
     def _update_item(self):
         """Creates an endpoint for updating an existing item in the database."""
+        pkeys = {
+            k: self.update_schema.model_fields[k].annotation
+            for k in self.primary_key_names
+        }
 
+        @forge.sign(
+            *[forge.arg(k, type=v) for k, v in pkeys.items()],
+            forge.arg("item", type=self.update_schema, default=Body(...)),
+            forge.arg("db", type=AsyncSession, default=Depends(self.session)),
+        )
         async def endpoint(
-            id: int,
             item: self.update_schema = Body(...),  # type: ignore
             db: AsyncSession = Depends(self.session),
+            **pkeys,
         ):
-            return await self.crud.update(db, item, id=id)
+            return await self.crud.update(db, item, **pkeys)
 
         return endpoint
 
     def _delete_item(self):
         """Creates an endpoint for deleting an item from the database."""
+        pkeys = {
+            k: self.update_schema.model_fields[k].annotation
+            for k in self.primary_key_names
+        }
 
-        async def endpoint(id: int, db: AsyncSession = Depends(self.session)):
-            await self.crud.delete(db, id=id)
+        @forge.sign(
+            *[forge.arg(k, type=v) for k, v in pkeys.items()],
+            forge.arg("db", type=AsyncSession, default=Depends(self.session)),
+        )
+        async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
+            await self.crud.delete(db, *pkeys)
             return {"message": "Item deleted successfully"}
 
         return endpoint
@@ -280,9 +306,17 @@ class EndpointCreator:
         The endpoint expects an item ID as a path parameter and uses the provided SQLAlchemy
         async session to permanently delete the item from the database.
         """
+        pkeys = {
+            k: self.update_schema.model_fields[k].annotation
+            for k in self.primary_key_names
+        }
 
+        @forge.sign(
+            *[forge.arg(k, type=v) for k, v in pkeys.items()],
+            forge.arg("db", type=AsyncSession, default=Depends(self.session)),
+        )
         async def endpoint(id: int, db: AsyncSession = Depends(self.session)):
-            await self.crud.db_delete(db, id=id)
+            await self.crud.db_delete(db, **pkeys)
             return {"message": "Item permanently deleted from the database"}
 
         return endpoint
@@ -410,14 +444,15 @@ class EndpointCreator:
 
         if ("read" in included_methods) and ("read" not in deleted_methods):
             endpoint_name = self._get_endpoint_name("read")
+
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{{{self.primary_key_name}}}",
+                f"{self.path}/{endpoint_name}/{'/'.join(f'{{{n}}}' for n in self.primary_key_names)}",
                 self._read_item(),
                 methods=["GET"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
                 dependencies=read_deps,
-                description=f"Read a single {self.model.__name__} row from the database by its primary key: {self.primary_key_name}.",
+                description=f"Read a single {self.model.__name__} row from the database by its primary keys: {self.primary_key_names}.",
             )
 
         if ("read_multi" in included_methods) and ("read_multi" not in deleted_methods):
@@ -449,25 +484,25 @@ class EndpointCreator:
         if ("update" in included_methods) and ("update" not in deleted_methods):
             endpoint_name = self._get_endpoint_name("update")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{{{self.primary_key_name}}}",
+                f"{self.path}/{endpoint_name}/{'/'.join(f'{{{n}}}' for n in self.primary_key_names)}",
                 self._update_item(),
                 methods=["PATCH"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
                 dependencies=update_deps,
-                description=f"Update an existing {self.model.__name__} row in the database by its primary key: {self.primary_key_name}.",
+                description=f"Update an existing {self.model.__name__} row in the database by its primary keys: {self.primary_key_names}.",
             )
 
         if ("delete" in included_methods) and ("delete" not in deleted_methods):
             endpoint_name = self._get_endpoint_name("delete")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{{{self.primary_key_name}}}",
+                f"{self.path}/{endpoint_name}/{'/'.join(f'{{{n}}}' for n in self.primary_key_names)}",
                 self._delete_item(),
                 methods=["DELETE"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
                 dependencies=delete_deps,
-                description=f"{delete_description} {self.model.__name__} row from the database by its primary key: {self.primary_key_name}.",
+                description=f"{delete_description} {self.model.__name__} row from the database by its primary keys: {self.primary_key_names}.",
             )
 
         if (
@@ -477,13 +512,13 @@ class EndpointCreator:
         ):
             endpoint_name = self._get_endpoint_name("db_delete")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{{{self.primary_key_name}}}",
+                f"{self.path}/{endpoint_name}/{'/'.join(f'{{{n}}}' for n in self.primary_key_names)}",
                 self._db_delete(),
                 methods=["DELETE"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
                 dependencies=db_delete_deps,
-                description=f"Permanently delete a {self.model.__name__} row from the database by its primary key: {self.primary_key_name}.",
+                description=f"Permanently delete a {self.model.__name__} row from the database by its primary keys: {self.primary_key_names}.",
             )
 
     def add_custom_route(

@@ -1,17 +1,16 @@
-from typing import Type, TypeVar, Optional, Callable
-import forge
+from typing import Callable, Optional, Type, TypeVar
 
-from fastapi import Depends, Body, Query, APIRouter
+import forge
+from fastapi import APIRouter, Body, Depends, Query
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
-from pydantic import BaseModel, ValidationError
 
-from ..exceptions.http_exceptions import NotFoundException
 from ..crud.fast_crud import FastCRUD
-from ..exceptions.http_exceptions import DuplicateValueException
-from .helper import CRUDMethods, _get_primary_keys, _extract_unique_columns
-from ..paginated.response import paginated_response
+from ..exceptions.http_exceptions import DuplicateValueException, NotFoundException
 from ..paginated.helper import compute_offset
+from ..paginated.response import paginated_response
+from .helper import CRUDMethods, _extract_unique_columns, _get_primary_keys
 
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)

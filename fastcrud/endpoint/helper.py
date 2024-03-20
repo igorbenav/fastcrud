@@ -42,11 +42,14 @@ class CRUDMethods(BaseModel):
         return values
 
 
-def _get_primary_key(model: DeclarativeBase) -> Union[str, None]:
+def _get_primary_keys(model: DeclarativeBase) -> Union[str, None]:
     """Get the primary key of a SQLAlchemy model."""
     inspector = inspect(model)
     primary_key_columns = inspector.primary_key
-    return primary_key_columns[0].name if primary_key_columns else None
+    return [
+        primary_key_column.name if primary_key_columns else None
+        for primary_key_column in primary_key_columns
+    ]
 
 
 def _extract_unique_columns(model: type[DeclarativeBase]) -> list[Column]:

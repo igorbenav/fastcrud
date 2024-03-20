@@ -133,22 +133,3 @@ def _add_column_with_prefix(column: Column, prefix: Optional[str]) -> Label:
     """
     column_label = f"{prefix}{column.name}" if prefix else column.name
     return column.label(column_label)
-
-
-def _sql_compare_float(attribute, value, default_precision=3):
-    if value is None:
-        return attribute == None  # noqa: E711
-
-    tolerance = 1
-    tmp = str(0 if value == 0 else value)
-
-    precision = attribute.type.precision or default_precision
-
-    asdecimal = attribute.type.asdecimal or precision - tmp.find(".") - 1
-    asdecimal = 0 if asdecimal <= -1 else asdecimal
-    val = float(("{:%d.%df}" % (asdecimal, precision)).format(value))
-
-    for i in range(precision + 1):
-        tolerance /= 10
-
-    return attribute.between(val - tolerance, val + tolerance)

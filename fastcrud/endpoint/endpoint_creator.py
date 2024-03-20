@@ -153,7 +153,11 @@ class EndpointCreator:
         updated_at_column: str = "updated_at",
         endpoint_names: Optional[dict[str, str]] = None,
     ) -> None:
-        self.primary_key_names = _get_primary_keys(model)
+        self._primary_keys = _get_primary_keys(model)
+        self._primary_keys_types = {
+            pk.name: pk.type.python_type for pk in self._primary_keys
+        }
+        self.primary_key_names = [pk.name for pk in self._primary_keys]
         self.session = session
         self.crud = crud or FastCRUD(
             model=model,
@@ -208,13 +212,9 @@ class EndpointCreator:
 
     def _read_item(self):
         """Creates an endpoint for reading a single item from the database."""
-        pkeys = {
-            k: self.update_schema.model_fields[k].annotation
-            for k in self.primary_key_names
-        }
 
         @forge.sign(
-            *[forge.arg(k, type=v) for k, v in pkeys.items()],
+            *[forge.arg(k, type=v) for k, v in self._primary_keys_types.items()],
             forge.arg("db", type=AsyncSession, default=Depends(self.session)),
         )
         async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
@@ -262,13 +262,9 @@ class EndpointCreator:
 
     def _update_item(self):
         """Creates an endpoint for updating an existing item in the database."""
-        pkeys = {
-            k: self.update_schema.model_fields[k].annotation
-            for k in self.primary_key_names
-        }
 
         @forge.sign(
-            *[forge.arg(k, type=v) for k, v in pkeys.items()],
+            *[forge.arg(k, type=v) for k, v in self._primary_keys_types.items()],
             forge.arg("item", type=self.update_schema, default=Body(...)),
             forge.arg("db", type=AsyncSession, default=Depends(self.session)),
         )
@@ -283,17 +279,13 @@ class EndpointCreator:
 
     def _delete_item(self):
         """Creates an endpoint for deleting an item from the database."""
-        pkeys = {
-            k: self.update_schema.model_fields[k].annotation
-            for k in self.primary_key_names
-        }
 
         @forge.sign(
-            *[forge.arg(k, type=v) for k, v in pkeys.items()],
+            *[forge.arg(k, type=v) for k, v in self._primary_keys_types.items()],
             forge.arg("db", type=AsyncSession, default=Depends(self.session)),
         )
         async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
-            await self.crud.delete(db, *pkeys)
+            await self.crud.delete(db, **pkeys)
             return {"message": "Item deleted successfully"}
 
         return endpoint
@@ -306,16 +298,12 @@ class EndpointCreator:
         The endpoint expects an item ID as a path parameter and uses the provided SQLAlchemy
         async session to permanently delete the item from the database.
         """
-        pkeys = {
-            k: self.update_schema.model_fields[k].annotation
-            for k in self.primary_key_names
-        }
 
         @forge.sign(
-            *[forge.arg(k, type=v) for k, v in pkeys.items()],
+            *[forge.arg(k, type=v) for k, v in self._primary_keys_types.items()],
             forge.arg("db", type=AsyncSession, default=Depends(self.session)),
         )
-        async def endpoint(id: int, db: AsyncSession = Depends(self.session)):
+        async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
             await self.crud.db_delete(db, **pkeys)
             return {"message": "Item permanently deleted from the database"}
 

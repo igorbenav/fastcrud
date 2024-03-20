@@ -50,10 +50,7 @@ def _get_primary_keys(model: DeclarativeBase) -> Union[str, None]:
     """Get the primary key of a SQLAlchemy model."""
     inspector = inspect(model).mapper
     primary_key_columns = inspector.primary_key
-    return [
-        primary_key_column.name if primary_key_columns else None
-        for primary_key_column in primary_key_columns
-    ]
+    return primary_key_columns
 
 
 def _extract_unique_columns(

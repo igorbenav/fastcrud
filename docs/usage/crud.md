@@ -306,6 +306,26 @@ paginated_items = await item_crud.get_multi_by_cursor(
 )
 ```
 
+### 5. Select
+
+```python
+async def select(
+    db: AsyncSession,
+    schema_to_select: Optional[type[BaseModel]] = None,
+    sort_columns: Optional[Union[str, list[str]]] = None,
+    sort_orders: Optional[Union[str, list[str]]] = None,
+    **kwargs: Any
+) -> Selectable
+```
+
+**Purpose**: Constructs a SQL Alchemy Select statement with optional column selection, filtering, and sorting.
+**Usage Example**: Selects all items, filtering by 'name' and sorting by 'id'. Returns the `select` statement.
+
+```python
+stmt = await item_crud.select(schema_to_select=ItemSchema, sort_columns='id', name='John')
+# Note: This method returns a SQL Alchemy Selectable object, not the actual query result.
+```
+
 ## Error Handling
 
 FastCRUD provides mechanisms to handle common database errors, ensuring robust API behavior.

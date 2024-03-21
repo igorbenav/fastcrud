@@ -212,6 +212,41 @@ tasks = await task_crud.get_multi_joined(
 
 In this example, `owner_alias` and `assigned_user_alias` are created from `UserModel` to distinguish between the task's owner and the assigned user within the task management system. By using aliases, you can join the same model multiple times for different purposes in your queries, enhancing expressiveness and eliminating ambiguity.
 
+## Enhanced Query Capabilities with Method Chaining
+
+The `select` method in FastCRUD is designed for flexibility, enabling you to build complex queries through method chaining.
+
+### The `select` Method
+
+```python
+async def select(
+    db: AsyncSession,
+    schema_to_select: Optional[type[BaseModel]] = None,
+    sort_columns: Optional[Union[str, list[str]]] = None,
+    sort_orders: Optional[Union[str, list[str]]] = None,
+    **kwargs: Any
+) -> Selectable
+```
+
+This method constructs a SQL Alchemy `Select` statement, offering optional column selection, filtering, and sorting. It's designed for flexibility, allowing you to chain additional SQLAlchemy methods for even more complex queries.
+
+#### Features:
+
+- **Column Selection**: Specify columns with a Pydantic schema.
+- **Sorting**: Define one or more columns for sorting, along with their sort order.
+- **Filtering**: Apply filters directly through keyword arguments.
+- **Chaining**: Chain with other SQLAlchemy methods for advanced query construction.
+
+#### Usage Example:
+
+```python
+stmt = await my_model_crud.select(schema_to_select=MySchema, sort_columns='name', name__like='%example%')
+stmt = stmt.where(additional_conditions).limit(10)
+results = await db.execute(stmt)
+```
+
+This example demonstrates selecting a subset of columns, applying a filter, and chaining additional conditions like `where` and `limit`. Note that `select` returns a `Selectable` object, allowing for further modifications before execution.
+
 ## Conclusion
 
 The advanced features of FastCRUD, such as `allow_multiple` and support for advanced filters, empower developers to efficiently manage database records with complex conditions. By leveraging these capabilities, you can build more dynamic, robust, and scalable FastAPI applications that effectively interact with your data model.

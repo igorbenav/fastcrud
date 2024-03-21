@@ -51,6 +51,9 @@ class FastCRUD(
         create:
             Creates a new record in the database from the provided Pydantic schema.
 
+        select:
+            Generates a SQL Alchemy `Select` statement with optional filtering and sorting.
+        
         get:
             Retrieves a single record based on filters. Supports advanced filtering through comparison operators like '__gt', '__lt', etc.
 
@@ -287,30 +290,61 @@ class FastCRUD(
         sort_orders: Optional[Union[str, list[str]]] = None,
         **kwargs,
     ) -> Selectable:
-        """Forge a raw sqlachemy statement with filtering and sorting mechanisms.
+        """
+        Constructs a SQL Alchemy `Select` statement with optional column selection, filtering, and sorting.
+        This method allows for advanced filtering through comparison operators, enabling queries to be refined beyond simple equality checks.
+        Supported operators include:
+            '__gt' (greater than),
+            '__lt' (less than),
+            '__gte' (greater than or equal to),
+            '__lte' (less than or equal to), and
+            '__ne' (not equal).
 
         Args:
             schema_to_select (Optional[type[BaseModel]], optional):
-                Optional Pydantic schema for selecting specific columns.
-                Defaults to None.
+                Pydantic schema to determine which columns to include in the selection. If not provided, selects all columns of the model.
             sort_columns (Optional[Union[str, list[str]]], optional):
-                Column names to sort the results by.
-                Defaults to None.
+                A single column name or list of column names to sort the query results by. Must be used in conjunction with sort_orders.
             sort_orders (Optional[Union[str, list[str]]], optional):
-                Corresponding sort orders ('asc', 'desc')
-                for each column in sort_columns.
-                Defaults to None.
+                A single sort order ('asc' or 'desc') or a list of sort orders, corresponding to each column in sort_columns. If not specified, defaults to ascending order for all sort_columns.
 
         Returns:
-            Selectable: The statement with applied filters and sorting
-        """
+            Selectable: An SQL Alchemy `Select` statement object that can be executed or further modified.
 
+        Examples:
+            Selecting specific columns with filtering and sorting:
+            ```python
+            stmt = await crud.select(
+                schema_to_select=UserReadSchema,
+                sort_columns=['age', 'name'],
+                sort_orders=['asc', 'desc'],
+                age__gt=18
+            )
+            ```
+
+            Creating a statement to select all users without any filters:
+            ```python
+            stmt = await crud.select()
+            ```
+
+            Selecting users with a specific role, ordered by name:
+            ```python
+            stmt = await crud.select(
+                schema_to_select=UserReadSchema,
+                sort_columns='name',
+                role='admin'
+            )
+            ```
+        Note:
+            This method does not execute the generated SQL statement.
+            Use `db.execute(stmt)` to run the query and fetch results.
+        """
         to_select = _extract_matching_columns_from_schema(
             model=self.model, schema=schema_to_select
         )
         filters = self._parse_filters(**kwargs)
         stmt = select(*to_select).filter(*filters)
-        if "sort_columns":
+        if sort_columns:
             stmt = self._apply_sorting(stmt, sort_columns, sort_orders)
         return stmt
 

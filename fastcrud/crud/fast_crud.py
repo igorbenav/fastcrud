@@ -2,9 +2,8 @@ from typing import Any, Generic, TypeVar, Union, Optional
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import Selectable, select, update, delete, func, inspect, asc, desc
+from sqlalchemy import select, update, delete, func, inspect, asc, desc
 from sqlalchemy.exc import ArgumentError, MultipleResultsFound, NoResultFound
-
 from sqlalchemy.sql import Join
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine.row import Row
@@ -289,7 +288,7 @@ class FastCRUD(
         sort_columns: Optional[Union[str, list[str]]] = None,
         sort_orders: Optional[Union[str, list[str]]] = None,
         **kwargs,
-    ) -> Selectable:
+    ) -> Select:
         """
         Constructs a SQL Alchemy `Select` statement with optional column selection, filtering, and sorting.
         This method allows for advanced filtering through comparison operators, enabling queries to be refined beyond simple equality checks.

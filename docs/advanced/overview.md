@@ -29,5 +29,10 @@ Explore the use of `get_joined` and `get_multi_joined` functions for complex que
 
 - [Joining Multiple Models Guide](crud.md#using-get_joined-and-get_multi_joined-for-multiple-models)
 
+### 6. Method Chaining with `select`
+FastCRUD's `select` method introduces method chaining, allowing for the construction of detailed queries with a focus on precision. It simplifies the process of dynamically applying filters, sorting, and conditions, making it easier to manage complex query requirements.
+
+- [Method Chaining Guide](crud.md#enhanced-query-capabilities-with-method-chaining)
+
 ## Prerequisites
 Advanced usage assumes a solid understanding of the basic features and functionalities of our application. Knowledge of FastAPI, SQLAlchemy, and Pydantic is highly recommended to fully grasp the concepts discussed.

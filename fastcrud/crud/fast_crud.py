@@ -18,6 +18,8 @@ from .helper import (
     JoinConfig,
 )
 
+from ..endpoint.helper import _get_primary_key
+
 ModelType = TypeVar("ModelType", bound=DeclarativeBase)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
@@ -52,7 +54,7 @@ class FastCRUD(
 
         select:
             Generates a SQL Alchemy `Select` statement with optional filtering and sorting.
-        
+
         get:
             Retrieves a single record based on filters. Supports advanced filtering through comparison operators like '__gt', '__lt', etc.
 
@@ -460,17 +462,22 @@ class FastCRUD(
         result = await db.execute(stmt)
         return result.first() is not None
 
-    async def count(self, db: AsyncSession, **kwargs: Any) -> int:
+    async def count(
+        self,
+        db: AsyncSession,
+        joins_config: Optional[list[JoinConfig]] = None,
+        **kwargs: Any,
+    ) -> int:
         """
         Counts records that match specified filters, supporting advanced filtering through comparison operators:
-            '__gt' (greater than),
-            '__lt' (less than),
+            '__gt' (greater than), '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
+            '__lte' (less than or equal to), and '__ne' (not equal).
+        Can also count records based on a configuration of joins, useful for complex queries involving relationships.
 
         Args:
             db: The database session to use for the operation.
+            joins_config: Optional configuration for applying joins in the count query.
             **kwargs: Filters to apply for the count, including field names for equality checks or with comparison operators for advanced queries.
 
         Returns:
@@ -479,29 +486,69 @@ class FastCRUD(
         Examples:
             Count users by ID:
             ```python
-            exists = await crud.count(db, id=1)
+            count = await crud.count(db, id=1)
             ```
 
             Count users older than 30:
             ```python
-            exists = await crud.count(db, age__gt=30)
-            ```
-
-            Count users who registered before Jan 1, 2020:
-            ```python
-            exists = await crud.count(db, registration_date__lt=datetime(2020, 1, 1))
+            count = await crud.count(db, age__gt=30)
             ```
 
             Count users with a username other than 'admin':
             ```python
-            exists = await crud.count(db, username__ne='admin')
+            count = await crud.count(db, username__ne='admin')
+            ```
+
+            Count projects with at least one participant (many-to-many relationship):
+            ```python
+            joins_config = [
+                JoinConfig(
+                    model=ProjectsParticipantsAssociation,
+                    join_on=Project.id == ProjectsParticipantsAssociation.project_id,
+                    join_type="inner"
+                ),
+                JoinConfig(
+                    model=Participant,
+                    join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
+                    join_type="inner"
+                )
+            ]
+            count = await crud.count(db, joins_config=joins_config)
+            ```
+
+            Count projects by a specific participant ID:
+            ```python
+            count = await crud.count(db, joins_config=joins_config, participant_id=2)
             ```
         """
         filters = self._parse_filters(**kwargs)
-        if filters:
-            count_query = select(func.count()).select_from(self.model).filter(*filters)
+
+        if joins_config:
+            primary_key = _get_primary_key(self.model)
+            if not primary_key:
+                raise ValueError(
+                    f"The model '{self.model.__name__}' does not have a primary key defined, which is required for counting with joins."
+                )
+
+            base_query = select(getattr(self.model, primary_key).label("distinct_id"))
+
+            for join in joins_config:
+                join_model = join.alias or join.model
+                base_query = (
+                    base_query.join(join_model, join.join_on)
+                    if join.join_type == "inner"
+                    else base_query.outerjoin(join_model, join.join_on)
+                )
+
+            if filters:
+                base_query = base_query.where(*filters)
+
+            subquery = base_query.subquery()
+            count_query = select(func.count()).select_from(subquery)
         else:
             count_query = select(func.count()).select_from(self.model)
+            if filters:
+                count_query = count_query.where(*filters)
 
         total_count: int = await db.scalar(count_query)
         return total_count
@@ -1051,7 +1098,7 @@ class FastCRUD(
         if return_as_model and schema_to_select:
             data = [schema_to_select.model_construct(**row) for row in data]
 
-        total_count = await self.count(db=db, **kwargs)
+        total_count = await self.count(db=db, joins_config=joins_config, **kwargs)
         return {"data": data, "total_count": total_count}
 
     async def get_multi_by_cursor(

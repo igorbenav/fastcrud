@@ -24,4 +24,4 @@ jobs:
       run: poetry add mypy --dev
 
     - name: Run mypy
-      run: poetry run mypy .
+      run: poetry run mypy fastcrud

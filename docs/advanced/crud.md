@@ -212,6 +212,53 @@ tasks = await task_crud.get_multi_joined(
 
 In this example, `owner_alias` and `assigned_user_alias` are created from `UserModel` to distinguish between the task's owner and the assigned user within the task management system. By using aliases, you can join the same model multiple times for different purposes in your queries, enhancing expressiveness and eliminating ambiguity.
 
+### Many-to-Many Relationships with `get_multi_joined`
+
+FastCRUD simplifies dealing with many-to-many relationships by allowing easy fetch operations with joined models. Here, we demonstrate using `get_multi_joined` to handle a many-to-many relationship between `Project` and `Participant` models, linked through an association table.
+
+**Note on Handling Many-to-Many Relationships:**
+
+When using `get_multi_joined` for many-to-many relationships, it's essential to maintain a specific order in your `joins_config`: 
+
+1. **First**, specify the main table you're querying from.
+2. **Next**, include the association table that links your main table to the other table involved in the many-to-many relationship.
+3. **Finally**, specify the other table that is connected via the association table.
+
+This order ensures that the SQL joins are structured correctly to reflect the many-to-many relationship and retrieve the desired data accurately.
+
+!!! TIP
+
+    Note that the first one can be the model defined in `FastCRUD(Model)`.
+
+```python
+# Fetch projects with their participants via a many-to-many relationship
+joins_config = [
+    JoinConfig(
+        model=ProjectsParticipantsAssociation,
+        join_on=Project.id == ProjectsParticipantsAssociation.project_id,
+        join_type="inner",
+        join_prefix="pp_"
+    ),
+    JoinConfig(
+        model=Participant,
+        join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
+        join_type="inner",
+        join_prefix="participant_"
+    )
+]
+
+crud_project = FastCRUD(Project)
+
+projects_with_participants = await project_crud.get_multi_joined(
+    db=db,
+    schema_to_select=ProjectSchema,
+    joins_config=joins_config
+)
+```
+
+For a more detailed explanation, read [this part of the docs](joins.md#many-to-many-relationships-with-get_multi_joined).
+
+
 ## Enhanced Query Capabilities with Method Chaining
 
 The `select` method in FastCRUD is designed for flexibility, enabling you to build complex queries through method chaining.

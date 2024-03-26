@@ -41,6 +41,32 @@ class TierModel(SQLModel, table=True):
     tests: list["ModelTest"] = Relationship(back_populates="tier")
 
 
+class ProjectsParticipantsAssociation(SQLModel, table=True):
+    __tablename__ = "projects_participants_association"
+    project_id: int = Field(foreign_key="projects.id", primary_key=True)
+    participant_id: int = Field(foreign_key="participants.id", primary_key=True)
+
+
+class Project(SQLModel, table=True):
+    __tablename__ = "projects"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    description: Optional[str] = None
+    participants: list["Participant"] = Relationship(
+        back_populates="projects", link_model=ProjectsParticipantsAssociation
+    )
+
+
+class Participant(SQLModel, table=True):
+    __tablename__ = "participants"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    role: Optional[str] = None
+    projects: list["Project"] = Relationship(
+        back_populates="participants", link_model=ProjectsParticipantsAssociation
+    )
+
+
 class CreateSchemaTest(SQLModel):
     model_config = ConfigDict(extra="forbid")
     name: str

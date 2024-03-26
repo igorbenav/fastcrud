@@ -866,7 +866,7 @@ class FastCRUD(
 
         for join in join_definitions:
             model = join.alias or join.model
-            join_filters = (
+            joined_model_filters = (
                 self._parse_filters(model=model, **join.filters)
                 if join.filters
                 else None
@@ -886,8 +886,8 @@ class FastCRUD(
             else:
                 raise ValueError(f"Unsupported join type: {join.join_type}.")
 
-            if join_filters is not None:
-                stmt = stmt.filter(*join_filters)
+            if joined_model_filters is not None:
+                stmt = stmt.filter(*joined_model_filters)
 
         primary_filters = self._parse_filters(**kwargs)
         if primary_filters:
@@ -1151,7 +1151,7 @@ class FastCRUD(
 
         for join in join_definitions:
             model = join.alias or join.model
-            join_filters = (
+            joined_model_filters = (
                 self._parse_filters(model=model, **join.filters)
                 if join.filters
                 else None
@@ -1171,8 +1171,8 @@ class FastCRUD(
             else:
                 raise ValueError(f"Unsupported join type: {join.join_type}.")
 
-            if join_filters is not None:
-                stmt = stmt.filter(*join_filters)
+            if joined_model_filters is not None:
+                stmt = stmt.filter(*joined_model_filters)
 
         primary_filters = self._parse_filters(**kwargs)
         if primary_filters:

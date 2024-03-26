@@ -20,8 +20,8 @@ jobs:
     - name: Install dependencies
       run: poetry install --with dev
 
-    - name: Install mypy 1.7.1
-      run: poetry add mypy==1.7.1 --dev
+    - name: Install mypy 1.9.0
+      run: poetry add mypy==1.9.0 --dev
 
     - name: Run mypy
-      run: poetry run mypy . --config-file mypy.ini
+      run: poetry run mypy fastcrud --config-file mypy.ini

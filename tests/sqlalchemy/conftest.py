@@ -56,6 +56,36 @@ class BookingModel(Base):
     user = relationship("ModelTest", foreign_keys=[user_id], backref="user_bookings")
 
 
+class Project(Base):
+    __tablename__ = "projects"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(String)
+    participants = relationship(
+        "Participant",
+        secondary="projects_participants_association",
+        back_populates="projects",
+    )
+
+
+class Participant(Base):
+    __tablename__ = "participants"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    role = Column(String)
+    projects = relationship(
+        "Project",
+        secondary="projects_participants_association",
+        back_populates="participants",
+    )
+
+
+class ProjectsParticipantsAssociation(Base):
+    __tablename__ = "projects_participants_association"
+    project_id = Column(Integer, ForeignKey("projects.id"), primary_key=True)
+    participant_id = Column(Integer, ForeignKey("participants.id"), primary_key=True)
+
+
 class CreateSchemaTest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str

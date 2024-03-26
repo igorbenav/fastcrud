@@ -74,7 +74,6 @@ async def test_get_multi_by_cursor_edge_cases(async_session, test_data):
     crud = FastCRUD(ModelTest)
 
     all_records = await crud.get_multi_by_cursor(db=async_session)
-    print("All records:", all_records)
 
     highest_id = max(record["id"] for record in all_records["data"])
 

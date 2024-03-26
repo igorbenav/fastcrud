@@ -34,5 +34,10 @@ FastCRUD's `select` method introduces method chaining, allowing for the construc
 
 - [Method Chaining Guide](crud.md#enhanced-query-capabilities-with-method-chaining)
 
+### 7. In depth explanation of Joined methods
+Explore different ways of joining models in FastCRUD with examples and tips.
+
+- [Joining Models](joins.md#applying-joins-in-fastcrud-methods)
+
 ## Prerequisites
 Advanced usage assumes a solid understanding of the basic features and functionalities of our application. Knowledge of FastAPI, SQLAlchemy, and Pydantic is highly recommended to fully grasp the concepts discussed.

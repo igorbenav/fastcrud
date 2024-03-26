@@ -18,6 +18,8 @@ from .helper import (
     JoinConfig,
 )
 
+from ..endpoint.helper import _get_primary_key
+
 ModelType = TypeVar("ModelType", bound=DeclarativeBase)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
@@ -52,7 +54,7 @@ class FastCRUD(
 
         select:
             Generates a SQL Alchemy `Select` statement with optional filtering and sorting.
-        
+
         get:
             Retrieves a single record based on filters. Supports advanced filtering through comparison operators like '__gt', '__lt', etc.
 
@@ -164,12 +166,15 @@ class FastCRUD(
         self.deleted_at_column = deleted_at_column
         self.updated_at_column = updated_at_column
 
-    def _parse_filters(self, **kwargs) -> list[BinaryExpression]:
+    def _parse_filters(
+        self, model: Optional[type[ModelType]] = None, **kwargs
+    ) -> list[BinaryExpression]:
+        model = model or self.model
         filters = []
         for key, value in kwargs.items():
             if "__" in key:
                 field_name, op = key.rsplit("__", 1)
-                column = getattr(self.model, field_name, None)
+                column = getattr(model, field_name, None)
                 if column is None:
                     raise ValueError(f"Invalid filter column: {field_name}")
 
@@ -184,7 +189,7 @@ class FastCRUD(
                 elif op == "ne":
                     filters.append(column != value)
             else:
-                column = getattr(self.model, key, None)
+                column = getattr(model, key, None)
                 if column is not None:
                     filters.append(column == value)
 
@@ -460,17 +465,22 @@ class FastCRUD(
         result = await db.execute(stmt)
         return result.first() is not None
 
-    async def count(self, db: AsyncSession, **kwargs: Any) -> int:
+    async def count(
+        self,
+        db: AsyncSession,
+        joins_config: Optional[list[JoinConfig]] = None,
+        **kwargs: Any,
+    ) -> int:
         """
         Counts records that match specified filters, supporting advanced filtering through comparison operators:
-            '__gt' (greater than),
-            '__lt' (less than),
+            '__gt' (greater than), '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
+            '__lte' (less than or equal to), and '__ne' (not equal).
+        Can also count records based on a configuration of joins, useful for complex queries involving relationships.
 
         Args:
             db: The database session to use for the operation.
+            joins_config: Optional configuration for applying joins in the count query.
             **kwargs: Filters to apply for the count, including field names for equality checks or with comparison operators for advanced queries.
 
         Returns:
@@ -479,29 +489,90 @@ class FastCRUD(
         Examples:
             Count users by ID:
             ```python
-            exists = await crud.count(db, id=1)
+            count = await crud.count(db, id=1)
             ```
 
             Count users older than 30:
             ```python
-            exists = await crud.count(db, age__gt=30)
-            ```
-
-            Count users who registered before Jan 1, 2020:
-            ```python
-            exists = await crud.count(db, registration_date__lt=datetime(2020, 1, 1))
+            count = await crud.count(db, age__gt=30)
             ```
 
             Count users with a username other than 'admin':
             ```python
-            exists = await crud.count(db, username__ne='admin')
+            count = await crud.count(db, username__ne='admin')
+            ```
+
+            Count projects with at least one participant (many-to-many relationship):
+            ```python
+            joins_config = [
+                JoinConfig(
+                    model=ProjectsParticipantsAssociation,
+                    join_on=Project.id == ProjectsParticipantsAssociation.project_id,
+                    join_type="inner"
+                ),
+                JoinConfig(
+                    model=Participant,
+                    join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
+                    join_type="inner"
+                )
+            ]
+            count = await crud.count(db, joins_config=joins_config)
+            ```
+
+            Count projects by a specific participant name (filter applied on a joined model):
+            ```python
+            joins_config = [
+                JoinConfig(
+                    model=ProjectsParticipantsAssociation,
+                    join_on=Project.id == ProjectsParticipantsAssociation.project_id,
+                    join_type="inner"
+                ),
+                JoinConfig(
+                    model=Participant,
+                    join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
+                    join_type="inner",
+                    filters={'name': 'Jane Doe'}
+                )
+            ]
+            count = await crud.count(db, joins_config=joins_config)
             ```
         """
-        filters = self._parse_filters(**kwargs)
-        if filters:
-            count_query = select(func.count()).select_from(self.model).filter(*filters)
+        primary_filters = self._parse_filters(**kwargs)
+
+        if joins_config is not None:
+            primary_key = _get_primary_key(self.model)
+            if not primary_key:
+                raise ValueError(
+                    f"The model '{self.model.__name__}' does not have a primary key defined, which is required for counting with joins."
+                )
+
+            base_query = select(getattr(self.model, primary_key).label("distinct_id"))
+
+            for join in joins_config:
+                join_model = join.alias or join.model
+                join_filters = (
+                    self._parse_filters(model=join_model, **join.filters)
+                    if join.filters
+                    else []
+                )
+
+                if join.join_type == "inner":
+                    base_query = base_query.join(join_model, join.join_on)
+                else:
+                    base_query = base_query.outerjoin(join_model, join.join_on)
+
+                if join_filters:
+                    base_query = base_query.where(*join_filters)
+
+            if primary_filters:
+                base_query = base_query.where(*primary_filters)
+
+            subquery = base_query.subquery()
+            count_query = select(func.count()).select_from(subquery)
         else:
             count_query = select(func.count()).select_from(self.model)
+            if primary_filters:
+                count_query = count_query.where(*primary_filters)
 
         total_count: int = await db.scalar(count_query)
         return total_count
@@ -611,6 +682,7 @@ class FastCRUD(
         join_schema_to_select: Optional[type[BaseModel]] = None,
         join_type: str = "left",
         alias: Optional[AliasedClass] = None,
+        join_filters: Optional[dict] = None,
         joins_config: Optional[list[JoinConfig]] = None,
         **kwargs: Any,
     ) -> Optional[dict[str, Any]]:
@@ -633,6 +705,7 @@ class FastCRUD(
             join_schema_to_select: Pydantic schema for selecting specific columns from the joined model.
             join_type: Specifies the type of join operation to perform. Can be "left" for a left outer join or "inner" for an inner join.
             alias: An instance of `AliasedClass` for the join model, useful for self-joins or multiple joins on the same model. Result of `aliased(join_model)`.
+            join_filters: Filters applied to the joined model, specified as a dictionary mapping column names to their expected values.
             joins_config: A list of JoinConfig instances, each specifying a model to join with, join condition, optional prefix for column names, schema for selecting specific columns, and the type of join. This parameter enables support for multiple joins.
             **kwargs: Filters to apply to the primary model query, supporting advanced comparison operators for refined searching.
 
@@ -739,6 +812,28 @@ class FastCRUD(
                 id=1
             )
             ```
+
+            Fetching a single project and its associated participants where a participant has a specific role:
+            ```python
+            joins_config = [
+                JoinConfig(
+                    model=ProjectsParticipantsAssociation,
+                    join_on=Project.id == ProjectsParticipantsAssociation.project_id,
+                    join_type="inner"
+                ),
+                JoinConfig(
+                    model=Participant,
+                    join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
+                    join_type="inner",
+                    filters={'role': 'Designer'}
+                )
+            ]
+            project = await crud.get_joined(
+                db=session,
+                schema_to_select=ProjectSchema,
+                joins_config=joins_config
+            )
+            ```
         """
         if joins_config and (
             join_model or join_prefix or join_on or join_schema_to_select or alias
@@ -765,11 +860,17 @@ class FastCRUD(
                     schema_to_select=join_schema_to_select,
                     join_type=join_type,
                     alias=alias,
+                    filters=join_filters,
                 )
             )
 
         for join in join_definitions:
             model = join.alias or join.model
+            join_filters = (
+                self._parse_filters(model=model, **join.filters)
+                if join.filters
+                else None
+            )
 
             join_select = _extract_matching_columns_from_schema(
                 model=join.model,
@@ -785,9 +886,12 @@ class FastCRUD(
             else:
                 raise ValueError(f"Unsupported join type: {join.join_type}.")
 
-        filters = self._parse_filters(**kwargs)
-        if filters:
-            stmt = stmt.filter(*filters)
+            if join_filters is not None:
+                stmt = stmt.filter(*join_filters)
+
+        primary_filters = self._parse_filters(**kwargs)
+        if primary_filters:
+            stmt = stmt.filter(*primary_filters)
 
         db_row = await db.execute(stmt)
         result: Row = db_row.first()
@@ -807,6 +911,7 @@ class FastCRUD(
         join_schema_to_select: Optional[type[BaseModel]] = None,
         join_type: str = "left",
         alias: Optional[str] = None,
+        join_filters: Optional[dict] = None,
         offset: int = 0,
         limit: int = 100,
         sort_columns: Optional[Union[str, list[str]]] = None,
@@ -833,6 +938,7 @@ class FastCRUD(
             join_schema_to_select: Pydantic schema for selecting specific columns from the joined model.
             join_type: Specifies the type of join operation to perform. Can be "left" for a left outer join or "inner" for an inner join.
             alias: An instance of `AliasedClass` for the join model, useful for self-joins or multiple joins on the same model. Result of `aliased(join_model)`.
+            join_filters: Filters applied to the joined model, specified as a dictionary mapping column names to their expected values.
             offset: The offset (number of records to skip) for pagination.
             limit: The limit (maximum number of records to return) for pagination.
             sort_columns: A single column name or a list of column names on which to apply sorting.
@@ -987,6 +1093,29 @@ class FastCRUD(
                 sort_orders=['desc']  # In descending order
             )
             ```
+
+            Fetching multiple project records and their associated participants where participants have a specific role:
+            ```python
+            joins_config = [
+                JoinConfig(
+                    model=ProjectsParticipantsAssociation,
+                    join_on=Project.id == ProjectsParticipantsAssociation.project_id,
+                    join_type="inner"
+                ),
+                JoinConfig(
+                    model=Participant,
+                    join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
+                    join_type="inner",
+                    filters={'role': 'Developer'}
+                )
+            ]
+            projects = await crud.get_multi_joined(
+                db=session,
+                schema_to_select=ProjectSchema,
+                joins_config=joins_config,
+                limit=10
+            )
+            ```
         """
         if joins_config and (
             join_model or join_prefix or join_on or join_schema_to_select or alias
@@ -1016,11 +1145,17 @@ class FastCRUD(
                     schema_to_select=join_schema_to_select,
                     join_type=join_type,
                     alias=alias,
+                    filters=join_filters,
                 )
             )
 
         for join in join_definitions:
             model = join.alias or join.model
+            join_filters = (
+                self._parse_filters(model=model, **join.filters)
+                if join.filters
+                else None
+            )
 
             join_select = _extract_matching_columns_from_schema(
                 model=join.model,
@@ -1036,9 +1171,12 @@ class FastCRUD(
             else:
                 raise ValueError(f"Unsupported join type: {join.join_type}.")
 
-        filters = self._parse_filters(**kwargs)
-        if filters:
-            stmt = stmt.filter(*filters)
+            if join_filters is not None:
+                stmt = stmt.filter(*join_filters)
+
+        primary_filters = self._parse_filters(**kwargs)
+        if primary_filters:
+            stmt = stmt.filter(*primary_filters)
 
         if sort_columns:
             stmt = self._apply_sorting(stmt, sort_columns, sort_orders)
@@ -1051,7 +1189,7 @@ class FastCRUD(
         if return_as_model and schema_to_select:
             data = [schema_to_select.model_construct(**row) for row in data]
 
-        total_count = await self.count(db=db, **kwargs)
+        total_count = await self.count(db=db, joins_config=joins_config, **kwargs)
         return {"data": data, "total_count": total_count}
 
     async def get_multi_by_cursor(

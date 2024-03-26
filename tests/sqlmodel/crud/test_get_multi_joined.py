@@ -10,6 +10,9 @@ from ...sqlmodel.conftest import (
     CategorySchemaTest,
     BookingModel,
     BookingSchema,
+    Project,
+    Participant,
+    ProjectsParticipantsAssociation,
 )
 
 
@@ -440,3 +443,95 @@ async def test_get_multi_joined_with_aliases_no_schema(
     assert (
         first_result["user_name"] == expected_user_name
     ), "User name does not match expected value"
+
+
+@pytest.mark.asyncio
+async def test_many_to_many_joined(async_session):
+    project1 = Project(id=1, name="Project 1", description="First Project")
+    project2 = Project(id=2, name="Project 2", description="Second Project")
+
+    participant1 = Participant(id=1, name="Participant 1", role="Developer")
+    participant2 = Participant(id=2, name="Participant 2", role="Designer")
+
+    async_session.add_all([project1, project2, participant1, participant2])
+    await async_session.commit()
+
+    projects_participants1 = ProjectsParticipantsAssociation(
+        project_id=1, participant_id=1
+    )
+    projects_participants2 = ProjectsParticipantsAssociation(
+        project_id=1, participant_id=2
+    )
+    projects_participants3 = ProjectsParticipantsAssociation(
+        project_id=2, participant_id=1
+    )
+
+    async_session.add_all(
+        [projects_participants1, projects_participants2, projects_participants3]
+    )
+    await async_session.commit()
+
+    crud_project = FastCRUD(Project)
+
+    join_condition_1 = Project.id == ProjectsParticipantsAssociation.project_id
+    join_condition_2 = ProjectsParticipantsAssociation.participant_id == Participant.id
+
+    joins_config = [
+        JoinConfig(
+            model=ProjectsParticipantsAssociation,
+            join_on=join_condition_1,
+            join_type="inner",
+            join_prefix="pp_",
+        ),
+        JoinConfig(
+            model=Participant,
+            join_on=join_condition_2,
+            join_type="inner",
+            join_prefix="participant_",
+        ),
+    ]
+
+    records = await crud_project.get_multi_joined(
+        db=async_session,
+        joins_config=joins_config,
+    )
+
+    expected_results = [
+        {
+            "project_id": 1,
+            "participant_id": 1,
+            "participant_name": "Participant 1",
+            "participant_role": "Developer",
+        },
+        {
+            "project_id": 1,
+            "participant_id": 2,
+            "participant_name": "Participant 2",
+            "participant_role": "Designer",
+        },
+        {
+            "project_id": 2,
+            "participant_id": 1,
+            "participant_name": "Participant 1",
+            "participant_role": "Developer",
+        },
+    ]
+
+    assert len(records["data"]) == 3, "Expected three project-participant associations"
+    assert (
+        len(records["data"]) == records["total_count"]
+    ), "Number of records should be the same in total_count and len"
+
+    for expected, actual in zip(expected_results, records["data"]):
+        assert (
+            actual["id"] == expected["project_id"]
+        ), f"Project ID mismatch. Expected: {expected['project_id']}, Got: {actual['id']}"
+        assert (
+            actual["participant_id"] == expected["participant_id"]
+        ), f"Participant ID mismatch. Expected: {expected['participant_id']}, Got: {actual['participant_id']}"
+        assert (
+            actual["participant_name"] == expected["participant_name"]
+        ), f"Participant name mismatch. Expected: {expected['participant_name']}, Got: {actual['participant_name']}"
+        assert (
+            actual["participant_role"] == expected["participant_role"]
+        ), f"Participant role mismatch. Expected: {expected['participant_role']}, Got: {actual['participant_role']}"

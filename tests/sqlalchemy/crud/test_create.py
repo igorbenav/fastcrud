@@ -62,3 +62,21 @@ async def test_create_with_invalid_data_types(async_session, test_model, create_
     invalid_data = {"name": 123, "tier_id": "invalid"}
     with pytest.raises(ValidationError):
         await crud.create(async_session, create_schema(**invalid_data))
+
+
+@pytest.mark.asyncio
+async def test_create_successful_multi_pk(
+    async_session, multi_pk_model, multi_pk_test_create_schema
+):
+    crud = FastCRUD(multi_pk_model)
+    new_data = multi_pk_test_create_schema(name="New Record", id=1, uuid="a")
+    await crud.create(async_session, new_data)
+
+    stmt = select(multi_pk_model).where(multi_pk_model.name == "New Record")
+    result = await async_session.execute(stmt)
+    fetched_record = result.scalar_one_or_none()
+
+    assert fetched_record is not None
+    assert fetched_record.name == "New Record"
+    assert fetched_record.id == 1
+    assert fetched_record.uuid == "a"

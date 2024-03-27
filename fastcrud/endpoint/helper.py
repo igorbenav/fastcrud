@@ -42,11 +42,21 @@ class CRUDMethods(BaseModel):
         return values
 
 
-def _get_primary_key(model: DeclarativeBase) -> Union[str, None]:
+def _get_primary_keys(model: DeclarativeBase) -> Union[str, None]:
     """Get the primary key of a SQLAlchemy model."""
     inspector = inspect(model)
     primary_key_columns = inspector.primary_key
-    return primary_key_columns[0].name if primary_key_columns else None
+
+    # Some patching when using derived sa.TypeDecorator as primary keys
+    # if sa.TypeDecorator.python_type is not implemented by using
+    # the sa.TypeDecorator.impl.python_type one.
+    for pk in primary_key_columns:
+        try:
+            pk.type.python_type
+        except NotImplementedError:
+            pk.type.__class__.python_type = pk.type.__class__.impl.python_type
+
+    return primary_key_columns
 
 
 def _extract_unique_columns(model: type[DeclarativeBase]) -> list[Column]:

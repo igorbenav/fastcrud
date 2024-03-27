@@ -17,7 +17,6 @@ async def test_update_item(client: TestClient, async_session, test_model, test_d
 
     update_response = client.patch(f"/test/update/{min_id}", json=updated_data)
     assert update_response.status_code == 200
-    print(update_response.status_code)
 
     stmt = select(test_model).filter_by(id=min_id)
     result = await async_session.execute(stmt)

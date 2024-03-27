@@ -1,5 +1,7 @@
 import pytest
 from fastcrud.crud.fast_crud import FastCRUD
+from fastcrud import JoinConfig
+from ..conftest import Project, Participant, ProjectsParticipantsAssociation
 
 
 @pytest.mark.asyncio
@@ -101,3 +103,56 @@ async def test_soft_delete_custom_columns(async_session, test_model, test_data):
             "custom_deleted_at" in deleted_record
             and deleted_record["custom_deleted_at"] is not None
         ), "Deletion timestamp should be set"
+
+
+@pytest.mark.asyncio
+async def test_count_with_joins_config_many_to_many(async_session):
+    project1 = Project(name="Project Alpha", description="First Project")
+    project2 = Project(name="Project Beta", description="Second Project")
+    project3 = Project(name="Project Gamma", description="Third Project")
+    participant1 = Participant(name="John Doe", role="Developer")
+    participant2 = Participant(name="Jane Doe", role="Designer")
+
+    async_session.add_all([project1, project2, project3, participant1, participant2])
+    await async_session.commit()
+
+    async_session.add_all(
+        [
+            ProjectsParticipantsAssociation(
+                project_id=project1.id, participant_id=participant1.id
+            ),
+            ProjectsParticipantsAssociation(
+                project_id=project2.id, participant_id=participant1.id
+            ),
+            ProjectsParticipantsAssociation(
+                project_id=project3.id, participant_id=participant2.id
+            ),
+        ]
+    )
+    await async_session.commit()
+
+    crud_project = FastCRUD(Project)
+
+    joins_config = [
+        JoinConfig(
+            model=ProjectsParticipantsAssociation,
+            join_on=Project.id == ProjectsParticipantsAssociation.project_id,
+            join_type="inner",
+            join_prefix="association_",
+        ),
+        JoinConfig(
+            model=Participant,
+            join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
+            join_type="inner",
+            join_prefix="participant_",
+            filters={"id": 1},
+        ),
+    ]
+
+    count = await crud_project.count(
+        async_session, joins_config=joins_config, participant_id=1
+    )
+
+    assert (
+        count == 2
+    ), f"Expected to find 2 projects associated with 'John Doe', found {count}"

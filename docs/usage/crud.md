@@ -101,6 +101,7 @@ exists = await item_crud.exists(db, name="Existing Item")
 ```python
 count(
     db: AsyncSession,
+    joins_config: Optional[list[JoinConfig]] = None,
     **kwargs: Any
 ) -> int
 ```
@@ -226,6 +227,7 @@ get_joined(
     schema_to_select: Optional[type[BaseModel]] = None,
     join_schema_to_select: Optional[type[BaseModel]] = None,
     join_type: str = "left",
+    join_filters: Optional[dict] = None,
     joins_config: Optional[list[JoinConfig]] = None,
     **kwargs: Any,
 ) -> Optional[dict[str, Any]]
@@ -255,6 +257,8 @@ get_multi_joined(
     schema_to_select: Optional[type[BaseModel]] = None,
     join_schema_to_select: Optional[type[BaseModel]] = None,
     join_type: str = "left",
+    alias: Optional[str] = None,
+    join_filters: Optional[dict] = None,
     offset: int = 0,
     limit: int = 100,
     sort_columns: Optional[Union[str, list[str]]] = None,
@@ -303,6 +307,54 @@ paginated_items = await item_crud.get_multi_by_cursor(
     limit=10,
     sort_column='created_at',
     sort_order='desc'
+)
+```
+
+### 5. Select
+
+```python
+async def select(
+    db: AsyncSession,
+    schema_to_select: Optional[type[BaseModel]] = None,
+    sort_columns: Optional[Union[str, list[str]]] = None,
+    sort_orders: Optional[Union[str, list[str]]] = None,
+    **kwargs: Any
+) -> Selectable
+```
+
+**Purpose**: Constructs a SQL Alchemy Select statement with optional column selection, filtering, and sorting.
+**Usage Example**: Selects all items, filtering by 'name' and sorting by 'id'. Returns the `select` statement.
+
+```python
+stmt = await item_crud.select(schema_to_select=ItemSchema, sort_columns='id', name='John')
+# Note: This method returns a SQL Alchemy Selectable object, not the actual query result.
+```
+
+### 6. Count for Joined Models
+
+```python
+count(
+    db: AsyncSession,
+    joins_config: Optional[list[JoinConfig]] = None,
+    **kwargs: Any
+) -> int
+```
+
+**Purpose**: To count records that match specified filters, especially useful in scenarios involving joins between models. This method supports counting unique entities across relationships, a common requirement in many-to-many or complex relationships.
+**Usage Example**: Count the number of unique projects a participant is involved in, considering a many-to-many relationship between Project and Participant models.
+
+```python
+# Assuming a Project model related to a Participant model through a many-to-many relationship
+projects_count = await project_crud.count(
+    db=session,
+    joins_config=[
+        JoinConfig(
+            model=Participant,
+            join_on=ProjectsParticipantsAssociation.project_id == Project.id,
+            join_type="inner"
+        )
+    ],
+    participant_id=specific_participant_id
 )
 ```
 

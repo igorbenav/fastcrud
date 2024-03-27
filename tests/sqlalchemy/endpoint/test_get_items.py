@@ -14,7 +14,6 @@ async def test_read_items(client: TestClient, async_session, test_model, test_da
     assert response.status_code == 200
     data = response.json()
 
-    print(data)
     assert "data" in data
     assert len(data["data"]) > 0
 

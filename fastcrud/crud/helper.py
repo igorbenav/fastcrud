@@ -14,6 +14,7 @@ class JoinConfig(NamedTuple):
     schema_to_select: Optional[type[BaseModel]] = None
     join_type: str = "left"
     alias: Optional[AliasedClass] = None
+    filters: Optional[dict] = None
 
 
 def _extract_matching_columns_from_schema(

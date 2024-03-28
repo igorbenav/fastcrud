@@ -2,7 +2,6 @@ from typing import Type, TypeVar, Optional, Union, Sequence, Callable
 from enum import Enum
 
 from fastapi import APIRouter, params
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from pydantic import BaseModel
 

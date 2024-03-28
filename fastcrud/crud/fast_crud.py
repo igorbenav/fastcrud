@@ -576,7 +576,7 @@ class FastCRUD(
 
         total_count: Optional[int] = await db.scalar(count_query)
         if total_count is None:
-            raise ValueError(f"Could not find the count.")
+            raise ValueError("Could not find the count.")
 
         return total_count
 
@@ -670,7 +670,7 @@ class FastCRUD(
             try:
                 model_data = [schema_to_select.model_construct(**row) for row in data]
                 return {"data": model_data, "total_count": total_count}
-            
+
             except ValidationError as e:
                 raise ValueError(
                     f"Data validation error for schema {schema_to_select.__name__}: {e}"
@@ -1195,7 +1195,9 @@ class FastCRUD(
         total_count = await self.count(db=db, joins_config=joins_config, **kwargs)
 
         if return_as_model and schema_to_select:
-            model_data: list[BaseModel] = [schema_to_select.model_construct(**row) for row in data]
+            model_data: list[BaseModel] = [
+                schema_to_select.model_construct(**row) for row in data
+            ]
             return {"data": model_data, "total_count": total_count}
 
         return {"data": data, "total_count": total_count}

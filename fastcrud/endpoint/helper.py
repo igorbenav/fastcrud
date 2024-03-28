@@ -49,7 +49,9 @@ def _get_primary_key(model: type[DeclarativeBase]) -> Union[str, None]:
     return primary_key_columns[0].name if primary_key_columns else None
 
 
-def _extract_unique_columns(model: type[DeclarativeBase]) -> Sequence[KeyedColumnElement]:
+def _extract_unique_columns(
+    model: type[DeclarativeBase],
+) -> Sequence[KeyedColumnElement]:
     """Extracts columns from a SQLAlchemy model that are marked as unique."""
     unique_columns = [column for column in model.__table__.columns if column.unique]
     return unique_columns

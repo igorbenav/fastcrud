@@ -1,7 +1,7 @@
 from typing import Any, Optional, NamedTuple
 
 from sqlalchemy import inspect
-from sqlalchemy.orm import DeclarativeBase, DeclarativeMeta
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql import ColumnElement
 from pydantic import BaseModel

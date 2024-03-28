@@ -138,8 +138,8 @@ class EndpointCreator:
 
     def __init__(
         self,
-        session: AsyncSession,
-        model: DeclarativeBase,
+        session: Callable,
+        model: type[DeclarativeBase],
         create_schema: Type[CreateSchemaType],
         update_schema: Type[UpdateSchemaType],
         crud: Optional[FastCRUD] = None,
@@ -491,12 +491,12 @@ class EndpointCreator:
         endpoint: Callable,
         methods: Optional[Union[set[str], list[str]]],
         path: Optional[str] = None,
-        dependencies: Optional[Sequence[Callable]] = None,
+        dependencies: Optional[Sequence[params.Depends]] = None,
         include_in_schema: bool = True,
         tags: Optional[list[Union[str, Enum]]] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
-        response_description: Optional[str] = None,
+        response_description: str = "Successful Response",
     ) -> None:
         """
         Adds a custom route to the FastAPI router.

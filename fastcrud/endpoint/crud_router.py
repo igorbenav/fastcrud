@@ -1,4 +1,4 @@
-from typing import Type, TypeVar, Optional, Union, Sequence
+from typing import Type, TypeVar, Optional, Union, Sequence, Callable
 from enum import Enum
 
 from fastapi import APIRouter, params
@@ -15,8 +15,8 @@ DeleteSchemaType = TypeVar("DeleteSchemaType", bound=BaseModel)
 
 
 def crud_router(
-    session: AsyncSession,
-    model: DeclarativeBase,
+    session: Callable,
+    model: type[DeclarativeBase],
     create_schema: Type[CreateSchemaType],
     update_schema: Type[UpdateSchemaType],
     crud: Optional[FastCRUD] = None,

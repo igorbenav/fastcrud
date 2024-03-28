@@ -1,8 +1,11 @@
-from typing import Type, TypeVar, Optional, Callable, List
-from fastapi import APIRouter
+from typing import Type, TypeVar, Optional, Union, Sequence
+from enum import Enum
+
+from fastapi import APIRouter, params
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from pydantic import BaseModel
+
 from .endpoint_creator import EndpointCreator
 from ..crud.fast_crud import FastCRUD
 
@@ -19,15 +22,15 @@ def crud_router(
     crud: Optional[FastCRUD] = None,
     delete_schema: Optional[Type[DeleteSchemaType]] = None,
     path: str = "",
-    tags: Optional[List[str]] = None,
+    tags: Optional[list[Union[str, Enum]]] = None,
     include_in_schema: bool = True,
-    create_deps: List[Callable] = [],
-    read_deps: List[Callable] = [],
-    read_multi_deps: List[Callable] = [],
-    read_paginated_deps: list[Callable] = [],
-    update_deps: List[Callable] = [],
-    delete_deps: List[Callable] = [],
-    db_delete_deps: List[Callable] = [],
+    create_deps: Sequence[params.Depends] = [],
+    read_deps: Sequence[params.Depends] = [],
+    read_multi_deps: Sequence[params.Depends] = [],
+    read_paginated_deps: Sequence[params.Depends] = [],
+    update_deps: Sequence[params.Depends] = [],
+    delete_deps: Sequence[params.Depends] = [],
+    db_delete_deps: Sequence[params.Depends] = [],
     included_methods: Optional[list[str]] = None,
     deleted_methods: Optional[list[str]] = None,
     endpoint_creator: Optional[Type[EndpointCreator]] = None,

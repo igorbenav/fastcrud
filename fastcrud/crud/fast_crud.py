@@ -408,7 +408,7 @@ class FastCRUD(
         stmt = select(*to_select).filter(*filters)
 
         db_row = await db.execute(stmt)
-        result: Row = db_row.first()
+        result: Optional[Row] = db_row.first()
         if result is not None:
             out: dict = dict(result._mapping)
             if return_as_model:
@@ -1184,10 +1184,10 @@ class FastCRUD(
         stmt = stmt.offset(offset).limit(limit)
 
         result = await db.execute(stmt)
-        data = [dict(row) for row in result.mappings().all()]
+        data: list[dict] = [dict(row) for row in result.mappings().all()]
 
         if return_as_model and schema_to_select:
-            data = [schema_to_select.model_construct(**row) for row in data]
+            data: list[BaseModel] = [schema_to_select.model_construct(**row) for row in data]
 
         total_count = await self.count(db=db, joins_config=joins_config, **kwargs)
         return {"data": data, "total_count": total_count}

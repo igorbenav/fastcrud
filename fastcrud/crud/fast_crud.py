@@ -167,7 +167,7 @@ class FastCRUD(
         self.updated_at_column = updated_at_column
 
     def _parse_filters(
-        self, model: Optional[type[ModelType]] = None, **kwargs
+        self, model: Optional[Union[type[ModelType], AliasedClass]] = None, **kwargs
     ) -> list[BinaryExpression]:
         model = model or self.model
         filters = []
@@ -408,7 +408,7 @@ class FastCRUD(
         stmt = select(*to_select).filter(*filters)
 
         db_row = await db.execute(stmt)
-        result: Row = db_row.first()
+        result: Optional[Row] = db_row.first()
         if result is not None:
             out: dict = dict(result._mapping)
             if return_as_model:
@@ -574,7 +574,10 @@ class FastCRUD(
             if primary_filters:
                 count_query = count_query.where(*primary_filters)
 
-        total_count: int = await db.scalar(count_query)
+        total_count: Optional[int] = await db.scalar(count_query)
+        if total_count is None:
+            raise ValueError("Could not find the count.")
+
         return total_count
 
     async def get_multi(
@@ -657,19 +660,22 @@ class FastCRUD(
         result = await db.execute(stmt)
         data = [dict(row) for row in result.mappings()]
 
+        total_count = await self.count(db=db, **kwargs)
+
         if return_as_model:
             if not schema_to_select:
                 raise ValueError(
                     "schema_to_select must be provided when return_as_model is True."
                 )
             try:
-                data = [schema_to_select.model_construct(**row) for row in data]
+                model_data = [schema_to_select.model_construct(**row) for row in data]
+                return {"data": model_data, "total_count": total_count}
+
             except ValidationError as e:
                 raise ValueError(
                     f"Data validation error for schema {schema_to_select.__name__}: {e}"
                 )
 
-        total_count = await self.count(db=db, **kwargs)
         return {"data": data, "total_count": total_count}
 
     async def get_joined(
@@ -866,7 +872,7 @@ class FastCRUD(
 
         for join in join_definitions:
             model = join.alias or join.model
-            join_filters = (
+            joined_model_filters = (
                 self._parse_filters(model=model, **join.filters)
                 if join.filters
                 else None
@@ -886,16 +892,16 @@ class FastCRUD(
             else:
                 raise ValueError(f"Unsupported join type: {join.join_type}.")
 
-            if join_filters is not None:
-                stmt = stmt.filter(*join_filters)
+            if joined_model_filters is not None:
+                stmt = stmt.filter(*joined_model_filters)
 
         primary_filters = self._parse_filters(**kwargs)
         if primary_filters:
             stmt = stmt.filter(*primary_filters)
 
         db_row = await db.execute(stmt)
-        result: Row = db_row.first()
-        if result:
+        result: Optional[Row] = db_row.first()
+        if result is not None:
             out: dict = dict(result._mapping)
             return out
 
@@ -910,7 +916,7 @@ class FastCRUD(
         join_prefix: Optional[str] = None,
         join_schema_to_select: Optional[type[BaseModel]] = None,
         join_type: str = "left",
-        alias: Optional[str] = None,
+        alias: Optional[AliasedClass[Any]] = None,
         join_filters: Optional[dict] = None,
         offset: int = 0,
         limit: int = 100,
@@ -1151,7 +1157,7 @@ class FastCRUD(
 
         for join in join_definitions:
             model = join.alias or join.model
-            join_filters = (
+            joined_model_filters = (
                 self._parse_filters(model=model, **join.filters)
                 if join.filters
                 else None
@@ -1171,8 +1177,8 @@ class FastCRUD(
             else:
                 raise ValueError(f"Unsupported join type: {join.join_type}.")
 
-            if join_filters is not None:
-                stmt = stmt.filter(*join_filters)
+            if joined_model_filters is not None:
+                stmt = stmt.filter(*joined_model_filters)
 
         primary_filters = self._parse_filters(**kwargs)
         if primary_filters:
@@ -1184,12 +1190,16 @@ class FastCRUD(
         stmt = stmt.offset(offset).limit(limit)
 
         result = await db.execute(stmt)
-        data = [dict(row) for row in result.mappings().all()]
-
-        if return_as_model and schema_to_select:
-            data = [schema_to_select.model_construct(**row) for row in data]
+        data: list[dict] = [dict(row) for row in result.mappings().all()]
 
         total_count = await self.count(db=db, joins_config=joins_config, **kwargs)
+
+        if return_as_model and schema_to_select:
+            model_data: list[BaseModel] = [
+                schema_to_select.model_construct(**row) for row in data
+            ]
+            return {"data": model_data, "total_count": total_count}
+
         return {"data": data, "total_count": total_count}
 
     async def get_multi_by_cursor(

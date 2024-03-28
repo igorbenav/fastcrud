@@ -1,7 +1,7 @@
 from typing import Any, Optional, NamedTuple
 
 from sqlalchemy import inspect
-from sqlalchemy.orm import DeclarativeBase, DeclarativeMeta
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql import ColumnElement
 from pydantic import BaseModel
@@ -59,7 +59,7 @@ def _extract_matching_columns_from_schema(
 
 
 def _auto_detect_join_condition(
-    base_model: type[DeclarativeMeta], join_model: type[DeclarativeMeta]
+    base_model: type[DeclarativeBase], join_model: type[DeclarativeBase]
 ) -> Optional[ColumnElement]:
     """
     Automatically detects the join condition for SQLAlchemy models based on foreign key relationships.
@@ -78,20 +78,24 @@ def _auto_detect_join_condition(
         # Assuming User has a foreign key reference to Tier:
         join_condition = auto_detect_join_condition(User, Tier)
     """
-    fk_columns = [col for col in inspect(base_model).c if col.foreign_keys]
-    join_on = next(
-        (
-            base_model.__table__.c[col.name]
-            == join_model.__table__.c[list(col.foreign_keys)[0].column.name]
-            for col in fk_columns
-            if list(col.foreign_keys)[0].column.table == join_model.__table__
-        ),
-        None,
-    )
-
-    if join_on is None:
-        raise ValueError(
-            "Could not automatically determine join condition. Please provide join_on."
+    inspector = inspect(base_model)
+    if inspector is not None:
+        fk_columns = [col for col in inspector.c if col.foreign_keys]
+        join_on = next(
+            (
+                base_model.__table__.c[col.name]
+                == join_model.__table__.c[list(col.foreign_keys)[0].column.name]
+                for col in fk_columns
+                if list(col.foreign_keys)[0].column.table == join_model.__table__
+            ),
+            None,
         )
+
+        if join_on is None:
+            raise ValueError(
+                "Could not automatically determine join condition. Please provide join_on."
+            )
+    else:
+        raise ValueError("Could not automatically get model columns.")
 
     return join_on

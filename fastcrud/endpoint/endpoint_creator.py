@@ -1,6 +1,7 @@
-from typing import Type, TypeVar, Optional, Callable
+from typing import Type, TypeVar, Optional, Callable, Sequence, Union
+from enum import Enum
 
-from fastapi import Depends, Body, Query, APIRouter
+from fastapi import Depends, Body, Query, APIRouter, params
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from pydantic import BaseModel, ValidationError
@@ -137,15 +138,15 @@ class EndpointCreator:
 
     def __init__(
         self,
-        session: AsyncSession,
-        model: DeclarativeBase,
+        session: Callable,
+        model: type[DeclarativeBase],
         create_schema: Type[CreateSchemaType],
         update_schema: Type[UpdateSchemaType],
         crud: Optional[FastCRUD] = None,
         include_in_schema: bool = True,
         delete_schema: Optional[Type[DeleteSchemaType]] = None,
         path: str = "",
-        tags: Optional[list[str]] = None,
+        tags: Optional[list[Union[str, Enum]]] = None,
         is_deleted_column: str = "is_deleted",
         deleted_at_column: str = "deleted_at",
         updated_at_column: str = "updated_at",
@@ -294,15 +295,15 @@ class EndpointCreator:
 
     def add_routes_to_router(
         self,
-        create_deps: list[Callable] = [],
-        read_deps: list[Callable] = [],
-        read_multi_deps: list[Callable] = [],
-        read_paginated_deps: list[Callable] = [],
-        update_deps: list[Callable] = [],
-        delete_deps: list[Callable] = [],
-        db_delete_deps: list[Callable] = [],
-        included_methods: Optional[list[str]] = None,
-        deleted_methods: Optional[list[str]] = None,
+        create_deps: Sequence[params.Depends] = [],
+        read_deps: Sequence[params.Depends] = [],
+        read_multi_deps: Sequence[params.Depends] = [],
+        read_paginated_deps: Sequence[params.Depends] = [],
+        update_deps: Sequence[params.Depends] = [],
+        delete_deps: Sequence[params.Depends] = [],
+        db_delete_deps: Sequence[params.Depends] = [],
+        included_methods: Optional[Sequence[str]] = None,
+        deleted_methods: Optional[Sequence[str]] = None,
     ):
         """
         Adds CRUD operation routes to the FastAPI router with specified dependencies for each type of operation.
@@ -488,14 +489,14 @@ class EndpointCreator:
     def add_custom_route(
         self,
         endpoint: Callable,
-        methods: list[str],
+        methods: Optional[Union[set[str], list[str]]],
         path: Optional[str] = None,
-        dependencies: Optional[list[Callable]] = None,
+        dependencies: Optional[Sequence[params.Depends]] = None,
         include_in_schema: bool = True,
-        tags: Optional[list[str]] = None,
+        tags: Optional[list[Union[str, Enum]]] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
-        response_description: Optional[str] = None,
+        response_description: str = "Successful Response",
     ) -> None:
         """
         Adds a custom route to the FastAPI router.

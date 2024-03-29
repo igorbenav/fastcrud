@@ -2,7 +2,7 @@ from typing import Union, Annotated, Sequence
 from pydantic import BaseModel, Field, ValidationError
 from pydantic.functional_validators import field_validator
 
-from sqlalchemy import inspect
+from sqlalchemy import Column, inspect
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql.elements import KeyedColumnElement
 
@@ -43,10 +43,10 @@ class CRUDMethods(BaseModel):
 
 
 def _get_primary_key(model: type[DeclarativeBase]) -> Union[str, None]:
-    return _get_primary_keys(model)[0]
+    return _get_primary_keys(model)[0].name
 
 
-def _get_primary_keys(model: DeclarativeBase) -> Union[str, None]:
+def _get_primary_keys(model: type[DeclarativeBase]) -> Sequence[Column]:
     """Get the primary key of a SQLAlchemy model."""
     inspector = inspect(model).mapper
     primary_key_columns = inspector.primary_key
@@ -58,7 +58,7 @@ def _get_primary_keys(model: DeclarativeBase) -> Union[str, None]:
         try:
             pk.type.python_type
         except NotImplementedError:
-            pk.type.__class__.python_type = pk.type.__class__.impl.python_type
+            pk.type.__class__.python_type = pk.type.__class__.impl.python_type  # type: ignore
 
     return primary_key_columns
 

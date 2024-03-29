@@ -540,14 +540,13 @@ class FastCRUD(
         primary_filters = self._parse_filters(**kwargs)
 
         if joins_config is not None:
-            primary_keys = _get_primary_keys(self.model)
+            primary_keys = [p.name for p in _get_primary_keys(self.model)]
             if not any(primary_keys):
                 raise ValueError(
                     f"The model '{self.model.__name__}' does not have a primary key defined, which is required for counting with joins."
                 )
             to_select = [
-                getattr(self.model, pk).label(f"distinct_{pk.name}")
-                for pk in primary_keys
+                getattr(self.model, pk).label(f"distinct_{pk}") for pk in primary_keys
             ]
             base_query = select(*to_select)
 

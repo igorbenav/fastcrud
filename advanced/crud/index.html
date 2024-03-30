@@ -18,7 +18,7 @@
         <link rel="prev" href="../endpoint/">
       
       
-        <link rel="next" href="../../api/overview/">
+        <link rel="next" href="../joins/">
       
       
       <link rel="icon" href="../../assets/logo.png">
@@ -626,6 +626,8 @@
       
         
       
+        
+      
     
     
     
@@ -877,6 +879,63 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#many-to-many-relationships-with-get_multi_joined" class="md-nav__link">
+    <span class="md-ellipsis">
+      Many-to-Many Relationships with get_multi_joined
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enhanced-query-capabilities-with-method-chaining" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enhanced Query Capabilities with Method Chaining
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Enhanced Query Capabilities with Method Chaining">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-select-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      The select Method
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The select Method">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Features:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage Example:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -895,6 +954,27 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../joins/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Joining Models
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -1362,6 +1442,63 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#many-to-many-relationships-with-get_multi_joined" class="md-nav__link">
+    <span class="md-ellipsis">
+      Many-to-Many Relationships with get_multi_joined
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enhanced-query-capabilities-with-method-chaining" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enhanced Query Capabilities with Method Chaining
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Enhanced Query Capabilities with Method Chaining">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-select-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      The select Method
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The select Method">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Features:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage Example:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1562,6 +1699,70 @@
 </span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="p">)</span>
 </span></code></pre></div>
 <p>In this example, <code>owner_alias</code> and <code>assigned_user_alias</code> are created from <code>UserModel</code> to distinguish between the task's owner and the assigned user within the task management system. By using aliases, you can join the same model multiple times for different purposes in your queries, enhancing expressiveness and eliminating ambiguity.</p>
+<h3 id="many-to-many-relationships-with-get_multi_joined">Many-to-Many Relationships with <code>get_multi_joined</code><a class="headerlink" href="#many-to-many-relationships-with-get_multi_joined" title="Permanent link">&para;</a></h3>
+<p>FastCRUD simplifies dealing with many-to-many relationships by allowing easy fetch operations with joined models. Here, we demonstrate using <code>get_multi_joined</code> to handle a many-to-many relationship between <code>Project</code> and <code>Participant</code> models, linked through an association table.</p>
+<p><strong>Note on Handling Many-to-Many Relationships:</strong></p>
+<p>When using <code>get_multi_joined</code> for many-to-many relationships, it's essential to maintain a specific order in your <code>joins_config</code>: </p>
+<ol>
+<li><strong>First</strong>, specify the main table you're querying from.</li>
+<li><strong>Next</strong>, include the association table that links your main table to the other table involved in the many-to-many relationship.</li>
+<li><strong>Finally</strong>, specify the other table that is connected via the association table.</li>
+</ol>
+<p>This order ensures that the SQL joins are structured correctly to reflect the many-to-many relationship and retrieve the desired data accurately.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Note that the first one can be the model defined in <code>FastCRUD(Model)</code>.</p>
+</div>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Fetch projects with their participants via a many-to-many relationship</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">joins_config</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">JoinConfig</span><span class="p">(</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>        <span class="n">model</span><span class="o">=</span><span class="n">ProjectsParticipantsAssociation</span><span class="p">,</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>        <span class="n">join_on</span><span class="o">=</span><span class="n">Project</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">ProjectsParticipantsAssociation</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;pp_&quot;</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="p">),</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">JoinConfig</span><span class="p">(</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>        <span class="n">model</span><span class="o">=</span><span class="n">Participant</span><span class="p">,</span>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>        <span class="n">join_on</span><span class="o">=</span><span class="n">ProjectsParticipantsAssociation</span><span class="o">.</span><span class="n">participant_id</span> <span class="o">==</span> <span class="n">Participant</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;participant_&quot;</span>
+</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>    <span class="p">)</span>
+</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="p">]</span>
+</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
+</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="n">crud_project</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">Project</span><span class="p">)</span>
+</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>
+</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="n">projects_with_participants</span> <span class="o">=</span> <span class="k">await</span> <span class="n">project_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
+</span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">ProjectSchema</span><span class="p">,</span>
+</span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>    <span class="n">joins_config</span><span class="o">=</span><span class="n">joins_config</span>
+</span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="p">)</span>
+</span></code></pre></div>
+<p>For a more detailed explanation, read <a href="../joins/#many-to-many-relationships-with-get_multi_joined">this part of the docs</a>.</p>
+<h2 id="enhanced-query-capabilities-with-method-chaining">Enhanced Query Capabilities with Method Chaining<a class="headerlink" href="#enhanced-query-capabilities-with-method-chaining" title="Permanent link">&para;</a></h2>
+<p>The <code>select</code> method in FastCRUD is designed for flexibility, enabling you to build complex queries through method chaining.</p>
+<h3 id="the-select-method">The <code>select</code> Method<a class="headerlink" href="#the-select-method" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">async</span> <span class="k">def</span> <span class="nf">select</span><span class="p">(</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">schema_to_select</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">sort_columns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="n">sort_orders</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Selectable</span>
+</span></code></pre></div>
+<p>This method constructs a SQL Alchemy <code>Select</code> statement, offering optional column selection, filtering, and sorting. It's designed for flexibility, allowing you to chain additional SQLAlchemy methods for even more complex queries.</p>
+<h4 id="features">Features:<a class="headerlink" href="#features" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Column Selection</strong>: Specify columns with a Pydantic schema.</li>
+<li><strong>Sorting</strong>: Define one or more columns for sorting, along with their sort order.</li>
+<li><strong>Filtering</strong>: Apply filters directly through keyword arguments.</li>
+<li><strong>Chaining</strong>: Chain with other SQLAlchemy methods for advanced query construction.</li>
+</ul>
+<h4 id="usage-example">Usage Example:<a class="headerlink" href="#usage-example" title="Permanent link">&para;</a></h4>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">stmt</span> <span class="o">=</span> <span class="k">await</span> <span class="n">my_model_crud</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">schema_to_select</span><span class="o">=</span><span class="n">MySchema</span><span class="p">,</span> <span class="n">sort_columns</span><span class="o">=</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">name__like</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%e</span><span class="s1">xample%&#39;</span><span class="p">)</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">stmt</span> <span class="o">=</span> <span class="n">stmt</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">additional_conditions</span><span class="p">)</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+</span></code></pre></div>
+<p>This example demonstrates selecting a subset of columns, applying a filter, and chaining additional conditions like <code>where</code> and <code>limit</code>. Note that <code>select</code> returns a <code>Selectable</code> object, allowing for further modifications before execution.</p>
 <h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
 <p>The advanced features of FastCRUD, such as <code>allow_multiple</code> and support for advanced filters, empower developers to efficiently manage database records with complex conditions. By leveraging these capabilities, you can build more dynamic, robust, and scalable FastAPI applications that effectively interact with your data model.</p>
 

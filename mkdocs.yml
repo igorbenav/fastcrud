@@ -66,6 +66,7 @@ nav:
     - Contributing: community/CONTRIBUTING.md
     - Code of Conduct: community/CODE_OF_CONDUCT.md
     - License: community/LICENSE.md
+  - Changelog: changelog.md
 
 markdown_extensions:
   - admonition

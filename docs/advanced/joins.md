@@ -13,7 +13,7 @@ FastCRUD simplifies CRUD operations while offering capabilities for handling com
 - **`schema_to_select`**: An optional Pydantic schema for selecting specific columns from the joined model.
 - **`join_type`**: The type of join (e.g., "left", "inner").
 - **`alias`**: An optional SQLAlchemy `AliasedClass` for complex scenarios like self-referential joins or multiple joins on the same model.
-- `filters`: An optional dictionary to apply filters directly to the joined model.
+- **`filters`**: An optional dictionary to apply filters directly to the joined model.
 
 ## Applying Joins in FastCRUD Methods
 
@@ -55,8 +55,8 @@ For simpler join requirements, FastCRUD allows specifying join parameters direct
 - **`model`**: The target model to join.
 - **`join_on`**: The join condition.
 - **`join_type`**: Specifies the SQL join type.
-- **`aliased`**: When `True`, uses an alias for the model in the join.
 - **`join_prefix`**: Optional prefix for columns from the joined model.
+- **`alias`**: An optional SQLAlchemy `AliasedClass` for complex scenarios like self-referential joins or multiple joins on the same model.
 - **`filters`**: Additional filters for the joined model.
 
 #### Examples of Simple Joining
@@ -77,6 +77,9 @@ When dealing with more complex join conditions, such as multiple joins, self-ref
 
 ```python
 # Fetch users with details from related departments and roles, using aliases for self-referential joins
+from fastcrud import aliased
+manager_alias = aliased(User)
+
 users = await user_crud.get_multi_joined(
     db=db,
     schema_to_select=UserSchema,

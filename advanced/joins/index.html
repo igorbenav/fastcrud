@@ -367,6 +367,23 @@
   
 
       
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -1253,6 +1270,26 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1464,7 +1501,7 @@
 <li><strong><code>schema_to_select</code></strong>: An optional Pydantic schema for selecting specific columns from the joined model.</li>
 <li><strong><code>join_type</code></strong>: The type of join (e.g., "left", "inner").</li>
 <li><strong><code>alias</code></strong>: An optional SQLAlchemy <code>AliasedClass</code> for complex scenarios like self-referential joins or multiple joins on the same model.</li>
-<li><code>filters</code>: An optional dictionary to apply filters directly to the joined model.</li>
+<li><strong><code>filters</code></strong>: An optional dictionary to apply filters directly to the joined model.</li>
 </ul>
 <h2 id="applying-joins-in-fastcrud-methods">Applying Joins in FastCRUD Methods<a class="headerlink" href="#applying-joins-in-fastcrud-methods" title="Permanent link">&para;</a></h2>
 <h3 id="the-count-method-with-joins">The <code>count</code> Method with Joins<a class="headerlink" href="#the-count-method-with-joins" title="Permanent link">&para;</a></h3>
@@ -1496,8 +1533,8 @@
 <li><strong><code>model</code></strong>: The target model to join.</li>
 <li><strong><code>join_on</code></strong>: The join condition.</li>
 <li><strong><code>join_type</code></strong>: Specifies the SQL join type.</li>
-<li><strong><code>aliased</code></strong>: When <code>True</code>, uses an alias for the model in the join.</li>
 <li><strong><code>join_prefix</code></strong>: Optional prefix for columns from the joined model.</li>
+<li><strong><code>alias</code></strong>: An optional SQLAlchemy <code>AliasedClass</code> for complex scenarios like self-referential joins or multiple joins on the same model.</li>
 <li><strong><code>filters</code></strong>: Additional filters for the joined model.</li>
 </ul>
 <h4 id="examples-of-simple-joining">Examples of Simple Joining<a class="headerlink" href="#examples-of-simple-joining" title="Permanent link">&para;</a></h4>
@@ -1512,28 +1549,31 @@
 <h3 id="complex-joins-using-joinconfig">Complex Joins Using <code>JoinConfig</code><a class="headerlink" href="#complex-joins-using-joinconfig" title="Permanent link">&para;</a></h3>
 <p>When dealing with more complex join conditions, such as multiple joins, self-referential joins, or needing to specify aliases and filters, <code>JoinConfig</code> instances become the norm. They offer granular control over each join's aspects, enabling precise and efficient data retrieval.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Fetch users with details from related departments and roles, using aliases for self-referential joins</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">user_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">UserSchema</span><span class="p">,</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">joins_config</span><span class="o">=</span><span class="p">[</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="n">JoinConfig</span><span class="p">(</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>            <span class="n">model</span><span class="o">=</span><span class="n">Department</span><span class="p">,</span> 
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>            <span class="n">join_on</span><span class="o">=</span><span class="n">User</span><span class="o">.</span><span class="n">department_id</span> <span class="o">==</span> <span class="n">Department</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> 
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>            <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;dept_&quot;</span>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="p">),</span>
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>        <span class="n">JoinConfig</span><span class="p">(</span>
-</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>            <span class="n">model</span><span class="o">=</span><span class="n">Role</span><span class="p">,</span> 
-</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>            <span class="n">join_on</span><span class="o">=</span><span class="n">User</span><span class="o">.</span><span class="n">role_id</span> <span class="o">==</span> <span class="n">Role</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> 
-</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>            <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;role_&quot;</span>
-</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        <span class="p">),</span>
-</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>        <span class="n">JoinConfig</span><span class="p">(</span>
-</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>            <span class="n">model</span><span class="o">=</span><span class="n">User</span><span class="p">,</span> 
-</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>            <span class="n">alias</span><span class="o">=</span><span class="n">manager_alias</span><span class="p">,</span> 
-</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>            <span class="n">join_on</span><span class="o">=</span><span class="n">User</span><span class="o">.</span><span class="n">manager_id</span> <span class="o">==</span> <span class="n">manager_alias</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> 
-</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>            <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;manager_&quot;</span>
-</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>        <span class="p">)</span>
-</span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>    <span class="p">]</span>
-</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="p">)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">aliased</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">manager_alias</span> <span class="o">=</span> <span class="n">aliased</span><span class="p">(</span><span class="n">User</span><span class="p">)</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">user_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">UserSchema</span><span class="p">,</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">joins_config</span><span class="o">=</span><span class="p">[</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="n">JoinConfig</span><span class="p">(</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>            <span class="n">model</span><span class="o">=</span><span class="n">Department</span><span class="p">,</span> 
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>            <span class="n">join_on</span><span class="o">=</span><span class="n">User</span><span class="o">.</span><span class="n">department_id</span> <span class="o">==</span> <span class="n">Department</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> 
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>            <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;dept_&quot;</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>        <span class="p">),</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        <span class="n">JoinConfig</span><span class="p">(</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>            <span class="n">model</span><span class="o">=</span><span class="n">Role</span><span class="p">,</span> 
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>            <span class="n">join_on</span><span class="o">=</span><span class="n">User</span><span class="o">.</span><span class="n">role_id</span> <span class="o">==</span> <span class="n">Role</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> 
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>            <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;role_&quot;</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>        <span class="p">),</span>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>        <span class="n">JoinConfig</span><span class="p">(</span>
+</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>            <span class="n">model</span><span class="o">=</span><span class="n">User</span><span class="p">,</span> 
+</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>            <span class="n">alias</span><span class="o">=</span><span class="n">manager_alias</span><span class="p">,</span> 
+</span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>            <span class="n">join_on</span><span class="o">=</span><span class="n">User</span><span class="o">.</span><span class="n">manager_id</span> <span class="o">==</span> <span class="n">manager_alias</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> 
+</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>            <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;manager_&quot;</span>
+</span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>        <span class="p">)</span>
+</span><span id="__span-2-25"><a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>    <span class="p">]</span>
+</span><span id="__span-2-26"><a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="p">)</span>
 </span></code></pre></div>
 <h4 id="many-to-many-relationships-with-get_multi_joined">Many-to-Many Relationships with <code>get_multi_joined</code><a class="headerlink" href="#many-to-many-relationships-with-get_multi_joined" title="Permanent link">&para;</a></h4>
 <p>FastCRUD simplifies dealing with many-to-many relationships by allowing easy fetch operations with joined models. Here, we demonstrate using <code>get_multi_joined</code> to handle a many-to-many relationship between <code>Project</code> and <code>Participant</code> models, linked through an association table.</p>

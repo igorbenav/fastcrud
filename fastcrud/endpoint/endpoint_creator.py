@@ -1,6 +1,6 @@
+import inspect
 from typing import Type, TypeVar, Optional, Callable, Sequence, Union
 from enum import Enum
-import forge
 
 from fastapi import Depends, Body, Query, APIRouter, params
 from pydantic import BaseModel, ValidationError
@@ -17,6 +17,29 @@ CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 UpdateSchemaInternalType = TypeVar("UpdateSchemaInternalType", bound=BaseModel)
 DeleteSchemaType = TypeVar("DeleteSchemaType", bound=BaseModel)
+
+
+def apply_model_pk(**pkeys):
+    def wrapper(endpoint):
+        signature = inspect.signature(endpoint)
+        parameters = [
+            p
+            for p in signature.parameters.values()
+            if p.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+        ]
+        extra_positional_params = [
+            inspect.Parameter(
+                name=k, annotation=v, kind=inspect.Parameter.POSITIONAL_ONLY
+            )
+            for k, v in pkeys.items()
+        ]
+
+        endpoint.__signature__ = signature.replace(
+            parameters=extra_positional_params + parameters
+        )
+        return endpoint
+
+    return wrapper
 
 
 class EndpointCreator:
@@ -212,10 +235,7 @@ class EndpointCreator:
     def _read_item(self):
         """Creates an endpoint for reading a single item from the database."""
 
-        @forge.sign(
-            *[forge.arg(k, type=v) for k, v in self._primary_keys_types.items()],
-            forge.arg("db", type=AsyncSession, default=Depends(self.session)),
-        )
+        @apply_model_pk(**self._primary_keys_types)
         async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
             item = await self.crud.get(db, **pkeys)
             if not item:
@@ -262,11 +282,7 @@ class EndpointCreator:
     def _update_item(self):
         """Creates an endpoint for updating an existing item in the database."""
 
-        @forge.sign(
-            *[forge.arg(k, type=v) for k, v in self._primary_keys_types.items()],
-            forge.arg("item", type=self.update_schema, default=Body(...)),
-            forge.arg("db", type=AsyncSession, default=Depends(self.session)),
-        )
+        @apply_model_pk(**self._primary_keys_types)
         async def endpoint(
             item: self.update_schema = Body(...),  # type: ignore
             db: AsyncSession = Depends(self.session),
@@ -279,10 +295,7 @@ class EndpointCreator:
     def _delete_item(self):
         """Creates an endpoint for deleting an item from the database."""
 
-        @forge.sign(
-            *[forge.arg(k, type=v) for k, v in self._primary_keys_types.items()],
-            forge.arg("db", type=AsyncSession, default=Depends(self.session)),
-        )
+        @apply_model_pk(**self._primary_keys_types)
         async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
             await self.crud.delete(db, **pkeys)
             return {"message": "Item deleted successfully"}
@@ -298,10 +311,7 @@ class EndpointCreator:
         async session to permanently delete the item from the database.
         """
 
-        @forge.sign(
-            *[forge.arg(k, type=v) for k, v in self._primary_keys_types.items()],
-            forge.arg("db", type=AsyncSession, default=Depends(self.session)),
-        )
+        @apply_model_pk(**self._primary_keys_types)
         async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
             await self.crud.db_delete(db, **pkeys)
             return {"message": "Item permanently deleted from the database"}
@@ -417,6 +427,8 @@ class EndpointCreator:
         if self.delete_schema:
             delete_description = "Soft delete a"
 
+        _primary_keys_path_suffix = "/".join(f"{{{n}}}" for n in self.primary_key_names)
+
         if ("create" in included_methods) and ("create" not in deleted_methods):
             endpoint_name = self._get_endpoint_name("create")
             self.router.add_api_route(
@@ -433,7 +445,7 @@ class EndpointCreator:
             endpoint_name = self._get_endpoint_name("read")
 
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{'/'.join(f'{{{n}}}' for n in self.primary_key_names)}",
+                f"{self.path}/{endpoint_name}/{_primary_keys_path_suffix}",
                 self._read_item(),
                 methods=["GET"],
                 include_in_schema=self.include_in_schema,
@@ -471,7 +483,7 @@ class EndpointCreator:
         if ("update" in included_methods) and ("update" not in deleted_methods):
             endpoint_name = self._get_endpoint_name("update")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{'/'.join(f'{{{n}}}' for n in self.primary_key_names)}",
+                f"{self.path}/{endpoint_name}/{_primary_keys_path_suffix}",
                 self._update_item(),
                 methods=["PATCH"],
                 include_in_schema=self.include_in_schema,
@@ -483,7 +495,7 @@ class EndpointCreator:
         if ("delete" in included_methods) and ("delete" not in deleted_methods):
             endpoint_name = self._get_endpoint_name("delete")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{'/'.join(f'{{{n}}}' for n in self.primary_key_names)}",
+                f"{self.path}/{endpoint_name}/{_primary_keys_path_suffix}",
                 self._delete_item(),
                 methods=["DELETE"],
                 include_in_schema=self.include_in_schema,
@@ -499,7 +511,7 @@ class EndpointCreator:
         ):
             endpoint_name = self._get_endpoint_name("db_delete")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{'/'.join(f'{{{n}}}' for n in self.primary_key_names)}",
+                f"{self.path}/{endpoint_name}/{_primary_keys_path_suffix}",
                 self._db_delete(),
                 methods=["DELETE"],
                 include_in_schema=self.include_in_schema,

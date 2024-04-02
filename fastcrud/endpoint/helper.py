@@ -58,8 +58,8 @@ def _get_python_type(column: Column) -> Optional[type]:
     try:
         return column.type.python_type
     except NotImplementedError:
-        if hasattr(column.type, "impl") and hasattr(column.type.impl, "python_type"):
-            return column.type.impl.python_type
+        if hasattr(column.type, "impl") and hasattr(column.type.impl, "python_type"):  # type: ignore
+            return column.type.impl.python_type  # type: ignore
         else:
             raise NotImplementedError(
                 f"The primary key column {column.name} uses a custom type without a defined `python_type` or suitable `impl` fallback."

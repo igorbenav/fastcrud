@@ -1,5 +1,5 @@
 import inspect
-from typing import Type, TypeVar, Optional, Callable, Sequence, Union
+from typing import Dict, Type, TypeVar, Optional, Callable, Sequence, Union
 from enum import Enum
 
 from fastapi import Depends, Body, Query, APIRouter, params
@@ -19,7 +19,13 @@ UpdateSchemaInternalType = TypeVar("UpdateSchemaInternalType", bound=BaseModel)
 DeleteSchemaType = TypeVar("DeleteSchemaType", bound=BaseModel)
 
 
-def apply_model_pk(**pkeys):
+def apply_model_pk(**pkeys: Dict[str, type]):
+    """
+    This decorator injects positional arguments into a fastCRUD endpoint.
+    It dynamically changes the endpoint signature and allows to use
+    multiple primary keys without defining them explicitly.
+    """
+
     def wrapper(endpoint):
         signature = inspect.signature(endpoint)
         parameters = [

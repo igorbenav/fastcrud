@@ -11,7 +11,12 @@ from ..crud.fast_crud import FastCRUD
 from ..exceptions.http_exceptions import DuplicateValueException, NotFoundException
 from ..paginated.helper import compute_offset
 from ..paginated.response import paginated_response
-from .helper import CRUDMethods, _extract_unique_columns, _get_primary_keys
+from .helper import (
+    CRUDMethods,
+    _extract_unique_columns,
+    _get_primary_keys,
+    _get_python_type,
+)
 
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
@@ -183,7 +188,7 @@ class EndpointCreator:
     ) -> None:
         self._primary_keys = _get_primary_keys(model)
         self._primary_keys_types = {
-            pk.name: pk.type.python_type for pk in self._primary_keys
+            pk.name: _get_python_type(pk) for pk in self._primary_keys
         }
         self.primary_key_names = [pk.name for pk in self._primary_keys]
         self.session = session

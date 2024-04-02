@@ -1,4 +1,4 @@
-from typing import Union, Annotated, Sequence
+from typing import Optional, Union, Annotated, Sequence
 from pydantic import BaseModel, Field, ValidationError
 from pydantic.functional_validators import field_validator
 
@@ -51,16 +51,19 @@ def _get_primary_keys(model: type[DeclarativeBase]) -> Sequence[Column]:
     inspector = inspect(model).mapper
     primary_key_columns = inspector.primary_key
 
-    # Some patching when using derived sa.TypeDecorator as primary keys
-    # if sa.TypeDecorator.python_type is not implemented by using
-    # the sa.TypeDecorator.impl.python_type one.
-    for pk in primary_key_columns:
-        try:
-            pk.type.python_type
-        except NotImplementedError:
-            pk.type.__class__.python_type = pk.type.__class__.impl.python_type  # type: ignore
-
     return primary_key_columns
+
+
+def _get_python_type(column: Column) -> Optional[type]:
+    try:
+        return column.type.python_type
+    except NotImplementedError:
+        if hasattr(column.type, "impl") and hasattr(column.type.impl, "python_type"):
+            return column.type.impl.python_type
+        else:
+            raise NotImplementedError(
+                f"The primary key column {column.name} uses a custom type without a defined `python_type` or suitable `impl` fallback."
+            )  # this could just warn and return the object as well if it's not that necessary: # logging.warning(f"Column {column.name} lacks a python_type and a suitable impl fallback.") # return object
 
 
 def _extract_unique_columns(

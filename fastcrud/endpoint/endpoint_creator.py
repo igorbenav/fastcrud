@@ -1,22 +1,56 @@
-from typing import Type, TypeVar, Optional, Callable, Sequence, Union
+import inspect
+from typing import Dict, Type, TypeVar, Optional, Callable, Sequence, Union
 from enum import Enum
 
 from fastapi import Depends, Body, Query, APIRouter, params
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
-from pydantic import BaseModel, ValidationError
 
-from ..exceptions.http_exceptions import NotFoundException
 from ..crud.fast_crud import FastCRUD
-from ..exceptions.http_exceptions import DuplicateValueException
-from .helper import CRUDMethods, _get_primary_key, _extract_unique_columns
-from ..paginated.response import paginated_response
+from ..exceptions.http_exceptions import DuplicateValueException, NotFoundException
 from ..paginated.helper import compute_offset
+from ..paginated.response import paginated_response
+from .helper import (
+    CRUDMethods,
+    _extract_unique_columns,
+    _get_primary_keys,
+    _get_python_type,
+)
 
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 UpdateSchemaInternalType = TypeVar("UpdateSchemaInternalType", bound=BaseModel)
 DeleteSchemaType = TypeVar("DeleteSchemaType", bound=BaseModel)
+
+
+def apply_model_pk(**pkeys: Dict[str, type]):
+    """
+    This decorator injects positional arguments into a fastCRUD endpoint.
+    It dynamically changes the endpoint signature and allows to use
+    multiple primary keys without defining them explicitly.
+    """
+
+    def wrapper(endpoint):
+        signature = inspect.signature(endpoint)
+        parameters = [
+            p
+            for p in signature.parameters.values()
+            if p.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+        ]
+        extra_positional_params = [
+            inspect.Parameter(
+                name=k, annotation=v, kind=inspect.Parameter.POSITIONAL_ONLY
+            )
+            for k, v in pkeys.items()
+        ]
+
+        endpoint.__signature__ = signature.replace(
+            parameters=extra_positional_params + parameters
+        )
+        return endpoint
+
+    return wrapper
 
 
 class EndpointCreator:
@@ -152,7 +186,11 @@ class EndpointCreator:
         updated_at_column: str = "updated_at",
         endpoint_names: Optional[dict[str, str]] = None,
     ) -> None:
-        self.primary_key_name = _get_primary_key(model)
+        self._primary_keys = _get_primary_keys(model)
+        self._primary_keys_types = {
+            pk.name: _get_python_type(pk) for pk in self._primary_keys
+        }
+        self.primary_key_names = [pk.name for pk in self._primary_keys]
         self.session = session
         self.crud = crud or FastCRUD(
             model=model,
@@ -208,8 +246,9 @@ class EndpointCreator:
     def _read_item(self):
         """Creates an endpoint for reading a single item from the database."""
 
-        async def endpoint(id: int, db: AsyncSession = Depends(self.session)):
-            item = await self.crud.get(db, id=id)
+        @apply_model_pk(**self._primary_keys_types)
+        async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
+            item = await self.crud.get(db, **pkeys)
             if not item:
                 raise NotFoundException(detail="Item not found")
             return item
@@ -254,20 +293,22 @@ class EndpointCreator:
     def _update_item(self):
         """Creates an endpoint for updating an existing item in the database."""
 
+        @apply_model_pk(**self._primary_keys_types)
         async def endpoint(
-            id: int,
             item: self.update_schema = Body(...),  # type: ignore
             db: AsyncSession = Depends(self.session),
+            **pkeys,
         ):
-            return await self.crud.update(db, item, id=id)
+            return await self.crud.update(db, item, **pkeys)
 
         return endpoint
 
     def _delete_item(self):
         """Creates an endpoint for deleting an item from the database."""
 
-        async def endpoint(id: int, db: AsyncSession = Depends(self.session)):
-            await self.crud.delete(db, id=id)
+        @apply_model_pk(**self._primary_keys_types)
+        async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
+            await self.crud.delete(db, **pkeys)
             return {"message": "Item deleted successfully"}
 
         return endpoint
@@ -281,8 +322,9 @@ class EndpointCreator:
         async session to permanently delete the item from the database.
         """
 
-        async def endpoint(id: int, db: AsyncSession = Depends(self.session)):
-            await self.crud.db_delete(db, id=id)
+        @apply_model_pk(**self._primary_keys_types)
+        async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
+            await self.crud.db_delete(db, **pkeys)
             return {"message": "Item permanently deleted from the database"}
 
         return endpoint
@@ -396,6 +438,8 @@ class EndpointCreator:
         if self.delete_schema:
             delete_description = "Soft delete a"
 
+        _primary_keys_path_suffix = "/".join(f"{{{n}}}" for n in self.primary_key_names)
+
         if ("create" in included_methods) and ("create" not in deleted_methods):
             endpoint_name = self._get_endpoint_name("create")
             self.router.add_api_route(
@@ -410,14 +454,15 @@ class EndpointCreator:
 
         if ("read" in included_methods) and ("read" not in deleted_methods):
             endpoint_name = self._get_endpoint_name("read")
+
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{{{self.primary_key_name}}}",
+                f"{self.path}/{endpoint_name}/{_primary_keys_path_suffix}",
                 self._read_item(),
                 methods=["GET"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
                 dependencies=read_deps,
-                description=f"Read a single {self.model.__name__} row from the database by its primary key: {self.primary_key_name}.",
+                description=f"Read a single {self.model.__name__} row from the database by its primary keys: {self.primary_key_names}.",
             )
 
         if ("read_multi" in included_methods) and ("read_multi" not in deleted_methods):
@@ -449,25 +494,25 @@ class EndpointCreator:
         if ("update" in included_methods) and ("update" not in deleted_methods):
             endpoint_name = self._get_endpoint_name("update")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{{{self.primary_key_name}}}",
+                f"{self.path}/{endpoint_name}/{_primary_keys_path_suffix}",
                 self._update_item(),
                 methods=["PATCH"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
                 dependencies=update_deps,
-                description=f"Update an existing {self.model.__name__} row in the database by its primary key: {self.primary_key_name}.",
+                description=f"Update an existing {self.model.__name__} row in the database by its primary keys: {self.primary_key_names}.",
             )
 
         if ("delete" in included_methods) and ("delete" not in deleted_methods):
             endpoint_name = self._get_endpoint_name("delete")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{{{self.primary_key_name}}}",
+                f"{self.path}/{endpoint_name}/{_primary_keys_path_suffix}",
                 self._delete_item(),
                 methods=["DELETE"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
                 dependencies=delete_deps,
-                description=f"{delete_description} {self.model.__name__} row from the database by its primary key: {self.primary_key_name}.",
+                description=f"{delete_description} {self.model.__name__} row from the database by its primary keys: {self.primary_key_names}.",
             )
 
         if (
@@ -477,13 +522,13 @@ class EndpointCreator:
         ):
             endpoint_name = self._get_endpoint_name("db_delete")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{{{self.primary_key_name}}}",
+                f"{self.path}/{endpoint_name}/{_primary_keys_path_suffix}",
                 self._db_delete(),
                 methods=["DELETE"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
                 dependencies=db_delete_deps,
-                description=f"Permanently delete a {self.model.__name__} row from the database by its primary key: {self.primary_key_name}.",
+                description=f"Permanently delete a {self.model.__name__} row from the database by its primary keys: {self.primary_key_names}.",
             )
 
     def add_custom_route(

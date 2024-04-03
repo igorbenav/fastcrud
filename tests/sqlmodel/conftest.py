@@ -15,6 +15,15 @@ from fastcrud.crud.fast_crud import FastCRUD
 from fastcrud.endpoint.crud_router import crud_router
 
 
+class MultiPKModel(SQLModel, table=True):
+    __tablename__ = "multi_pk"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    uuid: Optional[str] = Field(default=None, primary_key=True, max_length=25)
+    name: str = Field(index=True)
+    test_id: Optional[int] = Field(default=None, foreign_key="test.id")
+    test: "ModelTest" = Relationship(back_populates="multi_pk")
+
+
 class CategoryModel(SQLModel, table=True):
     __tablename__ = "category"
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -29,6 +38,7 @@ class ModelTest(SQLModel, table=True):
     tier_id: int = Field(default=None, foreign_key="tier.id")
     category_id: Optional[int] = Field(default=None, foreign_key="category.id")
     tier: "TierModel" = Relationship(back_populates="tests")
+    multi_pk: "MultiPKModel" = Relationship(back_populates="test")
     category: "CategoryModel" = Relationship(back_populates="tests")
     is_deleted: bool = Field(default=False)
     deleted_at: Optional[datetime] = Field(default=None)
@@ -121,6 +131,18 @@ class BookingSchema(SQLModel):
     booking_date: datetime
 
 
+class MultiPkCreate(SQLModel):
+    id: int
+    uuid: str
+    name: str
+    test_id: int = None
+
+
+class MultiPkSchema(SQLModel):
+    name: str
+    test_id: int = None
+
+
 async_engine = create_async_engine(
     "sqlite+aiosqlite:///:memory:", echo=True, future=True
 )
@@ -176,6 +198,17 @@ def test_data_tier() -> list[dict]:
 @pytest.fixture(scope="function")
 def test_data_category() -> list[dict]:
     return [{"id": 1, "name": "Tech"}, {"id": 2, "name": "Health"}]
+
+
+@pytest.fixture(
+    scope="function",
+    params=[
+        {"id": 1, "uuid": "a", "name": "Tech"},
+        {"id": 1, "uuid": "b", "name": "Health"},
+    ],
+)
+def test_data_multipk(request) -> list[dict]:
+    return request.param
 
 
 @pytest.fixture(scope="function")
@@ -237,14 +270,32 @@ def tier_delete_schema():
 
 
 @pytest.fixture
+def multi_pk_model():
+    return MultiPKModel
+
+
+@pytest.fixture
+def multi_pk_test_schema():
+    return MultiPkSchema
+
+
+@pytest.fixture
+def multi_pk_test_create_schema():
+    return MultiPkCreate
+
+
+@pytest.fixture
 def client(
     test_model,
     tier_model,
+    multi_pk_model,
     create_schema,
     update_schema,
     delete_schema,
     tier_schema,
     tier_delete_schema,
+    multi_pk_test_schema,
+    multi_pk_test_create_schema,
 ):
     app = FastAPI()
 
@@ -271,6 +322,19 @@ def client(
             delete_schema=tier_delete_schema,
             path="/tier",
             tags=["tier"],
+        )
+    )
+
+    app.include_router(
+        crud_router(
+            session=get_session_local,
+            model=multi_pk_model,
+            crud=FastCRUD(multi_pk_model),
+            create_schema=multi_pk_test_create_schema,
+            update_schema=multi_pk_test_schema,
+            delete_schema=multi_pk_test_schema,
+            path="/multi_pk",
+            tags=["multi_pk"],
         )
     )
 

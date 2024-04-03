@@ -1,8 +1,8 @@
-from typing import Union, Annotated, Sequence
+from typing import Optional, Union, Annotated, Sequence
 from pydantic import BaseModel, Field, ValidationError
 from pydantic.functional_validators import field_validator
 
-from sqlalchemy import inspect
+from sqlalchemy import Column, inspect
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql.elements import KeyedColumnElement
 
@@ -43,10 +43,27 @@ class CRUDMethods(BaseModel):
 
 
 def _get_primary_key(model: type[DeclarativeBase]) -> Union[str, None]:
+    return _get_primary_keys(model)[0].name
+
+
+def _get_primary_keys(model: type[DeclarativeBase]) -> Sequence[Column]:
     """Get the primary key of a SQLAlchemy model."""
     inspector = inspect(model).mapper
     primary_key_columns = inspector.primary_key
-    return primary_key_columns[0].name if primary_key_columns else None
+
+    return primary_key_columns
+
+
+def _get_python_type(column: Column) -> Optional[type]:
+    try:
+        return column.type.python_type
+    except NotImplementedError:
+        if hasattr(column.type, "impl") and hasattr(column.type.impl, "python_type"):  # type: ignore
+            return column.type.impl.python_type  # type: ignore
+        else:
+            raise NotImplementedError(
+                f"The primary key column {column.name} uses a custom type without a defined `python_type` or suitable `impl` fallback."
+            )  # this could just warn and return the object as well if it's not that necessary: # logging.warning(f"Column {column.name} lacks a python_type and a suitable impl fallback.") # return object
 
 
 def _extract_unique_columns(

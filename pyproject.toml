@@ -45,6 +45,7 @@ uvicorn = "^0.25.0"
 sqlmodel = "^0.0.14"
 mypy = "^1.9.0"
 ruff = "^0.3.4"
+coverage = "^7.4.4"
 
 [build-system]
 requires = ["poetry-core"]

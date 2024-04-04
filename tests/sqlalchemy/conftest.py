@@ -9,9 +9,11 @@ from sqlalchemy.orm import sessionmaker, DeclarativeBase, relationship
 from pydantic import BaseModel, ConfigDict
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy.sql import func
 
 from fastcrud.crud.fast_crud import FastCRUD
 from fastcrud.endpoint.crud_router import crud_router
+from fastcrud import EndpointCreator
 
 
 class Base(DeclarativeBase):
@@ -37,6 +39,19 @@ class ModelTest(Base):
     category = relationship("CategoryModel", back_populates="tests")
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True, default=None)
+
+
+class ModelTestWithTimestamp(Base):
+    __tablename__ = 'model_test_with_timestamp'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    tier_id = Column(Integer, ForeignKey("tier.id"))
+    category_id = Column(
+        Integer, ForeignKey("category.id"), nullable=True, default=None
+    )
+    is_deleted = Column(Boolean, default=False)
+    deleted_at = Column(DateTime, nullable=True, default=None)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 
 
 class TierModel(Base):
@@ -282,3 +297,18 @@ def client(
     )
 
     return TestClient(app)
+
+
+@pytest.fixture
+def endpoint_creator() -> EndpointCreator:
+    """Fixture to create an instance of EndpointCreator."""
+    return EndpointCreator(
+        session=get_session_local,
+        model=ModelTest,
+        crud=FastCRUD(test_model),
+        create_schema=CreateSchemaTest,
+        update_schema=UpdateSchemaTest,
+        delete_schema=DeleteSchemaTest,
+        path="/custom_test",
+        tags=["custom_test"],
+    )

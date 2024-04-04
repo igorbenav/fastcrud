@@ -16,6 +16,9 @@
 <a href="https://pypi.org/project/fastcrud/">
   <img src="https://img.shields.io/pypi/pyversions/fastcrud.svg?color=%2334D058" alt="Supported Python Versions"/>
 </a>
+<a href="https://codecov.io/gh/igorbenav/fastcrud" > 
+  <img src="https://codecov.io/gh/igorbenav/fastcrud/graph/badge.svg?token=J7XUP29RKU"/> 
+</a>
 </p>
 <hr>
 <p align="justify">

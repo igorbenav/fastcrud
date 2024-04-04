@@ -25,10 +25,7 @@ class JoinedTestTier(BaseModel):
 
 
 class CustomCreateSchemaTest(BaseModel):
-    name: Annotated[
-        str,
-        Field(max_length=20)
-    ]
+    name: Annotated[str, Field(max_length=20)]
     tier_id: int
 
 
@@ -560,9 +557,14 @@ async def test_get_multi_joined_conflicting_join_parameters(async_session):
         await crud.get_multi_joined(
             db=async_session,
             join_model=TierModel,
-            joins_config=[JoinConfig(model=TierModel, join_on=TierModel.id == ModelTest.tier_id)],
+            joins_config=[
+                JoinConfig(model=TierModel, join_on=TierModel.id == ModelTest.tier_id)
+            ],
         )
-    assert "Cannot use both single join parameters and joins_config simultaneously" in str(exc_info.value)
+    assert (
+        "Cannot use both single join parameters and joins_config simultaneously"
+        in str(exc_info.value)
+    )
 
 
 @pytest.mark.asyncio
@@ -586,7 +588,9 @@ async def test_get_multi_joined_unsupported_join_type(async_session, test_data):
 
 
 @pytest.mark.asyncio
-async def test_get_multi_joined_with_joined_model_filters(async_session, test_data, test_data_tier):
+async def test_get_multi_joined_with_joined_model_filters(
+    async_session, test_data, test_data_tier
+):
     for tier_data in test_data_tier:
         async_session.add(TierModel(**tier_data))
     await async_session.commit()
@@ -600,7 +604,7 @@ async def test_get_multi_joined_with_joined_model_filters(async_session, test_da
     result = await crud.get_multi_joined(
         db=async_session,
         join_model=TierModel,
-        join_filters={'name': 'Premium'},
+        join_filters={"name": "Premium"},
         schema_to_select=ReadSchemaTest,
         join_schema_to_select=TierSchemaTest,
         join_prefix="tier_",
@@ -608,9 +612,13 @@ async def test_get_multi_joined_with_joined_model_filters(async_session, test_da
         limit=10,
     )
 
-    assert len(result['data']) > 0, "Expected to find at least one ModelTest record associated with the 'Premium' tier."
-    for item in result['data']:
-        assert item['tier_name'] == 'Premium', "Expected tier_name to be 'Premium' for all fetched records."
+    assert (
+        len(result["data"]) > 0
+    ), "Expected to find at least one ModelTest record associated with the 'Premium' tier."
+    for item in result["data"]:
+        assert (
+            item["tier_name"] == "Premium"
+        ), "Expected tier_name to be 'Premium' for all fetched records."
 
 
 @pytest.mark.asyncio
@@ -622,11 +630,15 @@ async def test_get_multi_joined_missing_schema_to_select(async_session):
             join_model=TierModel,
             return_as_model=True,
         )
-    assert "schema_to_select must be provided when return_as_model is True" in str(exc_info.value)
+    assert "schema_to_select must be provided when return_as_model is True" in str(
+        exc_info.value
+    )
 
 
 @pytest.mark.asyncio
-async def test_get_multi_joined_validation_error(async_session, test_data, test_model, test_data_tier):
+async def test_get_multi_joined_validation_error(
+    async_session, test_data, test_model, test_data_tier
+):
     for tier_data in test_data_tier:
         async_session.add(TierModel(**tier_data))
     await async_session.commit()
@@ -634,11 +646,14 @@ async def test_get_multi_joined_validation_error(async_session, test_data, test_
     for test_item in test_data:
         async_session.add(ModelTest(**test_item))
     await async_session.commit()
-    
-    invalid_test_data = {"name": "Extremely Long Name That Exceeds The Limits Of CustomCreateSchemaTest", "tier_id": 1}
+
+    invalid_test_data = {
+        "name": "Extremely Long Name That Exceeds The Limits Of CustomCreateSchemaTest",
+        "tier_id": 1,
+    }
     async_session.add(test_model(**invalid_test_data))
     await async_session.commit()
-    
+
     crud = FastCRUD(ModelTest)
     with pytest.raises(ValueError) as exc_info:
         await crud.get_multi_joined(
@@ -647,5 +662,7 @@ async def test_get_multi_joined_validation_error(async_session, test_data, test_
             return_as_model=True,
             schema_to_select=CustomCreateSchemaTest,
         )
-    
-    assert "Data validation error for schema CustomCreateSchemaTest:" in str(exc_info.value)
+
+    assert "Data validation error for schema CustomCreateSchemaTest:" in str(
+        exc_info.value
+    )

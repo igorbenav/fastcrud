@@ -53,7 +53,7 @@ class ModelTest(Base):
 
 
 class ModelTestWithTimestamp(Base):
-    __tablename__ = 'model_test_with_timestamp'
+    __tablename__ = "model_test_with_timestamp"
     id = Column(Integer, primary_key=True)
     name = Column(String)
     tier_id = Column(Integer, ForeignKey("tier.id"))
@@ -62,7 +62,9 @@ class ModelTestWithTimestamp(Base):
     )
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True, default=None)
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime, default=func.now(), onupdate=func.now(), nullable=False
+    )
 
 
 class TierModel(Base):

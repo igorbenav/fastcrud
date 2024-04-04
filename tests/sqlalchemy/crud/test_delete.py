@@ -1,7 +1,8 @@
 import pytest
 from sqlalchemy import select
 from fastcrud.crud.fast_crud import FastCRUD
-from sqlalchemy.exc import MultipleResultsFound, NoResultFound 
+from sqlalchemy.exc import MultipleResultsFound, NoResultFound
+
 
 @pytest.mark.asyncio
 async def test_db_delete_hard_delete(async_session, test_data_tier, tier_model):
@@ -124,20 +125,26 @@ async def test_soft_delete_custom_columns(async_session, test_model, test_data):
     await crud.delete(async_session, id=test_data[0]["id"], allow_multiple=False)
 
     deleted_record = await crud.get(async_session, id=test_data[0]["id"])
-    assert deleted_record is None, "Custom columns not found, so record should be deleted."
+    assert (
+        deleted_record is None
+    ), "Custom columns not found, so record should be deleted."
 
 
 @pytest.mark.asyncio
-async def test_db_delete_disallow_multiple_matches(async_session, test_data, test_model):
+async def test_db_delete_disallow_multiple_matches(
+    async_session, test_data, test_model
+):
     tier_id_for_multiple_records = 1
     for item in test_data:
         async_session.add(test_model(**item))
     await async_session.commit()
 
     crud = FastCRUD(test_model)
-    
+
     with pytest.raises(MultipleResultsFound):
-        await crud.db_delete(db=async_session, allow_multiple=False, tier_id=tier_id_for_multiple_records)
+        await crud.db_delete(
+            db=async_session, allow_multiple=False, tier_id=tier_id_for_multiple_records
+        )
 
     remaining_records = await async_session.execute(
         select(test_model).where(test_model.tier_id == tier_id_for_multiple_records)
@@ -151,7 +158,9 @@ async def test_soft_delete_db_row_provided(async_session, test_data, test_model)
     async_session.add(test_record)
     await async_session.commit()
 
-    crud = FastCRUD(test_model, is_deleted_column="is_deleted", deleted_at_column="deleted_at")
+    crud = FastCRUD(
+        test_model, is_deleted_column="is_deleted", deleted_at_column="deleted_at"
+    )
 
     db_row = await async_session.get(test_model, test_record.id)
 
@@ -178,7 +187,9 @@ async def test_hard_delete_db_row_provided(async_session, test_data_tier, tier_m
 
 
 @pytest.mark.asyncio
-async def test_delete_no_records_match_filters_raises_no_result_found(async_session, test_data, test_model):
+async def test_delete_no_records_match_filters_raises_no_result_found(
+    async_session, test_data, test_model
+):
     crud = FastCRUD(test_model)
     non_matching_filter_criteria = {"id": 99999}
 

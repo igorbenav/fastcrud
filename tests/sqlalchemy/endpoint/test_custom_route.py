@@ -13,7 +13,7 @@ def test_add_custom_route(client: TestClient, endpoint_creator: EndpointCreator)
         methods=["GET"],
         tags=["test"],
         summary="Test Custom Route",
-        description="This is a test for the custom route."
+        description="This is a test for the custom route.",
     )
 
     client.app.include_router(endpoint_creator.router)
@@ -27,7 +27,9 @@ def test_add_custom_route(client: TestClient, endpoint_creator: EndpointCreator)
     assert response.status_code == 422
 
 
-def test_add_custom_route_include_in_schema_false(client: TestClient, endpoint_creator: EndpointCreator):
+def test_add_custom_route_include_in_schema_false(
+    client: TestClient, endpoint_creator: EndpointCreator
+):
     endpoint_creator.add_custom_route(
         endpoint=custom_endpoint,
         path="/hidden-custom-route",
@@ -35,7 +37,7 @@ def test_add_custom_route_include_in_schema_false(client: TestClient, endpoint_c
         include_in_schema=False,
         tags=["hidden"],
         summary="Hidden Custom Route",
-        description="This is a hidden test for the custom route."
+        description="This is a hidden test for the custom route.",
     )
 
     client.app.include_router(endpoint_creator.router)

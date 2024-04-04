@@ -107,4 +107,7 @@ async def test_apply_sorting_sort_orders_without_columns(async_session, test_mod
     with pytest.raises(ValueError) as exc_info:
         crud._apply_sorting(stmt, None, ["asc"])
 
-    assert str(exc_info.value) == "Sort orders provided without corresponding sort columns."
+    assert (
+        str(exc_info.value)
+        == "Sort orders provided without corresponding sort columns."
+    )

@@ -338,7 +338,9 @@ async def test_get_joined_with_aliases_no_schema(
 
 
 @pytest.mark.asyncio
-async def test_get_joined_with_both_single_and_joins_config_raises_value_error(async_session, test_data):
+async def test_get_joined_with_both_single_and_joins_config_raises_value_error(
+    async_session, test_data
+):
     crud = FastCRUD(ModelTest)
 
     with pytest.raises(ValueError) as excinfo:
@@ -350,24 +352,31 @@ async def test_get_joined_with_both_single_and_joins_config_raises_value_error(a
                     model=TierModel,
                     join_on=ModelTest.tier_id == TierModel.id,
                 )
-            ]
+            ],
         )
 
-    assert "Cannot use both single join parameters and joins_config simultaneously." in str(excinfo.value)
+    assert (
+        "Cannot use both single join parameters and joins_config simultaneously."
+        in str(excinfo.value)
+    )
 
 
 @pytest.mark.asyncio
-async def test_get_joined_without_join_model_or_joins_config_raises_value_error(async_session, test_data):
+async def test_get_joined_without_join_model_or_joins_config_raises_value_error(
+    async_session, test_data
+):
     crud = FastCRUD(ModelTest)
 
     with pytest.raises(ValueError) as excinfo:
         await crud.get_joined(db=async_session)
-    
+
     assert "You need one of join_model or joins_config." in str(excinfo.value)
 
 
 @pytest.mark.asyncio
-async def test_get_joined_with_unsupported_join_type_raises_value_error(async_session, test_data):
+async def test_get_joined_with_unsupported_join_type_raises_value_error(
+    async_session, test_data
+):
     crud = FastCRUD(ModelTest)
 
     with pytest.raises(ValueError) as excinfo:
@@ -396,7 +405,9 @@ async def test_get_joined_returns_none_when_no_record_matches(async_session, tes
 
 
 @pytest.mark.asyncio
-async def test_get_joined_with_joined_model_filters(async_session, test_data, test_data_tier):
+async def test_get_joined_with_joined_model_filters(
+    async_session, test_data, test_data_tier
+):
     for tier_item in test_data_tier:
         async_session.add(TierModel(**tier_item))
     await async_session.commit()
@@ -407,7 +418,7 @@ async def test_get_joined_with_joined_model_filters(async_session, test_data, te
 
     crud = FastCRUD(ModelTest)
 
-    join_filters = {'name': 'Premium'}
+    join_filters = {"name": "Premium"}
 
     result = await crud.get_joined(
         db=async_session,
@@ -415,8 +426,10 @@ async def test_get_joined_with_joined_model_filters(async_session, test_data, te
         join_filters=join_filters,
         schema_to_select=CreateSchemaTest,
         join_schema_to_select=TierSchemaTest,
-        join_prefix="tier_"
+        join_prefix="tier_",
     )
 
     assert result is not None, "Expected to find at least one matching record"
-    assert result["tier_name"] == 'Premium', "Expected joined record to meet the filter criteria"
+    assert (
+        result["tier_name"] == "Premium"
+    ), "Expected joined record to meet the filter criteria"

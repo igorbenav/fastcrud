@@ -1,5 +1,5 @@
 from typing import Optional, Union, Annotated, Sequence
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 from pydantic.functional_validators import field_validator
 
 from sqlalchemy import Column, inspect

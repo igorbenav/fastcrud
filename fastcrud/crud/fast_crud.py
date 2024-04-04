@@ -541,7 +541,7 @@ class FastCRUD(
 
         if joins_config is not None:
             primary_keys = [p.name for p in _get_primary_keys(self.model)]
-            if not any(primary_keys): # pragma: no cover
+            if not any(primary_keys):  # pragma: no cover
                 raise ValueError(
                     f"The model '{self.model.__name__}' does not have a primary key defined, which is required for counting with joins."
                 )
@@ -1203,11 +1203,9 @@ class FastCRUD(
                     "schema_to_select must be provided when return_as_model is True."
                 )
             try:
-                model_data: list[BaseModel] = [
-                    schema_to_select(**row) for row in data
-                ]
+                model_data: list[BaseModel] = [schema_to_select(**row) for row in data]
                 return {"data": model_data, "total_count": total_count}
-            
+
             except ValidationError as e:
                 raise ValueError(
                     f"Data validation error for schema {schema_to_select.__name__}: {e}"
@@ -1365,7 +1363,7 @@ class FastCRUD(
         updated_at_col = getattr(self.model, self.updated_at_column, None)
         if updated_at_col:
             update_data[self.updated_at_column] = datetime.now(timezone.utc)
-        
+
         update_data_keys = set(update_data.keys())
         model_columns = {column.name for column in inspect(self.model).c}
         extra_fields = update_data_keys - model_columns
@@ -1474,7 +1472,9 @@ class FastCRUD(
         """
         filters = self._parse_filters(**kwargs)
         if db_row:
-            if hasattr(db_row, self.is_deleted_column) and hasattr(db_row, self.deleted_at_column):
+            if hasattr(db_row, self.is_deleted_column) and hasattr(
+                db_row, self.deleted_at_column
+            ):
                 setattr(db_row, self.is_deleted_column, True)
                 setattr(db_row, self.deleted_at_column, datetime.now(timezone.utc))
                 await db.commit()

@@ -47,7 +47,7 @@ class ModelTest(SQLModel, table=True):
 
 
 class ModelTestWithTimestamp(SQLModel, table=True):
-    __tablename__ = 'model_test_with_timestamp'
+    __tablename__ = "model_test_with_timestamp"
     id: int = Field(primary_key=True)
     name: str
     tier_id: Optional[int] = Field(foreign_key="tier.id")
@@ -352,6 +352,7 @@ def client(
     )
 
     return TestClient(app)
+
 
 @pytest.fixture
 def endpoint_creator() -> EndpointCreator:

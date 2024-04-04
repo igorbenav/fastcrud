@@ -148,10 +148,7 @@ async def test_get_multi_by_cursor_desc_with_cursor_filter(async_session, test_d
     crud = FastCRUD(ModelTest)
 
     first_page = await crud.get_multi_by_cursor(
-        db=async_session,
-        limit=3,
-        sort_column='id',
-        sort_order='desc'
+        db=async_session, limit=3, sort_column="id", sort_order="desc"
     )
 
     assert len(first_page["data"]) == 3, "Should fetch the correct number of records"
@@ -161,10 +158,14 @@ async def test_get_multi_by_cursor_desc_with_cursor_filter(async_session, test_d
         db=async_session,
         cursor=first_page_last_id,
         limit=3,
-        sort_column='id',
-        sort_order='desc'
+        sort_column="id",
+        sort_order="desc",
     )
 
-    assert len(second_page["data"]) == 3, "Should fetch the correct number of records for the second page"
+    assert (
+        len(second_page["data"]) == 3
+    ), "Should fetch the correct number of records for the second page"
     for record in second_page["data"]:
-        assert record['id'] < first_page_last_id, "Each ID in the second page should be less than the last ID of the first page"
+        assert (
+            record["id"] < first_page_last_id
+        ), "Each ID in the second page should be less than the last ID of the first page"

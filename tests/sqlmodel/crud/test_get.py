@@ -129,4 +129,7 @@ async def test_get_return_as_model_without_schema(async_session, test_data):
             id=test_data[0]["id"],
         )
 
-    assert str(exc_info.value) == "schema_to_select must be provided when return_as_model is True."
+    assert (
+        str(exc_info.value)
+        == "schema_to_select must be provided when return_as_model is True."
+    )

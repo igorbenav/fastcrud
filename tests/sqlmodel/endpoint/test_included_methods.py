@@ -38,10 +38,12 @@ async def test_included_methods(
 def test_endpoint_creation_conflict(endpoint_creator):
     with pytest.raises(ValueError) as exc_info:
         endpoint_creator.add_routes_to_router(
-            included_methods=["create", "read"],
-            deleted_methods=["update", "delete"]
+            included_methods=["create", "read"], deleted_methods=["update", "delete"]
         )
-    assert "Cannot use both 'included_methods' and 'deleted_methods' simultaneously" in str(exc_info.value)
+    assert (
+        "Cannot use both 'included_methods' and 'deleted_methods' simultaneously"
+        in str(exc_info.value)
+    )
 
 
 def test_invalid_included_methods(endpoint_creator):

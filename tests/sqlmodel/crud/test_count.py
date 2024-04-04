@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from fastcrud.crud.fast_crud import FastCRUD
 from fastcrud import JoinConfig
 from ..conftest import Project, Participant, ProjectsParticipantsAssociation
@@ -57,55 +58,6 @@ async def test_count_with_advanced_filters(async_session, test_model, test_data)
 
 
 @pytest.mark.asyncio
-async def test_update_multiple_records_allow_multiple(
-    async_session, test_model, test_data
-):
-    for item in test_data:
-        async_session.add(test_model(**item))
-    await async_session.commit()
-
-    crud = FastCRUD(test_model)
-
-    await crud.update(
-        async_session, {"name": "UpdatedName"}, allow_multiple=True, tier_id=1
-    )
-    updated_count = await crud.count(async_session, name="UpdatedName")
-    expected_count = len([item for item in test_data if item["tier_id"] == 1])
-
-    assert updated_count == expected_count
-
-
-@pytest.mark.asyncio
-async def test_soft_delete_custom_columns(async_session, test_model, test_data):
-    crud = FastCRUD(
-        test_model,
-        is_deleted_column="custom_is_deleted",
-        deleted_at_column="custom_deleted_at",
-    )
-    for item in test_data:
-        async_session.add(test_model(**item))
-    await async_session.commit()
-
-    existing_record = await crud.get(async_session, id=test_data[0]["id"])
-    assert existing_record is not None, "Record should exist before deletion"
-
-    await crud.delete(async_session, id=test_data[0]["id"], allow_multiple=False)
-
-    deleted_record = await crud.get(async_session, id=test_data[0]["id"])
-
-    if deleted_record is None:
-        assert True, "Record is considered 'deleted' and is not fetched by default"
-    else:
-        assert (
-            deleted_record.get("custom_is_deleted") is True
-        ), "Record should be marked as deleted"
-        assert (
-            "custom_deleted_at" in deleted_record
-            and deleted_record["custom_deleted_at"] is not None
-        ), "Deletion timestamp should be set"
-
-
-@pytest.mark.asyncio
 async def test_count_with_joins_config_many_to_many(async_session):
     project1 = Project(name="Project Alpha", description="First Project")
     project2 = Project(name="Project Beta", description="Second Project")
@@ -156,3 +108,60 @@ async def test_count_with_joins_config_many_to_many(async_session):
     assert (
         count == 2
     ), f"Expected to find 2 projects associated with 'John Doe', found {count}"
+
+
+@pytest.mark.asyncio
+async def test_count_with_joins_and_filters_executes_primary_filter(async_session):
+    project1 = Project(name="Project Delta", description="Fourth Project")
+    project2 = Project(name="Project Epsilon", description="Fifth Project")
+    participant1 = Participant(name="Alex Doe", role="Manager")
+    participant2 = Participant(name="Chris Doe", role="Analyst")
+
+    async_session.add_all([project1, project2, participant1, participant2])
+    await async_session.commit()
+
+    async_session.add_all(
+        [
+            ProjectsParticipantsAssociation(
+                project_id=project1.id, participant_id=participant1.id
+            ),
+            ProjectsParticipantsAssociation(
+                project_id=project2.id, participant_id=participant2.id
+            ),
+        ]
+    )
+    await async_session.commit()
+
+    joins_config = [
+        JoinConfig(
+            model=ProjectsParticipantsAssociation,
+            join_on=Project.id == ProjectsParticipantsAssociation.project_id,
+            join_type="inner",
+        ),
+        JoinConfig(
+            model=Participant,
+            join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
+            join_type="inner",
+            filters={"role": "Manager"},
+        ),
+    ]
+
+    crud_project = FastCRUD(Project)
+
+    count = await crud_project.count(
+        async_session, joins_config=joins_config, name="Project Delta"
+    )
+
+    assert (
+        count == 1
+    ), "Expected to find 1 project named 'Project Delta' associated with a manager, but found a different count."
+
+
+@pytest.mark.asyncio
+async def test_count_raises_value_error_for_invalid_count(async_session):
+    crud = FastCRUD(Project)
+
+    with patch("sqlalchemy.ext.asyncio.AsyncSession.scalar", return_value=None):
+        with pytest.raises(ValueError) as exc_info:
+            await crud.count(async_session)
+        assert str(exc_info.value) == "Could not find the count."

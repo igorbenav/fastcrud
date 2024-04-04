@@ -30,3 +30,9 @@ async def test_deleted_methods(
     item_id = response.json()["id"]
     response = client.delete(f"/test_custom/delete/{item_id}")
     assert response.status_code == 404
+
+
+def test_invalid_deleted_methods(endpoint_creator):
+    with pytest.raises(ValueError) as exc_info:
+        endpoint_creator.add_routes_to_router(deleted_methods=["swim", "jump"])
+    assert "Invalid CRUD methods in deleted_methods" in str(exc_info.value)

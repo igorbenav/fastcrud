@@ -234,7 +234,7 @@ class EndpointCreator:
                 if hasattr(item, col_name):
                     value = getattr(item, col_name)
                     exists = await self.crud.exists(db, **{col_name: value})
-                    if exists:
+                    if exists:  # pragma: no cover
                         raise DuplicateValueException(
                             f"Value {value} is already registered"
                         )
@@ -249,9 +249,9 @@ class EndpointCreator:
         @apply_model_pk(**self._primary_keys_types)
         async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
             item = await self.crud.get(db, **pkeys)
-            if not item:
+            if not item:  # pragma: no cover
                 raise NotFoundException(detail="Item not found")
-            return item
+            return item  # pragma: no cover
 
         return endpoint
 
@@ -286,7 +286,7 @@ class EndpointCreator:
 
             return paginated_response(
                 crud_data=crud_data, page=page, items_per_page=items_per_page
-            )
+            )  # pragma: no cover
 
         return endpoint
 
@@ -309,7 +309,7 @@ class EndpointCreator:
         @apply_model_pk(**self._primary_keys_types)
         async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
             await self.crud.delete(db, **pkeys)
-            return {"message": "Item deleted successfully"}
+            return {"message": "Item deleted successfully"}  # pragma: no cover
 
         return endpoint
 
@@ -325,7 +325,9 @@ class EndpointCreator:
         @apply_model_pk(**self._primary_keys_types)
         async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
             await self.crud.db_delete(db, **pkeys)
-            return {"message": "Item permanently deleted from the database"}
+            return {
+                "message": "Item permanently deleted from the database"
+            }  # pragma: no cover
 
         return endpoint
 

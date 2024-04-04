@@ -335,3 +335,101 @@ async def test_get_joined_with_aliases_no_schema(
     assert (
         result["user_name"] == expected_user_name
     ), "User name does not match expected value"
+
+
+@pytest.mark.asyncio
+async def test_get_joined_with_both_single_and_joins_config_raises_value_error(
+    async_session, test_data
+):
+    crud = FastCRUD(ModelTest)
+
+    with pytest.raises(ValueError) as excinfo:
+        await crud.get_joined(
+            db=async_session,
+            join_model=TierModel,
+            joins_config=[
+                JoinConfig(
+                    model=TierModel,
+                    join_on=ModelTest.tier_id == TierModel.id,
+                )
+            ],
+        )
+
+    assert (
+        "Cannot use both single join parameters and joins_config simultaneously."
+        in str(excinfo.value)
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_joined_without_join_model_or_joins_config_raises_value_error(
+    async_session, test_data
+):
+    crud = FastCRUD(ModelTest)
+
+    with pytest.raises(ValueError) as excinfo:
+        await crud.get_joined(db=async_session)
+
+    assert "You need one of join_model or joins_config." in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_get_joined_with_unsupported_join_type_raises_value_error(
+    async_session, test_data
+):
+    crud = FastCRUD(ModelTest)
+
+    with pytest.raises(ValueError) as excinfo:
+        await crud.get_joined(
+            db=async_session,
+            join_model=TierModel,
+            join_type="unsupported_type",
+        )
+
+    assert "Unsupported join type: unsupported_type." in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_get_joined_returns_none_when_no_record_matches(async_session, test_data):
+    crud = FastCRUD(ModelTest)
+
+    result = await crud.get_joined(
+        db=async_session,
+        join_model=TierModel,
+        schema_to_select=CreateSchemaTest,
+        join_schema_to_select=TierSchemaTest,
+        name="Nonexistent Name",
+    )
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_get_joined_with_joined_model_filters(
+    async_session, test_data, test_data_tier
+):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    await async_session.commit()
+
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+
+    join_filters = {"name": "Premium"}
+
+    result = await crud.get_joined(
+        db=async_session,
+        join_model=TierModel,
+        join_filters=join_filters,
+        schema_to_select=CreateSchemaTest,
+        join_schema_to_select=TierSchemaTest,
+        join_prefix="tier_",
+    )
+
+    assert result is not None, "Expected to find at least one matching record"
+    assert (
+        result["tier_name"] == "Premium"
+    ), "Expected joined record to meet the filter criteria"

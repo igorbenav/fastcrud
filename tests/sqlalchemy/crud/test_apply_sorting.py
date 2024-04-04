@@ -97,3 +97,17 @@ async def test_apply_sorting_mismatched_lengths(async_session, test_model, test_
 
     with pytest.raises(ValueError):
         crud._apply_sorting(stmt, ["name", "id"], ["asc"])
+
+
+@pytest.mark.asyncio
+async def test_apply_sorting_sort_orders_without_columns(async_session, test_model):
+    crud = FastCRUD(test_model)
+    stmt = select(test_model)
+
+    with pytest.raises(ValueError) as exc_info:
+        crud._apply_sorting(stmt, None, ["asc"])
+
+    assert (
+        str(exc_info.value)
+        == "Sort orders provided without corresponding sort columns."
+    )

@@ -10,9 +10,11 @@ from pydantic import ConfigDict
 from sqlmodel import SQLModel, Field, Relationship
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy.sql import func
 
 from fastcrud.crud.fast_crud import FastCRUD
 from fastcrud.endpoint.crud_router import crud_router
+from fastcrud import EndpointCreator
 
 
 class MultiPKModel(SQLModel, table=True):
@@ -42,6 +44,17 @@ class ModelTest(SQLModel, table=True):
     category: "CategoryModel" = Relationship(back_populates="tests")
     is_deleted: bool = Field(default=False)
     deleted_at: Optional[datetime] = Field(default=None)
+
+
+class ModelTestWithTimestamp(SQLModel, table=True):
+    __tablename__ = "model_test_with_timestamp"
+    id: int = Field(primary_key=True)
+    name: str
+    tier_id: Optional[int] = Field(foreign_key="tier.id")
+    category_id: Optional[int] = Field(default=None, foreign_key="category.id")
+    is_deleted: bool = Field(default=False)
+    deleted_at: Optional[datetime] = Field(default=None)
+    updated_at: datetime = Field(default=func.now(), nullable=False)
 
 
 class TierModel(SQLModel, table=True):
@@ -339,3 +352,18 @@ def client(
     )
 
     return TestClient(app)
+
+
+@pytest.fixture
+def endpoint_creator() -> EndpointCreator:
+    """Fixture to create an instance of EndpointCreator."""
+    return EndpointCreator(
+        session=get_session_local,
+        model=ModelTest,
+        crud=FastCRUD(test_model),
+        create_schema=CreateSchemaTest,
+        update_schema=UpdateSchemaTest,
+        delete_schema=DeleteSchemaTest,
+        path="/custom_test",
+        tags=["custom_test"],
+    )

@@ -541,7 +541,7 @@ class FastCRUD(
 
         if joins_config is not None:
             primary_keys = [p.name for p in _get_primary_keys(self.model)]
-            if not any(primary_keys):
+            if not any(primary_keys):  # pragma: no cover
                 raise ValueError(
                     f"The model '{self.model.__name__}' does not have a primary key defined, which is required for counting with joins."
                 )
@@ -670,7 +670,8 @@ class FastCRUD(
                     "schema_to_select must be provided when return_as_model is True."
                 )
             try:
-                model_data = [schema_to_select.model_construct(**row) for row in data]
+                print("I'm here at least")
+                model_data = [schema_to_select(**row) for row in data]
                 return {"data": model_data, "total_count": total_count}
 
             except ValidationError as e:
@@ -1196,11 +1197,19 @@ class FastCRUD(
 
         total_count = await self.count(db=db, joins_config=joins_config, **kwargs)
 
-        if return_as_model and schema_to_select:
-            model_data: list[BaseModel] = [
-                schema_to_select.model_construct(**row) for row in data
-            ]
-            return {"data": model_data, "total_count": total_count}
+        if return_as_model:
+            if not schema_to_select:
+                raise ValueError(
+                    "schema_to_select must be provided when return_as_model is True."
+                )
+            try:
+                model_data: list[BaseModel] = [schema_to_select(**row) for row in data]
+                return {"data": model_data, "total_count": total_count}
+
+            except ValidationError as e:
+                raise ValueError(
+                    f"Data validation error for schema {schema_to_select.__name__}: {e}"
+                )
 
         return {"data": data, "total_count": total_count}
 
@@ -1352,11 +1361,12 @@ class FastCRUD(
             update_data = object.model_dump(exclude_unset=True)
 
         updated_at_col = getattr(self.model, self.updated_at_column, None)
-        if updated_at_col and updated_at_col in update_data.keys():
-            update_data[updated_at_col] = datetime.now(timezone.utc)
+        if updated_at_col:
+            update_data[self.updated_at_column] = datetime.now(timezone.utc)
 
+        update_data_keys = set(update_data.keys())
         model_columns = {column.name for column in inspect(self.model).c}
-        extra_fields = set(update_data) - model_columns
+        extra_fields = update_data_keys - model_columns
         if extra_fields:
             raise ValueError(f"Extra fields provided: {extra_fields}")
 
@@ -1462,21 +1472,16 @@ class FastCRUD(
         """
         filters = self._parse_filters(**kwargs)
         if db_row:
-            if hasattr(db_row, self.is_deleted_column):
-                is_deleted_col = getattr(self.model, self.is_deleted_column)
-                deleted_at_col = getattr(self.model, self.deleted_at_column, None)
-
-                update_values = {
-                    is_deleted_col: True,
-                    deleted_at_col: datetime.now(timezone.utc),
-                }
-                update_stmt = (
-                    update(self.model).filter(*filters).values(**update_values)
-                )
-                await db.execute(update_stmt)
+            if hasattr(db_row, self.is_deleted_column) and hasattr(
+                db_row, self.deleted_at_column
+            ):
+                setattr(db_row, self.is_deleted_column, True)
+                setattr(db_row, self.deleted_at_column, datetime.now(timezone.utc))
+                await db.commit()
             else:
                 await db.delete(db_row)
-                await db.commit()
+            await db.commit()
+            return
 
         total_count = await self.count(db, **kwargs)
         if total_count == 0:

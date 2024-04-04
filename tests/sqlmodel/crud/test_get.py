@@ -113,3 +113,23 @@ async def test_get_return_as_model_instance(async_session, test_data, read_schem
     assert isinstance(
         fetched_record, read_schema
     ), "The fetched record should be an instance of the ReadSchemaTest Pydantic model"
+
+
+@pytest.mark.asyncio
+async def test_get_return_as_model_without_schema(async_session, test_data):
+    async_session.add(ModelTest(**test_data[0]))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+
+    with pytest.raises(ValueError) as exc_info:
+        await crud.get(
+            async_session,
+            return_as_model=True,
+            id=test_data[0]["id"],
+        )
+
+    assert (
+        str(exc_info.value)
+        == "schema_to_select must be provided when return_as_model is True."
+    )

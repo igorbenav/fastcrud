@@ -1,6 +1,13 @@
 import pytest
+from typing import Annotated
+from pydantic import BaseModel, Field
 from fastcrud.crud.fast_crud import FastCRUD
 from sqlalchemy import select, func
+
+
+class CustomCreateSchemaTest(BaseModel):
+    name: Annotated[str, Field(max_length=20)]
+    tier_id: int
 
 
 @pytest.mark.asyncio
@@ -182,3 +189,42 @@ async def test_get_multi_advanced_filtering_return_model(
     assert all(
         item.id <= 5 for item in result["data"]
     ), "Should only include records with ID less than or equal to 5"
+
+
+@pytest.mark.asyncio
+async def test_get_multi_return_as_model_without_schema(
+    async_session, test_model, test_data
+):
+    for item in test_data:
+        async_session.add(test_model(**item))
+    await async_session.commit()
+
+    crud = FastCRUD(test_model)
+
+    with pytest.raises(ValueError) as exc_info:
+        await crud.get_multi(async_session, return_as_model=True)
+
+    assert "schema_to_select must be provided when return_as_model is True" in str(
+        exc_info.value
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_multi_handle_validation_error(async_session, test_model):
+    invalid_test_data = {
+        "name": "Extremely Long Name That Exceeds The Limits Of CustomCreateSchemaTest",
+        "tier_id": 1,
+    }
+    async_session.add(test_model(**invalid_test_data))
+    await async_session.commit()
+
+    crud = FastCRUD(test_model)
+
+    with pytest.raises(ValueError) as exc_info:
+        await crud.get_multi(
+            async_session, return_as_model=True, schema_to_select=CustomCreateSchemaTest
+        )
+
+    assert "Data validation error for schema CustomCreateSchemaTest:" in str(
+        exc_info.value
+    )

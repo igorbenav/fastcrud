@@ -20,5 +20,13 @@ jobs:
     - name: Install dependencies
       run: poetry install --with dev
 
-    - name: Run tests
-      run: poetry run pytest
+    - name: Run tests with coverage.py
+      run: |
+        poetry run coverage run -m pytest
+        poetry run coverage xml
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4.0.1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: igorbenav/fastcrud

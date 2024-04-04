@@ -46,7 +46,7 @@ class DuplicateValueException(CustomException):
     def __init__(self, detail: Union[str, None] = None):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail
-        ) # pragma: no cover
+        )
 
 
 class RateLimitException(CustomException):

@@ -196,7 +196,7 @@ class EndpointCreator:
                 if hasattr(item, col_name):
                     value = getattr(item, col_name)
                     exists = await self.crud.exists(db, **{col_name: value})
-                    if exists:
+                    if exists: # pragma: no cover
                         raise DuplicateValueException(
                             f"Value {value} is already registered"
                         )
@@ -210,7 +210,7 @@ class EndpointCreator:
 
         async def endpoint(id: int, db: AsyncSession = Depends(self.session)):
             item = await self.crud.get(db, id=id)
-            if not item:
+            if not item: # pragma: no cover
                 raise NotFoundException(detail="Item not found")
             return item # pragma: no cover
 

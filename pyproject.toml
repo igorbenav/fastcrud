@@ -6,9 +6,7 @@ authors = ["Igor Benav <igor.magalhaes.r@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/igorbenav/fastcrud"
-include = [
-    "LICENSE",
-]
+include = ["LICENSE"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -22,7 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "Framework :: FastAPI",
-    "Typing :: Typed"
+    "Typing :: Typed",
 ]
 
 keywords = ["fastapi", "crud", "async", "sqlalchemy", "pydantic"]

@@ -20,6 +20,16 @@ class Base(DeclarativeBase):
     pass
 
 
+class MultiPkModel(Base):
+    __tablename__ = "multi_pk"
+    # tests = relationship("ModelTest", back_populates="category")
+    id = Column(Integer, primary_key=True)
+    uuid = Column(String(32), primary_key=True)
+    name = Column(String, unique=True)
+    test_id = Column(Integer, ForeignKey("test.id"))
+    test = relationship("ModelTest", back_populates="multi_pk")
+
+
 class CategoryModel(Base):
     __tablename__ = "category"
     tests = relationship("ModelTest", back_populates="category")
@@ -37,6 +47,7 @@ class ModelTest(Base):
     )
     tier = relationship("TierModel", back_populates="tests")
     category = relationship("CategoryModel", back_populates="tests")
+    multi_pk = relationship("MultiPkModel", back_populates="test")
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True, default=None)
 
@@ -136,6 +147,16 @@ class CategorySchemaTest(BaseModel):
     name: str
 
 
+class MultiPkSchema(BaseModel):
+    id: int
+    uuid: str
+    name: str
+
+
+class MultiPkCreate(MultiPkSchema):
+    pass
+
+
 class BookingSchema(BaseModel):
     id: Optional[int] = None
     owner_id: int
@@ -200,6 +221,17 @@ def test_data_category() -> list[dict]:
     return [{"id": 1, "name": "Tech"}, {"id": 2, "name": "Health"}]
 
 
+@pytest.fixture(
+    scope="function",
+    params=[
+        {"id": 1, "uuid": "a", "name": "Tech"},
+        {"id": 1, "uuid": "b", "name": "Health"},
+    ],
+)
+def test_data_multipk(request) -> list[dict]:
+    return request.param
+
+
 @pytest.fixture(scope="function")
 def test_data_booking() -> list[dict]:
     return [
@@ -259,14 +291,32 @@ def tier_delete_schema():
 
 
 @pytest.fixture
+def multi_pk_model():
+    return MultiPkModel
+
+
+@pytest.fixture
+def multi_pk_test_schema():
+    return MultiPkSchema
+
+
+@pytest.fixture
+def multi_pk_test_create_schema():
+    return MultiPkCreate
+
+
+@pytest.fixture
 def client(
     test_model,
     tier_model,
+    multi_pk_model,
     create_schema,
     update_schema,
     delete_schema,
     tier_schema,
     tier_delete_schema,
+    multi_pk_test_schema,
+    multi_pk_test_create_schema,
 ):
     app = FastAPI()
 
@@ -293,6 +343,19 @@ def client(
             delete_schema=tier_delete_schema,
             path="/tier",
             tags=["tier"],
+        )
+    )
+
+    app.include_router(
+        crud_router(
+            session=get_session_local,
+            model=multi_pk_model,
+            crud=FastCRUD(multi_pk_model),
+            create_schema=multi_pk_test_create_schema,
+            update_schema=multi_pk_test_schema,
+            delete_schema=multi_pk_test_schema,
+            path="/multi_pk",
+            tags=["multi_pk"],
         )
     )
 

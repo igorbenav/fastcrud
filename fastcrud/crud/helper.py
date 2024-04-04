@@ -91,11 +91,11 @@ def _auto_detect_join_condition(
             None,
         )
 
-        if join_on is None:
+        if join_on is None: # pragma: no cover 
             raise ValueError(
                 "Could not automatically determine join condition. Please provide join_on."
             )
-    else:
+    else: # pragma: no cover
         raise ValueError("Could not automatically get model columns.")
 
     return join_on

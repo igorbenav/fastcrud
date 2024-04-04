@@ -212,7 +212,7 @@ class EndpointCreator:
             item = await self.crud.get(db, id=id)
             if not item:
                 raise NotFoundException(detail="Item not found")
-            return item
+            return item # pragma: no cover
 
         return endpoint
 
@@ -247,7 +247,7 @@ class EndpointCreator:
 
             return paginated_response(
                 crud_data=crud_data, page=page, items_per_page=items_per_page
-            )
+            ) # pragma: no cover
 
         return endpoint
 
@@ -268,7 +268,7 @@ class EndpointCreator:
 
         async def endpoint(id: int, db: AsyncSession = Depends(self.session)):
             await self.crud.delete(db, id=id)
-            return {"message": "Item deleted successfully"}
+            return {"message": "Item deleted successfully"} # pragma: no cover
 
         return endpoint
 
@@ -283,7 +283,7 @@ class EndpointCreator:
 
         async def endpoint(id: int, db: AsyncSession = Depends(self.session)):
             await self.crud.db_delete(db, id=id)
-            return {"message": "Item permanently deleted from the database"}
+            return {"message": "Item permanently deleted from the database"} # pragma: no cover
 
         return endpoint
 

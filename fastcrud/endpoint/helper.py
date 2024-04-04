@@ -1,5 +1,5 @@
 from typing import Union, Annotated, Sequence
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 from pydantic.functional_validators import field_validator
 
 from sqlalchemy import inspect
@@ -37,7 +37,7 @@ class CRUDMethods(BaseModel):
 
         for v in values:
             if v not in valid_methods:
-                raise ValidationError(f"Invalid CRUD method: {v}")
+                raise ValueError(f"Invalid CRUD method: {v}")
 
         return values
 

@@ -124,6 +124,7 @@ get_multi(
     sort_columns: Optional[Union[str, list[str]]] = None,
     sort_orders: Optional[Union[str, list[str]]] = None,
     return_as_model: bool = False,
+    return_total_count: bool = True,
     **kwargs: Any
 ) -> dict[str, Any]
 ```
@@ -205,6 +206,7 @@ get_multi(
     sort_columns: Optional[Union[str, list[str]]] = None,
     sort_orders: Optional[Union[str, list[str]]] = None,
     return_as_model: bool = False,
+    return_total_count: bool = True,
     **kwargs: Any
 ) -> dict[str, Any]
 ```
@@ -265,6 +267,7 @@ get_multi_joined(
     sort_orders: Optional[Union[str, list[str]]] = None,
     return_as_model: bool = False,
     joins_config: Optional[list[JoinConfig]] = None,
+    return_total_count: bool = True,
     **kwargs: Any,
 ) -> dict[str, Any]
 ```

@@ -664,7 +664,7 @@ class FastCRUD(
         result = await db.execute(stmt)
         data = [dict(row) for row in result.mappings()]
 
-        response = {"data": data}
+        response: dict[str, Any] = {"data": data}
 
         if return_total_count:
             total_count = await self.count(db=db, **kwargs)
@@ -1201,7 +1201,7 @@ class FastCRUD(
         result = await db.execute(stmt)
         data: list[dict] = [dict(row) for row in result.mappings().all()]
 
-        response = {"data": data}
+        response: dict[str, Any] = {"data": data}
 
         if return_total_count:
             total_count = await self.count(db=db, joins_config=joins_config, **kwargs)

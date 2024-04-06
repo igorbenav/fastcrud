@@ -42,7 +42,9 @@ class CRUDMethods(BaseModel):
         return values
 
 
-def _get_primary_key(model: type[DeclarativeBase]) -> Union[str, None]: # pragma: no cover 
+def _get_primary_key(
+    model: type[DeclarativeBase],
+) -> Union[str, None]:  # pragma: no cover
     return _get_primary_keys(model)[0].name
 
 
@@ -60,7 +62,7 @@ def _get_python_type(column: Column) -> Optional[type]:
     except NotImplementedError:
         if hasattr(column.type, "impl") and hasattr(column.type.impl, "python_type"):  # type: ignore
             return column.type.impl.python_type  # type: ignore
-        else: # pragma: no cover 
+        else:  # pragma: no cover
             raise NotImplementedError(
                 f"The primary key column {column.name} uses a custom type without a defined `python_type` or suitable `impl` fallback."
             )

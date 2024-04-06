@@ -591,6 +591,7 @@ class FastCRUD(
         sort_columns: Optional[Union[str, list[str]]] = None,
         sort_orders: Optional[Union[str, list[str]]] = None,
         return_as_model: bool = False,
+        return_total_count: bool = True,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
@@ -609,6 +610,7 @@ class FastCRUD(
             sort_columns: Column names to sort the results by.
             sort_orders: Corresponding sort orders ('asc', 'desc') for each column in sort_columns.
             return_as_model: If True, returns data as instances of the specified Pydantic model.
+            return_total_count: If True, also returns the total count of rows with the selected filters. Useful for pagination.
             **kwargs: Filters to apply to the query, including advanced comparison operators for more detailed querying.
 
         Returns:
@@ -662,7 +664,11 @@ class FastCRUD(
         result = await db.execute(stmt)
         data = [dict(row) for row in result.mappings()]
 
-        total_count = await self.count(db=db, **kwargs)
+        response: dict[str, Any] = {"data": data}
+
+        if return_total_count:
+            total_count = await self.count(db=db, **kwargs)
+            response["total_count"] = total_count
 
         if return_as_model:
             if not schema_to_select:
@@ -670,16 +676,14 @@ class FastCRUD(
                     "schema_to_select must be provided when return_as_model is True."
                 )
             try:
-                print("I'm here at least")
                 model_data = [schema_to_select(**row) for row in data]
-                return {"data": model_data, "total_count": total_count}
-
+                response["data"] = model_data
             except ValidationError as e:
                 raise ValueError(
                     f"Data validation error for schema {schema_to_select.__name__}: {e}"
                 )
 
-        return {"data": data, "total_count": total_count}
+        return response
 
     async def get_joined(
         self,
@@ -927,6 +931,7 @@ class FastCRUD(
         sort_orders: Optional[Union[str, list[str]]] = None,
         return_as_model: bool = False,
         joins_config: Optional[list[JoinConfig]] = None,
+        return_total_count: bool = True,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
@@ -954,6 +959,7 @@ class FastCRUD(
             sort_orders: A single sort order ('asc' or 'desc') or a list of sort orders corresponding to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
             return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
             joins_config: List of JoinConfig instances for specifying multiple joins. Each instance defines a model to join with, join condition, optional prefix for column names, schema for selecting specific columns, and join type.
+            return_total_count: If True, also returns the total count of rows with the selected filters. Useful for pagination.
             **kwargs: Filters to apply to the primary query, including advanced comparison operators for refined searching.
 
         Returns:
@@ -1195,7 +1201,11 @@ class FastCRUD(
         result = await db.execute(stmt)
         data: list[dict] = [dict(row) for row in result.mappings().all()]
 
-        total_count = await self.count(db=db, joins_config=joins_config, **kwargs)
+        response: dict[str, Any] = {"data": data}
+
+        if return_total_count:
+            total_count = await self.count(db=db, joins_config=joins_config, **kwargs)
+            response["total_count"] = total_count
 
         if return_as_model:
             if not schema_to_select:
@@ -1204,14 +1214,13 @@ class FastCRUD(
                 )
             try:
                 model_data: list[BaseModel] = [schema_to_select(**row) for row in data]
-                return {"data": model_data, "total_count": total_count}
-
+                response["data"] = model_data
             except ValidationError as e:
                 raise ValueError(
                     f"Data validation error for schema {schema_to_select.__name__}: {e}"
                 )
 
-        return {"data": data, "total_count": total_count}
+        return response
 
     async def get_multi_by_cursor(
         self,

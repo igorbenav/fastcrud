@@ -19,7 +19,6 @@ def test_add_custom_route(client: TestClient, endpoint_creator: EndpointCreator)
     client.app.include_router(endpoint_creator.router)
 
     response = client.get("/custom_test/test-custom-route?foo=bar")
-    print(response.json())
     assert response.status_code == 200
     assert response.json() == {"foo": "bar"}
 

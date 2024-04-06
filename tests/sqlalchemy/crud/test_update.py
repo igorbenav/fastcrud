@@ -212,7 +212,6 @@ async def test_update_auto_updates_updated_at(async_session, test_data):
     )
     updated = updated_record.scalar_one()
     assert updated.name == "UpdatedName", "Record should be updated with the new name."
-    print(updated.updated_at, initial_time)
     assert (
         updated.updated_at > initial_time
     ), "updated_at should be later than the initial timestamp."

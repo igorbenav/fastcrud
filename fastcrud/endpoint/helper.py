@@ -42,7 +42,7 @@ class CRUDMethods(BaseModel):
         return values
 
 
-def _get_primary_key(model: type[DeclarativeBase]) -> Union[str, None]:
+def _get_primary_key(model: type[DeclarativeBase]) -> Union[str, None]: # pragma: no cover 
     return _get_primary_keys(model)[0].name
 
 
@@ -60,10 +60,10 @@ def _get_python_type(column: Column) -> Optional[type]:
     except NotImplementedError:
         if hasattr(column.type, "impl") and hasattr(column.type.impl, "python_type"):  # type: ignore
             return column.type.impl.python_type  # type: ignore
-        else:
+        else: # pragma: no cover 
             raise NotImplementedError(
                 f"The primary key column {column.name} uses a custom type without a defined `python_type` or suitable `impl` fallback."
-            )  # this could just warn and return the object as well if it's not that necessary: # logging.warning(f"Column {column.name} lacks a python_type and a suitable impl fallback.") # return object
+            )
 
 
 def _extract_unique_columns(

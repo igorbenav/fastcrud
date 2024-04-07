@@ -132,10 +132,6 @@ Below are examples demonstrating both approaches:
 
 ### Using crud_router for Automatic Endpoint Creation
 
-!!! WARNING
-
-    For now, your primary column must be named `id` or automatic endpoint creation will not work.
-
 Here's a quick example to get you started:
 
 #### Define Your Model and Schema

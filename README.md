@@ -73,9 +73,6 @@ Below are examples demonstrating both approaches:
 
 <h3>Using crud_router for Automatic Endpoint Creation</h3>
 
-> \[!WARNING\]
-> For now, your primary column must be named `id` or automatic endpoint creation will not work.
-
 Here's a quick example to get you started:
 
 <h4>Define Your Model and Schema</h4>

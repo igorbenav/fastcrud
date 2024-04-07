@@ -6,6 +6,46 @@ The Changelog documents all notable changes made to FastCRUD. This includes new 
 
 ___
 
+## [0.11.0] - Apr 7, 2024
+
+#### Added
+- Multiple primary keys support, a significant enhancement by @dubusster in #31 🎉.
+- Option to disable the count in `get_multi` and `get_multi_joined` methods for performance optimization.
+- Fixes for a validation bug when `return_as_model` is set to `True`.
+- Resolution of a bug concerning incorrect handling of `db_row` in methods.
+- Correction of the `valid_methods` bug, which previously raised the wrong error type.
+- Upgrade of `FastAPI` dependency to version `0.111.0`, ensuring compatibility with the latest FastAPI features.
+- Achievement of 100% test coverage, with the addition of a workflow and badge to showcase this milestone.
+- Inclusion of the changelog within the project documentation, providing a comprehensive history of changes directly to users.
+
+#### Detailed Changes
+
+##### Multiple Primary Keys Support
+FastCRUD now accommodates models with multiple primary keys, facilitating more complex database designs. For models defined with more than one primary key, the endpoint creator automatically generates paths reflecting the primary keys' order. This feature extends support to primary keys named differently than `id`, enhancing the flexibility of FastCRUD's routing capabilities.
+
+###### Example:
+For a model with multiple primary keys, FastCRUD generates specific endpoints such as `/multi_pk/get/{id}/{uuid}`, accommodating the unique identification needs of complex data models.
+
+##### Optional Count
+The `get_multi` and `get_multi_joined` methods now feature an `return_total_count=False` parameter, allowing users to opt-out of receiving the total count in responses. This option can enhance performance by skipping potentially expensive count operations.
+
+###### Behavior:
+- By default, `return_total_count=True` is assumed, returning both data and a total count.
+- When set to `False`, responses contain only the data array, omitting the total count for efficiency.
+
+#### What's Changed
+- Implementation of multiple primary keys support, addressing a significant flexibility requirement for advanced use cases.
+- Introduction of optional count retrieval in multi-get methods, optimizing performance by eliminating unnecessary database queries.
+- Several critical bug fixes, improving the stability and reliability of FastCRUD.
+- Documentation enhancements, including the addition of a changelog section, ensuring users have access to detailed release information.
+- Update to FastAPI `0.111.0`, ensuring compatibility with the latest enhancements in the FastAPI ecosystem.
+- Achievement of 100% test coverage, marking a significant milestone in the project's commitment to reliability and quality assurance.
+
+#### Relevant Contributors
+- [@dubusster](https://github.com/dubusster) made a notable contribution with the implementation of multiple primary keys support in PR #31.
+
+**Full Changelog**: [View the full changelog](https://github.com/igorbenav/fastcrud/compare/v0.10.0...v0.11.0)
+
 ## [0.10.0] - Mar 30, 2024
 
 #### Added

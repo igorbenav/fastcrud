@@ -1399,6 +1399,10 @@
 <a href="https://pypi.org/project/fastcrud/">
   <img src="https://img.shields.io/pypi/pyversions/fastcrud.svg?color=%2334D058" alt="Supported Python Versions"/>
 </a>
+</a>
+<a href="https://codecov.io/gh/igorbenav/fastcrud" > 
+  <img src="https://codecov.io/gh/igorbenav/fastcrud/graph/badge.svg?token=J7XUP29RKU"/> 
+</a>
 </p>
 <hr>
 <p align="justify">
@@ -1489,10 +1493,6 @@
 </ol>
 <p>Below are examples demonstrating both approaches:</p>
 <h3 id="using-crud_router-for-automatic-endpoint-creation">Using crud_router for Automatic Endpoint Creation<a class="headerlink" href="#using-crud_router-for-automatic-endpoint-creation" title="Permanent link">&para;</a></h3>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>For now, your primary column must be named <code>id</code> or automatic endpoint creation will not work.</p>
-</div>
 <p>Here's a quick example to get you started:</p>
 <h4 id="define-your-model-and-schema">Define Your Model and Schema<a class="headerlink" href="#define-your-model-and-schema" title="Permanent link">&para;</a></h4>
 <div class="language-python highlight"><span class="filename">models/item.py</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span>

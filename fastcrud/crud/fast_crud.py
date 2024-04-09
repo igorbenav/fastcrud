@@ -431,7 +431,7 @@ class FastCRUD(
         instance: Union[UpdateSchemaType, type[BaseModel]],
         schema_to_select: Optional[type[BaseModel]] = None,
         return_as_model: bool = False,
-    ) -> Optional[Union[dict, BaseModel]]:
+    ) -> BaseModel:
         _pks = self._get_pk_dict(instance)
         db_instance = await self.get(
             db,
@@ -443,6 +443,12 @@ class FastCRUD(
             db_instance = await self.create(db, instance)
         else:
             await self.update(db, instance)
+            db_instance = await self.get(
+                db,
+                schema_to_select=schema_to_select,
+                return_as_model=return_as_model,
+                **_pks,
+            )
 
         return db_instance
 

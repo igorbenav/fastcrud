@@ -409,17 +409,16 @@ class FastCRUD(
 
         db_row = await db.execute(stmt)
         result: Optional[Row] = db_row.first()
-        if result is not None:
-            out: dict = dict(result._mapping)
-            if return_as_model:
-                if not schema_to_select:
-                    raise ValueError(
-                        "schema_to_select must be provided when return_as_model is True."
-                    )
-                return schema_to_select(**out)
+        if result is None:
+            return
+        out: dict = dict(result._mapping)
+        if not return_as_model:
             return out
-
-        return None
+        if not schema_to_select:
+            raise ValueError(
+                "schema_to_select must be provided when return_as_model is True."
+            )
+        return schema_to_select(**out)
 
     async def exists(self, db: AsyncSession, **kwargs: Any) -> bool:
         """

@@ -373,6 +373,7 @@ class FastCRUD(
         Args:
             db: The database session to use for the operation.
             schema_to_select: Optional Pydantic schema for selecting specific columns.
+            return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
             **kwargs: Filters to apply to the query, using field names for direct matches or appending comparison operators for advanced queries.
 
         Raises:

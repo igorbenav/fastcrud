@@ -165,6 +165,7 @@ class FastCRUD(
         self.is_deleted_column = is_deleted_column
         self.deleted_at_column = deleted_at_column
         self.updated_at_column = updated_at_column
+        self._primary_keys = _get_primary_keys(self.model)
 
     def _parse_filters(
         self, model: Optional[Union[type[ModelType], AliasedClass]] = None, **kwargs
@@ -420,6 +421,30 @@ class FastCRUD(
             return out
 
         return None
+
+    def _get_pk_dict(self, instance):
+        return {pk.name: getattr(instance, pk.name) for pk in self._primary_keys}
+
+    async def upsert(
+        self,
+        db: AsyncSession,
+        instance: Union[UpdateSchemaType, type[BaseModel]],
+        schema_to_select: Optional[type[BaseModel]] = None,
+        return_as_model: bool = False,
+    ) -> Optional[Union[dict, BaseModel]]:
+        _pks = self._get_pk_dict(instance)
+        db_instance = await self.get(
+            db,
+            schema_to_select=schema_to_select,
+            return_as_model=return_as_model,
+            **_pks,
+        )
+        if db_instance is None:
+            db_instance = await self.create(db, instance)
+        else:
+            await self.update(db, instance)
+
+        return db_instance
 
     async def exists(self, db: AsyncSession, **kwargs: Any) -> bool:
         """

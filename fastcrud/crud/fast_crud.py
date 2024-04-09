@@ -445,6 +445,7 @@ class FastCRUD(
             BaseModel: the created or updated instance
         """
         _pks = self._get_pk_dict(instance)
+        schema_to_select = schema_to_select or instance.__class__
         db_instance = await self.get(
             db,
             schema_to_select=schema_to_select,
@@ -453,6 +454,9 @@ class FastCRUD(
         )
         if db_instance is None:
             db_instance = await self.create(db, instance)
+            db_instance = schema_to_select.model_validate(
+                db_instance, from_attributes=True
+            )
         else:
             await self.update(db, instance)
             db_instance = await self.get(

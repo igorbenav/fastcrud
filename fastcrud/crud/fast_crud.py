@@ -1,4 +1,4 @@
-from typing import Any, Generic, TypeVar, Union, Optional
+from typing import Any, Dict, Generic, TypeVar, Union, Optional
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, ValidationError
@@ -429,10 +429,10 @@ class FastCRUD(
     async def upsert(
         self,
         db: AsyncSession,
-        instance: Union[UpdateSchemaType, type[BaseModel]],
+        instance: Union[UpdateSchemaType, CreateSchemaType],
         schema_to_select: Optional[type[BaseModel]] = None,
         return_as_model: bool = False,
-    ) -> BaseModel:
+    ) -> Union[BaseModel, Dict[str, Any], None]:
         """Update the instance or create it if it doesn't exists.
 
         Args:
@@ -445,7 +445,7 @@ class FastCRUD(
             BaseModel: the created or updated instance
         """
         _pks = self._get_pk_dict(instance)
-        schema_to_select = schema_to_select or instance.__class__
+        schema_to_select = schema_to_select or type(instance)
         db_instance = await self.get(
             db,
             schema_to_select=schema_to_select,
@@ -453,12 +453,12 @@ class FastCRUD(
             **_pks,
         )
         if db_instance is None:
-            db_instance = await self.create(db, instance)
+            db_instance = await self.create(db, instance)  # type: ignore
             db_instance = schema_to_select.model_validate(
                 db_instance, from_attributes=True
             )
         else:
-            await self.update(db, instance)
+            await self.update(db, instance)  # type: ignore
             db_instance = await self.get(
                 db,
                 schema_to_select=schema_to_select,

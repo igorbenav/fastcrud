@@ -1358,8 +1358,7 @@ class FastCRUD(
             update(db, {'username': 'new_username'}, id__ne=1, allow_multiple=False)
             ```
         """
-        total_count = await self.count(db, **kwargs)
-        if not allow_multiple and total_count > 1:
+        if not allow_multiple and (total_count := await self.count(db, **kwargs)) > 1:
             raise MultipleResultsFound(
                 f"Expected exactly one record to update, found {total_count}."
             )
@@ -1423,8 +1422,7 @@ class FastCRUD(
             db_delete(db, username='unique_username', allow_multiple=False)
             ```
         """
-        total_count = await self.count(db, **kwargs)
-        if not allow_multiple and total_count > 1:
+        if not allow_multiple and (total_count := await self.count(db, **kwargs)) > 1:
             raise MultipleResultsFound(
                 f"Expected exactly one record to delete, found {total_count}."
             )

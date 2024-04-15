@@ -408,7 +408,7 @@ class FastCRUD(
         stmt = select(*to_select).filter(*filters)
 
         db_row = await db.execute(stmt)
-        result: Optional[Row] = db_row.first()
+        result: Optional[Row] = db_row.one_or_none()
         if result is None:
             return
         out: dict = dict(result._mapping)

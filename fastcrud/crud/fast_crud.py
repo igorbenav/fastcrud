@@ -413,7 +413,7 @@ class FastCRUD(
         db_row = await db.execute(stmt)
         result: Optional[Row] = db_row.one_or_none() if strict else db_row.first()
         if result is None:
-            return
+            return None
         out: dict = dict(result._mapping)
         if not return_as_model:
             return out

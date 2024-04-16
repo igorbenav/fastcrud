@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 from fastcrud.crud.fast_crud import FastCRUD
 from ...sqlalchemy.conftest import ModelTest, CreateSchemaTest
+from sqlalchemy.exc import MultipleResultsFound
 
 
 @pytest.mark.asyncio
@@ -132,3 +133,20 @@ async def test_get_return_as_model_without_schema(async_session, test_data):
         str(exc_info.value)
         == "schema_to_select must be provided when return_as_model is True."
     )
+
+
+@pytest.mark.asyncio
+async def test_get_strict_existing_record(async_session, test_data):
+    test_record = ModelTest(**test_data[0])
+    async_session.add(test_record)
+    async_session.add(ModelTest(**test_data[1]))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+    with pytest.raises(MultipleResultsFound):
+        fetched_record = await crud.get(async_session, strict=True, category_id=1)
+
+    fetched_record = await crud.get(async_session, **test_data[0])
+
+    assert fetched_record is not None
+    assert fetched_record["name"] == test_data[0]["name"]

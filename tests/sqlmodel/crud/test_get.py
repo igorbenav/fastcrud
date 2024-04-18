@@ -145,7 +145,7 @@ async def test_get_strict_existing_record(async_session, test_data):
 
     crud = FastCRUD(ModelTest)
     with pytest.raises(MultipleResultsFound):
-        fetched_record = await crud.get(async_session, strict=True, category_id=1)
+        fetched_record = await crud.get(async_session, one_or_none=True, category_id=1)
 
     fetched_record = await crud.get(async_session, **test_data[0])
 

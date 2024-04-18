@@ -357,7 +357,7 @@ class FastCRUD(
         db: AsyncSession,
         schema_to_select: Optional[type[BaseModel]] = None,
         return_as_model: bool = False,
-        strict: bool = False,
+        one_or_none: bool = False,
         **kwargs: Any,
     ) -> Optional[Union[dict, BaseModel]]:
         """
@@ -373,12 +373,12 @@ class FastCRUD(
         Args:
             db: The database session to use for the operation.
             schema_to_select: Optional Pydantic schema for selecting specific columns.
-            strict: Flag to get strictly one or no result. Multiple results are not allowed.
+            one_or_none: Flag to get strictly one or no result. Multiple results are not allowed.
             **kwargs: Filters to apply to the query, using field names for direct matches or appending comparison operators for advanced queries.
 
         Raises:
             ValueError: If return_as_model is True but schema_to_select is not provided.
-            MultipleResultsFound: if `strict` is False and many result correspond to the passed filter.
+            MultipleResultsFound: if `one_or_none` is False and many result correspond to the passed filter.
 
         Returns:
             A dictionary or a Pydantic model instance of the fetched database row, or None if no match is found.
@@ -411,7 +411,7 @@ class FastCRUD(
         stmt = select(*to_select).filter(*filters)
 
         db_row = await db.execute(stmt)
-        result: Optional[Row] = db_row.one_or_none() if strict else db_row.first()
+        result: Optional[Row] = db_row.one_or_none() if one_or_none else db_row.first()
         if result is None:
             return None
         out: dict = dict(result._mapping)

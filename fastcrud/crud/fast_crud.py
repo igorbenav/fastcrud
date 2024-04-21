@@ -349,6 +349,7 @@ class FastCRUD(
         )
         filters = self._parse_filters(**kwargs)
         stmt = select(*to_select).filter(*filters)
+
         if sort_columns:
             stmt = self._apply_sorting(stmt, sort_columns, sort_orders)
         return stmt
@@ -358,6 +359,7 @@ class FastCRUD(
         db: AsyncSession,
         schema_to_select: Optional[type[BaseModel]] = None,
         return_as_model: bool = False,
+        one_or_none: bool = False,
         **kwargs: Any,
     ) -> Optional[Union[dict, BaseModel]]:
         """
@@ -374,10 +376,12 @@ class FastCRUD(
             db: The database session to use for the operation.
             schema_to_select: Optional Pydantic schema for selecting specific columns.
             return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
+            one_or_none: Flag to get strictly one or no result. Multiple results are not allowed.
             **kwargs: Filters to apply to the query, using field names for direct matches or appending comparison operators for advanced queries.
 
         Raises:
             ValueError: If return_as_model is True but schema_to_select is not provided.
+            MultipleResultsFound: if `one_or_none` is False and many result correspond to the passed filter.
 
         Returns:
             A dictionary or a Pydantic model instance of the fetched database row, or None if no match is found.
@@ -403,25 +407,20 @@ class FastCRUD(
             user = await crud.get(db, username__ne='admin')
             ```
         """
-        to_select = _extract_matching_columns_from_schema(
-            model=self.model, schema=schema_to_select
-        )
-        filters = self._parse_filters(**kwargs)
-        stmt = select(*to_select).filter(*filters)
+        stmt = await self.select(schema_to_select=schema_to_select, **kwargs)
 
         db_row = await db.execute(stmt)
-        result: Optional[Row] = db_row.first()
-        if result is not None:
-            out: dict = dict(result._mapping)
-            if return_as_model:
-                if not schema_to_select:
-                    raise ValueError(
-                        "schema_to_select must be provided when return_as_model is True."
-                    )
-                return schema_to_select(**out)
+        result: Optional[Row] = db_row.one_or_none() if one_or_none else db_row.first()
+        if result is None:
+            return None
+        out: dict = dict(result._mapping)
+        if not return_as_model:
             return out
-
-        return None
+        if not schema_to_select:
+            raise ValueError(
+                "schema_to_select must be provided when return_as_model is True."
+            )
+        return schema_to_select(**out)
 
     def _get_pk_dict(self, instance):
         return {pk.name: getattr(instance, pk.name) for pk in self._primary_keys}
@@ -700,12 +699,12 @@ class FastCRUD(
         if limit < 0 or offset < 0:
             raise ValueError("Limit and offset must be non-negative.")
 
-        to_select = _extract_matching_columns_from_schema(self.model, schema_to_select)
-        filters = self._parse_filters(**kwargs)
-        stmt = select(*to_select).filter(*filters)
-
-        if sort_columns:
-            stmt = self._apply_sorting(stmt, sort_columns, sort_orders)
+        stmt = await self.select(
+            schema_to_select=schema_to_select,
+            sort_columns=sort_columns,
+            sort_orders=sort_orders,
+            **kwargs,
+        )
 
         stmt = stmt.offset(offset).limit(limit)
         result = await db.execute(stmt)
@@ -1328,12 +1327,10 @@ class FastCRUD(
         if limit == 0:
             return {"data": [], "next_cursor": None}
 
-        to_select = _extract_matching_columns_from_schema(self.model, schema_to_select)
-        filters = self._parse_filters(**kwargs)
-
-        stmt = select(*to_select)
-        if filters:
-            stmt = stmt.filter(*filters)
+        stmt = await self.select(
+            schema_to_select=schema_to_select,
+            **kwargs,
+        )
 
         if cursor:
             if sort_order == "asc":
@@ -1405,8 +1402,7 @@ class FastCRUD(
             update(db, {'username': 'new_username'}, id__ne=1, allow_multiple=False)
             ```
         """
-        total_count = await self.count(db, **kwargs)
-        if not allow_multiple and total_count > 1:
+        if not allow_multiple and (total_count := await self.count(db, **kwargs)) > 1:
             raise MultipleResultsFound(
                 f"Expected exactly one record to update, found {total_count}."
             )
@@ -1470,8 +1466,7 @@ class FastCRUD(
             db_delete(db, username='unique_username', allow_multiple=False)
             ```
         """
-        total_count = await self.count(db, **kwargs)
-        if not allow_multiple and total_count > 1:
+        if not allow_multiple and (total_count := await self.count(db, **kwargs)) > 1:
             raise MultipleResultsFound(
                 f"Expected exactly one record to delete, found {total_count}."
             )

@@ -380,7 +380,6 @@ class FastCRUD(
 
         Raises:
             ValueError: If return_as_model is True but schema_to_select is not provided.
-            MultipleResultsFound: if `one_or_none` is False and many result correspond to the passed filter.
 
         Returns:
             A dictionary or a Pydantic model instance of the fetched database row, or None if no match is found.

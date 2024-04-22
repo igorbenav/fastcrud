@@ -666,3 +666,53 @@ async def test_get_multi_joined_validation_error(
     assert "Data validation error for schema CustomCreateSchemaTest:" in str(
         exc_info.value
     )
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_with_nesting(async_session, test_data, test_data_tier):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    await async_session.commit()
+
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+
+    result = await crud.get_multi_joined(
+        db=async_session,
+        joins_config=[
+            JoinConfig(
+                model=TierModel,
+                join_on=ModelTest.tier_id == TierModel.id,
+                join_prefix="tier_",
+                schema_to_select=TierSchemaTest,
+                join_type="left",
+            ),
+            JoinConfig(
+                model=CategoryModel,
+                join_on=ModelTest.category_id == CategoryModel.id,
+                join_prefix="category_",
+                schema_to_select=CategorySchemaTest,
+                join_type="left",
+            ),
+        ],
+        schema_to_select=CreateSchemaTest,
+        nest_joins=True,
+        offset=0,
+        limit=10
+    )
+
+    assert result is not None, "Expected non-None result for multi joined query"
+    assert "data" in result, "Result should contain 'data' key"
+    assert isinstance(result["data"], list), "'data' should be a list"
+
+    if result["data"]:
+        for item in result["data"]:
+            assert "tier" in item, "Nested tier data should be present under key 'tier'"
+            assert "category" in item, "Nested category data should be present under key 'category'"
+            assert isinstance(item["tier"], dict), "Nested tier data should be a dictionary"
+            assert isinstance(item["category"], dict), "Nested category data should be a dictionary"
+            assert "tier_" not in item["tier"], "No prefix should be present in the nested tier keys"
+            assert "category_" not in item["category"], "No prefix should be present in the nested category keys"

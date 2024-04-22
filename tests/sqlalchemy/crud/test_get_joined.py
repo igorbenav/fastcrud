@@ -453,11 +453,15 @@ async def test_get_joined_nest_joins(async_session, test_data, test_data_tier):
         join_prefix="tier_",
         schema_to_select=CreateSchemaTest,
         join_schema_to_select=TierSchemaTest,
-        nest_joins=True
+        nest_joins=True,
     )
 
     assert result is not None, "No result returned, expected a nested join result."
     assert "name" in result, "Expected primary model field 'name' in result."
     assert "tier" in result, "Expected nested 'tier' key in result for joined fields."
-    assert "name" in result["tier"], "Expected 'name' inside nested 'tier' dictionary from TierModel."
-    assert "tier_name" not in result, "'tier_name' should not be at the top level in the result."
+    assert (
+        "name" in result["tier"]
+    ), "Expected 'name' inside nested 'tier' dictionary from TierModel."
+    assert (
+        "tier_name" not in result
+    ), "'tier_name' should not be at the top level in the result."

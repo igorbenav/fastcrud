@@ -942,7 +942,7 @@ class FastCRUD(
             data: dict = dict(result._mapping)
             if nest_joins:
                 data = _nest_join_data(data, join_definitions)
-            
+
             return data
 
         return None

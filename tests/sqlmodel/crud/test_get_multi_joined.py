@@ -701,7 +701,7 @@ async def test_get_multi_joined_with_nesting(async_session, test_data, test_data
         schema_to_select=CreateSchemaTest,
         nest_joins=True,
         offset=0,
-        limit=10
+        limit=10,
     )
 
     assert result is not None, "Expected non-None result for multi joined query"
@@ -711,8 +711,18 @@ async def test_get_multi_joined_with_nesting(async_session, test_data, test_data
     if result["data"]:
         for item in result["data"]:
             assert "tier" in item, "Nested tier data should be present under key 'tier'"
-            assert "category" in item, "Nested category data should be present under key 'category'"
-            assert isinstance(item["tier"], dict), "Nested tier data should be a dictionary"
-            assert isinstance(item["category"], dict), "Nested category data should be a dictionary"
-            assert "tier_" not in item["tier"], "No prefix should be present in the nested tier keys"
-            assert "category_" not in item["category"], "No prefix should be present in the nested category keys"
+            assert (
+                "category" in item
+            ), "Nested category data should be present under key 'category'"
+            assert isinstance(
+                item["tier"], dict
+            ), "Nested tier data should be a dictionary"
+            assert isinstance(
+                item["category"], dict
+            ), "Nested category data should be a dictionary"
+            assert (
+                "tier_" not in item["tier"]
+            ), "No prefix should be present in the nested tier keys"
+            assert (
+                "category_" not in item["category"]
+            ), "No prefix should be present in the nested category keys"

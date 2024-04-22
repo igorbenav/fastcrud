@@ -102,7 +102,7 @@ def _auto_detect_join_condition(
 
 
 def _nest_join_data(data: dict[str, Any], join_definitions: list[JoinConfig]) -> dict[str, Any]:
-    nested_data = {}
+    nested_data: dict = {}
     for key, value in data.items():
         nested = False
         for join in join_definitions:

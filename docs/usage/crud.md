@@ -69,6 +69,7 @@ get(
     db: AsyncSession,
     schema_to_select: Optional[type[BaseModel]] = None,
     return_as_model: bool = False,
+    one_or_none: bool = False,
     **kwargs: Any
 ) -> Optional[Union[dict, BaseModel]]
 ```
@@ -231,6 +232,7 @@ get_joined(
     join_type: str = "left",
     join_filters: Optional[dict] = None,
     joins_config: Optional[list[JoinConfig]] = None,
+    nest_joins: bool = False,
     **kwargs: Any,
 ) -> Optional[dict[str, Any]]
 ```
@@ -261,6 +263,7 @@ get_multi_joined(
     join_type: str = "left",
     alias: Optional[str] = None,
     join_filters: Optional[dict] = None,
+    nest_joins: bool = False,
     offset: int = 0,
     limit: int = 100,
     sort_columns: Optional[Union[str, list[str]]] = None,

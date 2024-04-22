@@ -6,6 +6,110 @@ The Changelog documents all notable changes made to FastCRUD. This includes new 
 
 ___
 
+## [0.11.1] - Apr 22, 2024
+
+#### Added
+- `one_or_none` parameter to FastCRUD `get` method (default `False`)
+- `nest_joins` parameter to FastCRUD `get_joined` and `get_multi_joined` (default `False`)
+
+#### Detailed Changes
+##### `get`
+By default, the `get` method in `FastCRUD` returns the `first` object matching all the filters it finds.
+
+If you want to ensure the `one_or_none` behavior, you may pass the parameter as `True`:
+
+```python
+crud.get(
+    async_session, 
+    one_or_none=True, 
+    category_id=1
+)
+```
+
+##### `get_joined` and `get_multi_joined`
+By default, `FastCRUD` joins all the data and returns it in a single dictionary.
+Let's define two tables:
+```python
+class User(Base):
+    __tablename__ = "user"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    tier_id = Column(Integer, ForeignKey("tier.id"))
+
+
+class Tier(Base):
+    __tablename__ = "tier"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+```
+
+And join them with `FastCRUD`:
+
+```python
+user_tier = await user_crud.get_joined(
+    db=db,
+    model=Tier,
+    join_on=User.tier_id == Tier.id,
+    join_type="left",
+    join_prefix="tier_",,
+    id=1
+)
+```
+
+We'll get:
+
+```javascript
+{
+    "id": 1,
+    "name": "Example",
+    "tier_id": 1,
+    "tier_name": "Free",
+}
+```
+
+Now, if you want the joined data in a nested dictionary instead, you may just pass `nest_joins=True`:
+
+```python
+user_tier = await user_crud.get_joined(
+    db=db,
+    model=Tier,
+    join_on=User.tier_id == Tier.id,
+    join_type="left",
+    join_prefix="tier_",
+    nest_joins=True,
+    id=1,
+)
+```
+
+And you will get:
+
+```javascript
+{
+    "id": 1,
+    "name": "Example",
+    "tier": {
+        "id": 1,
+        "name": "Free",
+    },
+}
+```
+
+This works for both `get_joined` and `get_multi_joined`.
+
+!!! WARNING
+    Note that the final `"_"` in the passed `"tier_"` is stripped.
+
+#### What's Changed
+- Reuse of `select` method in `FastCRUD`
+- Skip count call when possible
+- Add `one_or_none` parameter to FastCRUD `get` method
+- Add `nest_joins` parameter to FastCRUD `get_joined` and `get_multi_joined`
+
+#### New Contributors
+- [@JakNowy](https://github.com/JakNowy) made their first contribution in PR #51.
+
+**Full Changelog**: [View the full changelog](https://github.com/igorbenav/fastcrud/compare/v0.11.0...v0.11.1)
+
 ## [0.11.0] - Apr 7, 2024
 
 #### Added

@@ -622,7 +622,11 @@ async def test_get_multi_joined_with_joined_model_filters(
 
 
 @pytest.mark.asyncio
-async def test_get_multi_joined_missing_schema_to_select(async_session):
+async def test_get_multi_joined_missing_schema_to_select(async_session, test_data):
+    for test_item in test_data:
+        async_session.add(ModelTest(**test_item))
+    await async_session.commit()
+
     crud = FastCRUD(ModelTest)
     with pytest.raises(ValueError) as exc_info:
         await crud.get_multi_joined(

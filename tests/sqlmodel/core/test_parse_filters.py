@@ -36,7 +36,7 @@ async def test_parse_filters_contained_in_exception(test_model):
     fast_crud = FastCRUD(test_model)
     with pytest.raises(ValueError) as exc:
         fast_crud._parse_filters(category_id__in=1)
-    assert exc.value == "in filter must be tuple, list or set"
+    assert str(exc.value) == "in filter must be tuple, list or set"
 
 
 @pytest.mark.asyncio

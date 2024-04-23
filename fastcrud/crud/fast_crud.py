@@ -192,7 +192,7 @@ class FastCRUD(
                 elif op == "in":
                     if not isinstance(value, (tuple, list, set)):
                         raise ValueError(
-                            f"\"in\" filter must be tuple, list or set"
+                            "\"in\" filter must be tuple, list or set"
                         )
                     filters.append(column.in_(value))
             else:

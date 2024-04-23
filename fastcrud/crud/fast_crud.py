@@ -15,6 +15,7 @@ from sqlalchemy.sql.selectable import Select
 from .helper import (
     _extract_matching_columns_from_schema,
     _auto_detect_join_condition,
+    _nest_join_data,
     JoinConfig,
 )
 
@@ -355,6 +356,7 @@ class FastCRUD(
         )
         filters = self._parse_filters(**kwargs)
         stmt = select(*to_select).filter(*filters)
+
         if sort_columns:
             stmt = self._apply_sorting(stmt, sort_columns, sort_orders)
         return stmt
@@ -364,6 +366,7 @@ class FastCRUD(
         db: AsyncSession,
         schema_to_select: Optional[type[BaseModel]] = None,
         return_as_model: bool = False,
+        one_or_none: bool = False,
         **kwargs: Any,
     ) -> Optional[Union[dict, BaseModel]]:
         """
@@ -380,6 +383,7 @@ class FastCRUD(
         Args:
             db: The database session to use for the operation.
             schema_to_select: Optional Pydantic schema for selecting specific columns.
+            one_or_none: Flag to get strictly one or no result. Multiple results are not allowed.
             **kwargs: Filters to apply to the query, using field names for direct matches or appending comparison operators for advanced queries.
 
         Raises:
@@ -409,25 +413,20 @@ class FastCRUD(
             user = await crud.get(db, username__ne='admin')
             ```
         """
-        to_select = _extract_matching_columns_from_schema(
-            model=self.model, schema=schema_to_select
-        )
-        filters = self._parse_filters(**kwargs)
-        stmt = select(*to_select).filter(*filters)
+        stmt = await self.select(schema_to_select=schema_to_select, **kwargs)
 
         db_row = await db.execute(stmt)
-        result: Optional[Row] = db_row.first()
-        if result is not None:
-            out: dict = dict(result._mapping)
-            if return_as_model:
-                if not schema_to_select:
-                    raise ValueError(
-                        "schema_to_select must be provided when return_as_model is True."
-                    )
-                return schema_to_select(**out)
+        result: Optional[Row] = db_row.one_or_none() if one_or_none else db_row.first()
+        if result is None:
+            return None
+        out: dict = dict(result._mapping)
+        if not return_as_model:
             return out
-
-        return None
+        if not schema_to_select:
+            raise ValueError(
+                "schema_to_select must be provided when return_as_model is True."
+            )
+        return schema_to_select(**out)
 
     async def exists(self, db: AsyncSession, **kwargs: Any) -> bool:
         """
@@ -664,12 +663,12 @@ class FastCRUD(
         if limit < 0 or offset < 0:
             raise ValueError("Limit and offset must be non-negative.")
 
-        to_select = _extract_matching_columns_from_schema(self.model, schema_to_select)
-        filters = self._parse_filters(**kwargs)
-        stmt = select(*to_select).filter(*filters)
-
-        if sort_columns:
-            stmt = self._apply_sorting(stmt, sort_columns, sort_orders)
+        stmt = await self.select(
+            schema_to_select=schema_to_select,
+            sort_columns=sort_columns,
+            sort_orders=sort_orders,
+            **kwargs,
+        )
 
         stmt = stmt.offset(offset).limit(limit)
         result = await db.execute(stmt)
@@ -708,6 +707,7 @@ class FastCRUD(
         alias: Optional[AliasedClass] = None,
         join_filters: Optional[dict] = None,
         joins_config: Optional[list[JoinConfig]] = None,
+        nest_joins: bool = False,
         **kwargs: Any,
     ) -> Optional[dict[str, Any]]:
         """
@@ -732,6 +732,7 @@ class FastCRUD(
             alias: An instance of `AliasedClass` for the join model, useful for self-joins or multiple joins on the same model. Result of `aliased(join_model)`.
             join_filters: Filters applied to the joined model, specified as a dictionary mapping column names to their expected values.
             joins_config: A list of JoinConfig instances, each specifying a model to join with, join condition, optional prefix for column names, schema for selecting specific columns, and the type of join. This parameter enables support for multiple joins.
+            nest_joins: If True, nested data structures will be returned where joined model data are nested under the join_prefix as a dictionary.
             **kwargs: Filters to apply to the primary model query, supporting advanced comparison operators for refined searching.
 
         Returns:
@@ -859,6 +860,34 @@ class FastCRUD(
                 joins_config=joins_config
             )
             ```
+
+            Example of using 'joins_config' for multiple joins with nested joins enabled:
+            ```python
+            from fastcrud import JoinConfig
+
+            result = await crud_user.get_joined(
+                db=session,
+                schema_to_select=UserSchema,
+                joins_config=[
+                    JoinConfig(
+                        model=Tier,
+                        join_on=User.tier_id == Tier.id,
+                        join_prefix="tier_",
+                        schema_to_select=TierSchema,
+                        join_type="left",
+                    ),
+                    JoinConfig(
+                        model=Department,
+                        join_on=User.department_id == Department.id,
+                        join_prefix="dept_",
+                        schema_to_select=DepartmentSchema,
+                        join_type="inner",
+                    )
+                ],
+                nest_joins=True
+            )
+            # Expect 'result' to have 'tier' and 'dept' as nested dictionaries
+            ```
         """
         if joins_config and (
             join_model or join_prefix or join_on or join_schema_to_select or alias
@@ -921,8 +950,11 @@ class FastCRUD(
         db_row = await db.execute(stmt)
         result: Optional[Row] = db_row.first()
         if result is not None:
-            out: dict = dict(result._mapping)
-            return out
+            data: dict = dict(result._mapping)
+            if nest_joins:
+                data = _nest_join_data(data, join_definitions)
+
+            return data
 
         return None
 
@@ -937,6 +969,7 @@ class FastCRUD(
         join_type: str = "left",
         alias: Optional[AliasedClass[Any]] = None,
         join_filters: Optional[dict] = None,
+        nest_joins: bool = False,
         offset: int = 0,
         limit: int = 100,
         sort_columns: Optional[Union[str, list[str]]] = None,
@@ -966,6 +999,7 @@ class FastCRUD(
             join_type: Specifies the type of join operation to perform. Can be "left" for a left outer join or "inner" for an inner join.
             alias: An instance of `AliasedClass` for the join model, useful for self-joins or multiple joins on the same model. Result of `aliased(join_model)`.
             join_filters: Filters applied to the joined model, specified as a dictionary mapping column names to their expected values.
+            nest_joins: If True, nested data structures will be returned where joined model data are nested under the join_prefix as a dictionary.
             offset: The offset (number of records to skip) for pagination.
             limit: The limit (maximum number of records to return) for pagination.
             sort_columns: A single column name or a list of column names on which to apply sorting.
@@ -1144,6 +1178,36 @@ class FastCRUD(
                 limit=10
             )
             ```
+
+            Fetching a list of projects, each with nested details of associated tasks and task creators, using nested joins:
+            ```python
+            projects = await crud.get_multi_joined(
+                db=session,
+                schema_to_select=ProjectSchema,
+                joins_config=[
+                    JoinConfig(
+                        model=Task,
+                        join_on=Project.id == Task.project_id,
+                        join_prefix="task_",
+                        schema_to_select=TaskSchema,
+                        join_type="left",
+                    ),
+                    JoinConfig(
+                        model=User,
+                        join_on=Task.creator_id == User.id,
+                        join_prefix="creator_",
+                        schema_to_select=UserSchema,
+                        join_type="left",
+                        alias=aliased(User, name="task_creator")
+                    )
+                ],
+                nest_joins=True,
+                offset=0,
+                limit=5,
+                sort_columns='project_name',
+                sort_orders='asc'
+            )
+        ```
         """
         if joins_config and (
             join_model or join_prefix or join_on or join_schema_to_select or alias
@@ -1212,26 +1276,35 @@ class FastCRUD(
         stmt = stmt.offset(offset).limit(limit)
 
         result = await db.execute(stmt)
-        data: list[dict] = [dict(row) for row in result.mappings().all()]
+        data: list[Union[dict, BaseModel]] = []
+        for row in result.mappings().all():
+            row_dict = dict(row)
+
+            if nest_joins:
+                row_dict = _nest_join_data(row_dict, join_definitions)
+
+            if return_as_model:
+                if schema_to_select is None:
+                    raise ValueError(
+                        "schema_to_select must be provided when return_as_model is True."
+                    )
+                try:
+                    model_instance = schema_to_select(**row_dict)
+                    data.append(model_instance)
+                except ValidationError as e:
+                    raise ValueError(
+                        f"Data validation error for schema {schema_to_select.__name__}: {e}"
+                    )
+            else:
+                data.append(row_dict)
 
         response: dict[str, Any] = {"data": data}
 
         if return_total_count:
-            total_count = await self.count(db=db, joins_config=joins_config, **kwargs)
+            total_count: int = await self.count(
+                db=db, joins_config=joins_config, **kwargs
+            )
             response["total_count"] = total_count
-
-        if return_as_model:
-            if not schema_to_select:
-                raise ValueError(
-                    "schema_to_select must be provided when return_as_model is True."
-                )
-            try:
-                model_data: list[BaseModel] = [schema_to_select(**row) for row in data]
-                response["data"] = model_data
-            except ValidationError as e:
-                raise ValueError(
-                    f"Data validation error for schema {schema_to_select.__name__}: {e}"
-                )
 
         return response
 
@@ -1295,12 +1368,10 @@ class FastCRUD(
         if limit == 0:
             return {"data": [], "next_cursor": None}
 
-        to_select = _extract_matching_columns_from_schema(self.model, schema_to_select)
-        filters = self._parse_filters(**kwargs)
-
-        stmt = select(*to_select)
-        if filters:
-            stmt = stmt.filter(*filters)
+        stmt = await self.select(
+            schema_to_select=schema_to_select,
+            **kwargs,
+        )
 
         if cursor:
             if sort_order == "asc":

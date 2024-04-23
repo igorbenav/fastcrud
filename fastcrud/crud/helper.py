@@ -99,3 +99,23 @@ def _auto_detect_join_condition(
         raise ValueError("Could not automatically get model columns.")
 
     return join_on
+
+
+def _nest_join_data(
+    data: dict[str, Any], join_definitions: list[JoinConfig]
+) -> dict[str, Any]:
+    nested_data: dict = {}
+    for key, value in data.items():
+        nested = False
+        for join in join_definitions:
+            if join.join_prefix and key.startswith(join.join_prefix):
+                nested_key = join.join_prefix.rstrip("_")
+                nested_field = key[len(join.join_prefix) :]
+                if nested_key not in nested_data:
+                    nested_data[nested_key] = {}
+                nested_data[nested_key][nested_field] = value
+                nested = True
+                break
+        if not nested:
+            nested_data[key] = value
+    return nested_data

@@ -604,7 +604,7 @@ class FastCRUD(
         Args:
             db: The database session to use for the operation.
             offset: Starting index for records to fetch, useful for pagination.
-            limit: Maximum number of records to fetch in one call. Use 0 for "no limit", fetching all matching rows.
+            limit: Maximum number of records to fetch in one call. Use 0 for "no limit", fetching all matching rows. Note that if you are using this function in an endpoint, you should make sure to sanitize the query parameters before passing them to get_multi to make sure the user can't get all of the data, unless you really seriously want to allow that.
             schema_to_select: Optional Pydantic schema for selecting specific columns. Required if `return_as_model` is True.
             sort_columns: Column names to sort the results by.
             sort_orders: Corresponding sort orders ('asc', 'desc') for each column in sort_columns.
@@ -992,7 +992,7 @@ class FastCRUD(
             join_filters: Filters applied to the joined model, specified as a dictionary mapping column names to their expected values.
             nest_joins: If True, nested data structures will be returned where joined model data are nested under the join_prefix as a dictionary.
             offset: The offset (number of records to skip) for pagination.
-            limit: The limit (maximum number of records to return) for pagination. Use 0 for "no limit", fetching all matching rows.
+            limit: The limit (maximum number of records to return) for pagination. Use 0 for "no limit", fetching all matching rows. Note that if you are using this function in an endpoint, you should make sure to sanitize the query parameters before passing them to get_multi to make sure the user can't get all of the data, unless you really seriously want to allow that.
             sort_columns: A single column name or a list of column names on which to apply sorting.
             sort_orders: A single sort order ('asc' or 'desc') or a list of sort orders corresponding to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
             return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.

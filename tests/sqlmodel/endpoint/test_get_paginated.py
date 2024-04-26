@@ -10,9 +10,7 @@ async def test_read_paginated(client: TestClient, async_session, test_model, tes
     await async_session.commit()
 
     with pytest.raises(ValueError) as exc_info:
-        response = client.get(
-            f"/test/get_paginated?page=1&itemsPerPage=0"
-        )
+        response = client.get("/test/get_paginated?page=1&itemsPerPage=0")
     assert "0 is not a valid value for itemsPerPage!" in str(exc_info.value)
 
     page = 1

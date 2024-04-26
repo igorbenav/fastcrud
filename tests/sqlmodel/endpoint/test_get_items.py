@@ -25,7 +25,14 @@ async def test_read_items(client: TestClient, async_session, test_model, test_da
 
 
 @pytest.mark.asyncio
-async def test_read_items_limit0(client: TestClient, async_session, test_model, create_schema, update_schema, test_data):
+async def test_read_items_limit0(
+    client: TestClient,
+    async_session,
+    test_model,
+    create_schema,
+    update_schema,
+    test_data,
+):
     custom_router = crud_router(
         session=get_session_local,
         model=test_model,

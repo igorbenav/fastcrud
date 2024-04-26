@@ -78,6 +78,7 @@ class EndpointCreator:
         endpoint_names: Optional dictionary to customize endpoint names for CRUD operations. Keys are operation types
                         ("create", "read", "update", "delete", "db_delete", "read_multi", "read_paginated"), and
                         values are the custom names to use. Unspecified operations will use default names.
+        allow_limit_0: Whether multi-get endpoints allow 0 as a limit parameter, fetching all rows. Public APIs should probably keep this set to False, which will cause a ValueError to be raised if someone tries it.
 
     Raises:
         ValueError: If both `included_methods` and `deleted_methods` are provided.
@@ -185,6 +186,7 @@ class EndpointCreator:
         deleted_at_column: str = "deleted_at",
         updated_at_column: str = "updated_at",
         endpoint_names: Optional[dict[str, str]] = None,
+        allow_limit_0: bool = False,
     ) -> None:
         self._primary_keys = _get_primary_keys(model)
         self._primary_keys_types = {
@@ -219,6 +221,7 @@ class EndpointCreator:
             "read_paginated": "get_paginated",
         }
         self.endpoint_names = {**self.default_endpoint_names, **(endpoint_names or {})}
+        self.allow_limit_0 = allow_limit_0
 
     def _create_item(self):
         """Creates an endpoint for creating items in the database."""
@@ -263,6 +266,9 @@ class EndpointCreator:
             offset: int = Query(0),
             limit: int = Query(100),
         ):
+            if not (limit or self.allow_limit_0):
+                raise ValueError("0 is not a valid value for limit!")
+
             return await self.crud.get_multi(db, offset=offset, limit=limit)
 
         return endpoint
@@ -279,6 +285,9 @@ class EndpointCreator:
                 10, alias="itemsPerPage", description="Number of items per page"
             ),
         ):
+            if not items_per_page:
+                raise ValueError("0 is not a valid value for itemsPerPage!")
+
             offset = compute_offset(page=page, items_per_page=items_per_page)
             crud_data = await self.crud.get_multi(
                 db, offset=offset, limit=items_per_page

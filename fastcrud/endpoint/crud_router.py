@@ -37,6 +37,7 @@ def crud_router(
     deleted_at_column: str = "deleted_at",
     updated_at_column: str = "updated_at",
     endpoint_names: Optional[dict[str, str]] = None,
+    allow_limit_0: bool = False,
 ) -> APIRouter:
     """
     Creates and configures a FastAPI router with CRUD endpoints for a given model.
@@ -70,6 +71,7 @@ def crud_router(
         endpoint_names: Optional dictionary to customize endpoint names for CRUD operations. Keys are operation types
                         ("create", "read", "update", "delete", "db_delete", "read_multi", "read_paginated"), and
                         values are the custom names to use. Unspecified operations will use default names.
+        allow_limit_0: Whether multi-get endpoints allow 0 as a limit parameter, fetching all rows. Public APIs should probably keep this set to False, which will cause a ValueError to be raised if someone tries it.
 
     Returns:
         Configured APIRouter instance with the CRUD endpoints.
@@ -252,6 +254,7 @@ def crud_router(
         deleted_at_column=deleted_at_column,
         updated_at_column=updated_at_column,
         endpoint_names=endpoint_names,
+        allow_limit_0=allow_limit_0,
     )
 
     endpoint_creator_instance.add_routes_to_router(

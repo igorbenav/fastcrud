@@ -49,6 +49,24 @@ async def test_get_multi_pagination(async_session, test_model, test_data):
 
 
 @pytest.mark.asyncio
+async def test_get_multi_unpaginated(async_session, test_model, test_data):
+    for item in test_data:
+        record = test_model(**item)
+        async_session.add(record)
+    await async_session.commit()
+
+    total_count_query = await async_session.execute(
+        select(func.count()).select_from(test_model)
+    )
+    total_count = total_count_query.scalar()
+
+    crud = FastCRUD(test_model)
+    results = await crud.get_multi(async_session, offset=0, limit=None)
+
+    assert len(results["data"]) == total_count
+
+
+@pytest.mark.asyncio
 async def test_get_multi_sorting(async_session, test_model, test_data):
     for item in test_data:
         async_session.add(test_model(**item))

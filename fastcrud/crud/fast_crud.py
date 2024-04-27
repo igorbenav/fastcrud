@@ -585,7 +585,7 @@ class FastCRUD(
         self,
         db: AsyncSession,
         offset: int = 0,
-        limit: int = 100,
+        limit: Optional[int] = 100,
         schema_to_select: Optional[type[BaseModel]] = None,
         sort_columns: Optional[Union[str, list[str]]] = None,
         sort_orders: Optional[Union[str, list[str]]] = None,
@@ -604,7 +604,7 @@ class FastCRUD(
         Args:
             db: The database session to use for the operation.
             offset: Starting index for records to fetch, useful for pagination.
-            limit: Maximum number of records to fetch in one call. Use 0 for "no limit", fetching all matching rows. Note that if you are using this function in an endpoint, you should make sure to sanitize the query parameters before passing them to get_multi to make sure the user can't get all of the data, unless you really seriously want to allow that.
+            limit: Maximum number of records to fetch in one call. Use `None` for "no limit", fetching all matching rows. Note that in order to use `limit=None`, you'll have to provide a custom endpoint to facilitate it, which you should only do if you really seriously want to allow the user to get all the data at once.
             schema_to_select: Optional Pydantic schema for selecting specific columns. Required if `return_as_model` is True.
             sort_columns: Column names to sort the results by.
             sort_orders: Corresponding sort orders ('asc', 'desc') for each column in sort_columns.
@@ -649,7 +649,7 @@ class FastCRUD(
             users = await crud.get_multi(db, 0, 10, is_active=True, sort_columns=['username', 'email'], sort_orders=['asc', 'desc'])
             ```
         """
-        if limit < 0 or offset < 0:
+        if (limit is not None and limit < 0) or offset < 0:
             raise ValueError("Limit and offset must be non-negative.")
 
         stmt = await self.select(
@@ -661,7 +661,7 @@ class FastCRUD(
 
         if offset:
             stmt = stmt.offset(offset)
-        if limit:
+        if limit is not None:
             stmt = stmt.limit(limit)
 
         result = await db.execute(stmt)
@@ -963,7 +963,7 @@ class FastCRUD(
         join_filters: Optional[dict] = None,
         nest_joins: bool = False,
         offset: int = 0,
-        limit: int = 100,
+        limit: Optional[int] = 100,
         sort_columns: Optional[Union[str, list[str]]] = None,
         sort_orders: Optional[Union[str, list[str]]] = None,
         return_as_model: bool = False,
@@ -992,7 +992,7 @@ class FastCRUD(
             join_filters: Filters applied to the joined model, specified as a dictionary mapping column names to their expected values.
             nest_joins: If True, nested data structures will be returned where joined model data are nested under the join_prefix as a dictionary.
             offset: The offset (number of records to skip) for pagination.
-            limit: The limit (maximum number of records to return) for pagination. Use 0 for "no limit", fetching all matching rows. Note that if you are using this function in an endpoint, you should make sure to sanitize the query parameters before passing them to get_multi to make sure the user can't get all of the data, unless you really seriously want to allow that.
+            limit: Maximum number of records to fetch in one call. Use `None` for "no limit", fetching all matching rows. Note that in order to use `limit=None`, you'll have to provide a custom endpoint to facilitate it, which you should only do if you really seriously want to allow the user to get all the data at once.
             sort_columns: A single column name or a list of column names on which to apply sorting.
             sort_orders: A single sort order ('asc' or 'desc') or a list of sort orders corresponding to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
             return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
@@ -1209,7 +1209,7 @@ class FastCRUD(
         elif not joins_config and not join_model:
             raise ValueError("You need one of join_model or joins_config.")
 
-        if limit < 0 or offset < 0:
+        if (limit is not None and limit < 0) or offset < 0:
             raise ValueError("Limit and offset must be non-negative.")
 
         primary_select = _extract_matching_columns_from_schema(
@@ -1266,7 +1266,7 @@ class FastCRUD(
 
         if offset:
             stmt = stmt.offset(offset)
-        if limit:
+        if limit is not None:
             stmt = stmt.limit(limit)
 
         result = await db.execute(stmt)

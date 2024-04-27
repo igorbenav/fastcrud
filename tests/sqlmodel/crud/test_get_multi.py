@@ -61,7 +61,7 @@ async def test_get_multi_unpaginated(async_session, test_model, test_data):
     total_count = total_count_query.scalar()
 
     crud = FastCRUD(test_model)
-    results = await crud.get_multi(async_session, offset=0, limit=0)
+    results = await crud.get_multi(async_session, offset=0, limit=None)
 
     assert len(results["data"]) == total_count
 

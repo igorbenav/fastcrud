@@ -73,7 +73,7 @@ async def test_get_multi_joined_unpaginated(async_session, test_data, test_data_
         schema_to_select=CreateSchemaTest,
         join_schema_to_select=TierSchemaTest,
         offset=0,
-        limit=0,
+        limit=None,
     )
 
     assert len(result["data"]) == len(test_data)

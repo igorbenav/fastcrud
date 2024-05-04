@@ -468,7 +468,7 @@ async def test_get_joined_nest_joins(async_session, test_data, test_data_tier):
 
 
 @pytest.mark.asyncio
-async def test_get_joined_no_prefix_provided(async_session, test_data, test_data_tier):
+async def test_get_joined_nested_no_prefix_provided(async_session, test_data, test_data_tier):
     for tier_item in test_data_tier:
         async_session.add(TierModel(**tier_item))
     await async_session.commit()
@@ -492,3 +492,28 @@ async def test_get_joined_no_prefix_provided(async_session, test_data, test_data
     assert (
         "name" in result["tier"]
     ), "Expected 'name' field inside nested 'tier' dictionary."
+
+
+@pytest.mark.asyncio
+async def test_get_joined_no_prefix_no_nesting(async_session, test_data, test_data_tier):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    await async_session.commit()
+
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+
+    result = await crud.get_joined(
+        db=async_session,
+        join_model=TierModel,
+        schema_to_select=CreateSchemaTest,
+        join_schema_to_select=TierSchemaTest,
+    )
+
+    assert result is not None, "Expected to retrieve a result from joined query."
+    assert "name" in result, "Expected 'name' field from the primary model in the result."
+    assert "tier_id" in result, "Expected 'tier_id' (foreign key) in the result."
+    assert "tier_name" not in result, "Field 'tier_name' should not exist unless specifically prefixed or nested."

@@ -730,3 +730,58 @@ async def test_get_multi_joined_with_nesting(async_session, test_data, test_data
             assert (
                 "category_" not in item["category"]
             ), "No prefix should be present in the nested category keys"
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_no_prefix_regular(async_session, test_data, test_data_tier):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    await async_session.commit()
+
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+
+    result = await crud.get_multi_joined(
+        db=async_session,
+        join_model=TierModel,
+        schema_to_select=CreateSchemaTest,
+        join_schema_to_select=TierSchemaTest,
+        limit=10
+    )
+
+    print(result)
+    assert result and result["data"], "Expected data in the result."
+    for item in result["data"]:
+        assert "name" in item, "Expected user name in each item."
+        assert "name_1" in item, "Expected tier name in each item without prefix."
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_no_prefix_nested(async_session, test_data, test_data_tier):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    await async_session.commit()
+
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+
+    result = await crud.get_multi_joined(
+        db=async_session,
+        join_model=TierModel,
+        schema_to_select=CreateSchemaTest,
+        join_schema_to_select=TierSchemaTest,
+        nest_joins=True,
+        limit=10
+    )
+
+    assert result and result["data"], "Expected data in the result."
+    for item in result["data"]:
+        assert "name" in item, "Expected user name in each item."
+        assert TierModel.__tablename__ in item, f"Expected nested '{TierModel.__tablename__}' key in each item."
+        assert "name" in item[TierModel.__tablename__], f"Expected 'name' field inside nested '{TierModel.__tablename__}' dictionary."

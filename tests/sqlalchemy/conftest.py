@@ -310,6 +310,7 @@ def multi_pk_test_create_schema():
 async def test_read_dep():
     pass
 
+
 @pytest.fixture
 def client(
     test_model,

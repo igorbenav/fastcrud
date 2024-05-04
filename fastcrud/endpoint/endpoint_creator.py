@@ -2,7 +2,7 @@ import inspect
 from typing import Dict, Type, TypeVar, Optional, Callable, Sequence, Union
 from enum import Enum
 
-from fastapi import Depends, Body, Query, APIRouter, params
+from fastapi import Depends, Body, Query, APIRouter
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
@@ -16,6 +16,7 @@ from .helper import (
     _extract_unique_columns,
     _get_primary_keys,
     _get_python_type,
+    _inject_dependencies,
 )
 
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -339,13 +340,13 @@ class EndpointCreator:
 
     def add_routes_to_router(
         self,
-        create_deps: Sequence[params.Depends] = [],
-        read_deps: Sequence[params.Depends] = [],
-        read_multi_deps: Sequence[params.Depends] = [],
-        read_paginated_deps: Sequence[params.Depends] = [],
-        update_deps: Sequence[params.Depends] = [],
-        delete_deps: Sequence[params.Depends] = [],
-        db_delete_deps: Sequence[params.Depends] = [],
+        create_deps: Sequence[Callable] = [],
+        read_deps: Sequence[Callable] = [],
+        read_multi_deps: Sequence[Callable] = [],
+        read_paginated_deps: Sequence[Callable] = [],
+        update_deps: Sequence[Callable] = [],
+        delete_deps: Sequence[Callable] = [],
+        db_delete_deps: Sequence[Callable] = [],
         included_methods: Optional[Sequence[str]] = None,
         deleted_methods: Optional[Sequence[str]] = None,
     ):
@@ -356,12 +357,12 @@ class EndpointCreator:
         allowing for custom dependency injection for each type of operation.
 
         Args:
-            create_deps: List of dependency injection functions for the create endpoint.
-            read_deps: List of dependency injection functions for the read endpoint.
-            read_multi_deps: List of dependency injection functions for the read multiple items endpoint.
-            update_deps: List of dependency injection functions for the update endpoint.
-            delete_deps: List of dependency injection functions for the delete endpoint.
-            db_delete_deps: List of dependency injection functions for the hard delete endpoint.
+            create_deps: List of functions to be injected as dependencies for the create endpoint.
+            read_deps: List of functions to be injected as dependencies for the read endpoint.
+            read_multi_deps: List of functions to be injected as dependencies for the read multiple items endpoint.
+            update_deps: List of functions to be injected as dependencies for the update endpoint.
+            delete_deps: List of functions to be injected as dependencies for the delete endpoint.
+            db_delete_deps: List of functions to be injected as dependencies for the hard delete endpoint.
             included_methods: Optional list of methods to include. Defaults to all CRUD methods.
             deleted_methods: Optional list of methods to exclude. Defaults to None.
 
@@ -450,7 +451,7 @@ class EndpointCreator:
                 methods=["POST"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
-                dependencies=create_deps,
+                dependencies=_inject_dependencies(create_deps),
                 description=f"Create a new {self.model.__name__} row in the database.",
             )
 
@@ -463,7 +464,7 @@ class EndpointCreator:
                 methods=["GET"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
-                dependencies=read_deps,
+                dependencies=_inject_dependencies(read_deps),
                 description=f"Read a single {self.model.__name__} row from the database by its primary keys: {self.primary_key_names}.",
             )
 
@@ -475,7 +476,7 @@ class EndpointCreator:
                 methods=["GET"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
-                dependencies=read_multi_deps,
+                dependencies=_inject_dependencies(read_multi_deps),
                 description=f"Read multiple {self.model.__name__} rows from the database with a limit and an offset.",
             )
 
@@ -489,7 +490,7 @@ class EndpointCreator:
                 methods=["GET"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
-                dependencies=read_paginated_deps,
+                dependencies=_inject_dependencies(read_paginated_deps),
                 description=f"Read multiple {self.model.__name__} rows from the database with pagination.",
             )
 
@@ -501,7 +502,7 @@ class EndpointCreator:
                 methods=["PATCH"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
-                dependencies=update_deps,
+                dependencies=_inject_dependencies(update_deps),
                 description=f"Update an existing {self.model.__name__} row in the database by its primary keys: {self.primary_key_names}.",
             )
 
@@ -513,7 +514,7 @@ class EndpointCreator:
                 methods=["DELETE"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
-                dependencies=delete_deps,
+                dependencies=_inject_dependencies(delete_deps),
                 description=f"{delete_description} {self.model.__name__} row from the database by its primary keys: {self.primary_key_names}.",
             )
 
@@ -529,7 +530,7 @@ class EndpointCreator:
                 methods=["DELETE"],
                 include_in_schema=self.include_in_schema,
                 tags=self.tags,
-                dependencies=db_delete_deps,
+                dependencies=_inject_dependencies(db_delete_deps),
                 description=f"Permanently delete a {self.model.__name__} row from the database by its primary keys: {self.primary_key_names}.",
             )
 
@@ -538,7 +539,7 @@ class EndpointCreator:
         endpoint: Callable,
         methods: Optional[Union[set[str], list[str]]],
         path: Optional[str] = None,
-        dependencies: Optional[Sequence[params.Depends]] = None,
+        dependencies: Optional[Sequence[Callable]] = None,
         include_in_schema: bool = True,
         tags: Optional[list[Union[str, Enum]]] = None,
         summary: Optional[str] = None,
@@ -552,7 +553,7 @@ class EndpointCreator:
             path: URL path for the custom route.
             endpoint: The endpoint function to execute when the route is called.
             methods: A list of HTTP methods for the route (e.g., ['GET', 'POST']).
-            dependencies: A list of dependency injection functions for the route.
+            dependencies: A list of functions to be injected as dependencies for the route.
             include_in_schema: Whether to include this route in the OpenAPI schema.
             tags: Tags for grouping and categorizing the route in documentation.
             summary: A short summary of the route, for documentation.
@@ -581,7 +582,7 @@ class EndpointCreator:
             path=full_path,
             endpoint=endpoint,
             methods=methods,
-            dependencies=dependencies or [],
+            dependencies=_inject_dependencies(dependencies) or [],
             include_in_schema=include_in_schema,
             tags=tags or self.tags,
             summary=summary,

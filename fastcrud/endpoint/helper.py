@@ -1,6 +1,7 @@
-from typing import Optional, Union, Annotated, Sequence
+from typing import Optional, Union, Annotated, Sequence, Callable, Any, get_type_hints
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import field_validator
+from fastapi import Depends, params
 
 from sqlalchemy import Column, inspect
 from sqlalchemy.orm import DeclarativeBase
@@ -77,3 +78,13 @@ def _extract_unique_columns(
     """Extracts columns from a SQLAlchemy model that are marked as unique."""
     unique_columns = [column for column in model.__table__.columns if column.unique]
     return unique_columns
+
+
+def _inject_dependencies(funcs: Optional[Sequence[Callable]] = None) -> Sequence[params.Depends]:
+    """Wraps a list of functions in FastAPI's Depends."""
+    dependencies = []
+    if funcs is not None:
+        for func in funcs:
+            dependency = Depends(func)
+            dependencies.append(dependency)
+    return dependencies

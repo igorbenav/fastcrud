@@ -22,8 +22,8 @@ def _extract_matching_columns_from_schema(
     schema: Optional[type[BaseModel]],
     prefix: Optional[str] = None,
     alias: Optional[AliasedClass] = None,
-    use_temporary_prefix: bool = False,
-    temp_prefix="joined__",
+    use_temporary_prefix: Optional[bool] = False,
+    temp_prefix: Optional[str] = "joined__",
 ) -> list[Any]:
     """
     Retrieves a list of ORM column objects from a SQLAlchemy model that match the field names in a given Pydantic schema,
@@ -35,6 +35,8 @@ def _extract_matching_columns_from_schema(
         schema: Optional; a Pydantic schema containing field names to be matched with the model's columns. If None, all columns from the model are used.
         prefix: Optional; a prefix to be added to all column names. If None, no prefix is added.
         alias: Optional; an alias for the model, used for referencing the columns through this alias in the query. If None, the original model is used.
+        use_temporary_prefix: Whether to use or not an aditional prefix for joins. Default False.
+        temp_prefix: The temporary prefix to be used. Default "joined__".
 
     Returns:
         A list of ORM column objects (potentially labeled with a prefix) that correspond to the field names defined
@@ -43,7 +45,9 @@ def _extract_matching_columns_from_schema(
     """
     model_or_alias = alias if alias else model
     columns = []
-    temp_prefix = temp_prefix if use_temporary_prefix else ""
+    temp_prefix = (
+        temp_prefix if use_temporary_prefix and temp_prefix is not None else ""
+    )
     if schema:
         for field in schema.model_fields.keys():
             if hasattr(model_or_alias, field):
@@ -69,39 +73,6 @@ def _extract_matching_columns_from_schema(
             columns.append(column)
 
     return columns
-
-
-def _nest_join_data(
-    data: dict[str, Any],
-    join_definitions: list[JoinConfig],
-    temp_prefix: str = "joined__",
-) -> dict[str, Any]:
-    nested_data: dict = {}
-    for key, value in data.items():
-        nested = False
-        for join in join_definitions:
-            full_prefix = (
-                f"{temp_prefix}{join.join_prefix}" if join.join_prefix else temp_prefix
-            )
-            if key.startswith(full_prefix):
-                nested_key = (
-                    join.join_prefix.rstrip("_")
-                    if join.join_prefix
-                    else join.model.__tablename__
-                )
-                nested_field = key[len(full_prefix) :]
-                if nested_key not in nested_data:
-                    nested_data[nested_key] = {}
-                nested_data[nested_key][nested_field] = value
-                nested = True
-                break
-        if not nested:
-            stripped_key = (
-                key[len(temp_prefix) :] if key.startswith(temp_prefix) else key
-            )
-            nested_data[stripped_key] = value
-
-    return nested_data
 
 
 def _auto_detect_join_condition(
@@ -145,3 +116,36 @@ def _auto_detect_join_condition(
         raise ValueError("Could not automatically get model columns.")
 
     return join_on
+
+
+def _nest_join_data(
+    data: dict[str, Any],
+    join_definitions: list[JoinConfig],
+    temp_prefix: str = "joined__",
+) -> dict[str, Any]:
+    nested_data: dict = {}
+    for key, value in data.items():
+        nested = False
+        for join in join_definitions:
+            full_prefix = (
+                f"{temp_prefix}{join.join_prefix}" if join.join_prefix else temp_prefix
+            )
+            if key.startswith(full_prefix):
+                nested_key = (
+                    join.join_prefix.rstrip("_")
+                    if join.join_prefix
+                    else join.model.__tablename__
+                )
+                nested_field = key[len(full_prefix) :]
+                if nested_key not in nested_data:
+                    nested_data[nested_key] = {}
+                nested_data[nested_key][nested_field] = value
+                nested = True
+                break
+        if not nested:
+            stripped_key = (
+                key[len(temp_prefix) :] if key.startswith(temp_prefix) else key
+            )
+            nested_data[stripped_key] = value
+
+    return nested_data

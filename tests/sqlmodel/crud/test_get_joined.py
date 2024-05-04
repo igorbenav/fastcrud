@@ -465,3 +465,30 @@ async def test_get_joined_nest_joins(async_session, test_data, test_data_tier):
     assert (
         "tier_name" not in result
     ), "'tier_name' should not be at the top level in the result."
+
+
+@pytest.mark.asyncio
+async def test_get_joined_no_prefix_provided(async_session, test_data, test_data_tier):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    await async_session.commit()
+
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+    result = await crud.get_joined(
+        db=async_session,
+        join_model=TierModel,
+        schema_to_select=CreateSchemaTest,
+        join_schema_to_select=TierSchemaTest,
+        join_prefix="tier_",
+        nest_joins=True,
+    )
+
+    assert result is not None, "No result returned, expected a nested join result."
+    assert "name" in result, "Expected primary model field 'name' in result."
+    assert (
+        "name" in result["tier"]
+    ), "Expected 'name' field inside nested 'tier' dictionary."

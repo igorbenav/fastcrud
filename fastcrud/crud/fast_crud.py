@@ -271,6 +271,47 @@ class FastCRUD(
 
         return stmt
 
+    def _prepare_and_apply_joins(
+        self,
+        stmt: Select,
+        joins_config: list[JoinConfig],
+        use_temporary_prefix: bool = False,
+    ):
+        """
+        Applies joins to the given SQL statement based on a list of JoinConfig objects.
+
+        Args:
+            stmt: The initial SQL statement.
+            joins_config: Configurations for all joins.
+            use_temporary_prefix: Whether to use or not an aditional prefix for joins. Default False.
+
+        Returns:
+            Select: The modified SQL statement with joins applied.
+        """
+        for join in joins_config:
+            model = join.alias or join.model
+            join_select = _extract_matching_columns_from_schema(
+                model,
+                join.schema_to_select,
+                join.join_prefix,
+                join.alias,
+                use_temporary_prefix,
+            )
+            joined_model_filters = self._parse_filters(
+                model=model, **(join.filters or {})
+            )
+
+            if join.join_type == "left":
+                stmt = stmt.outerjoin(model, join.join_on).add_columns(*join_select)
+            elif join.join_type == "inner":
+                stmt = stmt.join(model, join.join_on).add_columns(*join_select)
+            else:
+                raise ValueError(f"Unsupported join type: {join.join_type}.")
+            if joined_model_filters:
+                stmt = stmt.filter(*joined_model_filters)
+
+        return stmt
+
     async def create(self, db: AsyncSession, object: CreateSchemaType) -> ModelType:
         """
         Create a new record in the database.
@@ -906,31 +947,9 @@ class FastCRUD(
                 )
             )
 
-        for join in join_definitions:
-            model = join.alias or join.model
-            joined_model_filters = (
-                self._parse_filters(model=model, **join.filters)
-                if join.filters
-                else None
-            )
-
-            join_select = _extract_matching_columns_from_schema(
-                model=join.model,
-                schema=join.schema_to_select,
-                prefix=join.join_prefix,
-                alias=join.alias,
-            )
-
-            if join.join_type == "left":
-                stmt = stmt.outerjoin(model, join.join_on).add_columns(*join_select)
-            elif join.join_type == "inner":
-                stmt = stmt.join(model, join.join_on).add_columns(*join_select)
-            else:
-                raise ValueError(f"Unsupported join type: {join.join_type}.")
-
-            if joined_model_filters is not None:
-                stmt = stmt.filter(*joined_model_filters)
-
+        stmt = self._prepare_and_apply_joins(
+            stmt=stmt, joins_config=join_definitions, use_temporary_prefix=nest_joins
+        )
         primary_filters = self._parse_filters(**kwargs)
         if primary_filters:
             stmt = stmt.filter(*primary_filters)
@@ -1228,30 +1247,9 @@ class FastCRUD(
                 )
             )
 
-        for join in join_definitions:
-            model = join.alias or join.model
-            joined_model_filters = (
-                self._parse_filters(model=model, **join.filters)
-                if join.filters
-                else None
-            )
-
-            join_select = _extract_matching_columns_from_schema(
-                model=join.model,
-                schema=join.schema_to_select,
-                prefix=join.join_prefix,
-                alias=join.alias,
-            )
-
-            if join.join_type == "left":
-                stmt = stmt.outerjoin(model, join.join_on).add_columns(*join_select)
-            elif join.join_type == "inner":
-                stmt = stmt.join(model, join.join_on).add_columns(*join_select)
-            else:
-                raise ValueError(f"Unsupported join type: {join.join_type}.")
-
-            if joined_model_filters is not None:
-                stmt = stmt.filter(*joined_model_filters)
+        stmt = self._prepare_and_apply_joins(
+            stmt=stmt, joins_config=join_definitions, use_temporary_prefix=nest_joins
+        )
 
         primary_filters = self._parse_filters(**kwargs)
         if primary_filters:

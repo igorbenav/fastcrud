@@ -1,4 +1,4 @@
-from typing import Optional, Union, Annotated, Sequence, Callable, Any, get_type_hints
+from typing import Optional, Union, Annotated, Sequence, Callable
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import field_validator
 from fastapi import Depends, params
@@ -80,7 +80,9 @@ def _extract_unique_columns(
     return unique_columns
 
 
-def _inject_dependencies(funcs: Optional[Sequence[Callable]] = None) -> Sequence[params.Depends]:
+def _inject_dependencies(
+    funcs: Optional[Sequence[Callable]] = None,
+) -> Sequence[params.Depends]:
     """Wraps a list of functions in FastAPI's Depends."""
     dependencies = []
     if funcs is not None:

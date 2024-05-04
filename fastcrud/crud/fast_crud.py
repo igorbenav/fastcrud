@@ -312,13 +312,14 @@ class FastCRUD(
 
         return stmt
 
-    async def create(self, db: AsyncSession, object: CreateSchemaType) -> ModelType:
+    async def create(self, db: AsyncSession, object: CreateSchemaType, commit: bool = True) -> ModelType:
         """
         Create a new record in the database.
 
         Args:
             db: The SQLAlchemy async session.
             object: The Pydantic schema containing the data to be saved.
+            commit: If True, commits the transaction immediately. Default is True.
 
         Returns:
             The created database object.
@@ -326,7 +327,8 @@ class FastCRUD(
         object_dict = object.model_dump()
         db_object: ModelType = self.model(**object_dict)
         db.add(db_object)
-        await db.commit()
+        if commit:
+            await db.commit()
         return db_object
 
     async def select(
@@ -1394,6 +1396,7 @@ class FastCRUD(
         db: AsyncSession,
         object: Union[UpdateSchemaType, dict[str, Any]],
         allow_multiple: bool = False,
+        commit: bool = True,
         **kwargs: Any,
     ) -> None:
         """
@@ -1409,6 +1412,7 @@ class FastCRUD(
             db: The database session to use for the operation.
             object: A Pydantic schema or dictionary containing the update data.
             allow_multiple: If True, allows updating multiple records that match the filters. If False, raises an error if more than one record matches the filters.
+            commit: If True, commits the transaction immediately. Default is True.
             **kwargs: Filters to identify the record(s) to update, supporting advanced comparison operators for refined querying.
 
         Returns:
@@ -1458,10 +1462,11 @@ class FastCRUD(
         stmt = update(self.model).filter(*filters).values(update_data)
 
         await db.execute(stmt)
-        await db.commit()
+        if commit:
+            await db.commit()
 
     async def db_delete(
-        self, db: AsyncSession, allow_multiple: bool = False, **kwargs: Any
+        self, db: AsyncSession, allow_multiple: bool = False, commit: bool = True, **kwargs: Any
     ) -> None:
         """
         Deletes a record or multiple records from the database based on specified filters, with support for advanced filtering through comparison operators:
@@ -1474,6 +1479,7 @@ class FastCRUD(
         Args:
             db: The database session to use for the operation.
             allow_multiple: If True, allows deleting multiple records that match the filters. If False, raises an error if more than one record matches the filters.
+            commit: If True, commits the transaction immediately. Default is True.
             **kwargs: Filters to identify the record(s) to delete, including advanced comparison operators for detailed querying.
 
         Returns:
@@ -1506,13 +1512,15 @@ class FastCRUD(
         filters = self._parse_filters(**kwargs)
         stmt = delete(self.model).filter(*filters)
         await db.execute(stmt)
-        await db.commit()
+        if commit:
+            await db.commit()
 
     async def delete(
         self,
         db: AsyncSession,
         db_row: Optional[Row] = None,
         allow_multiple: bool = False,
+        commit: bool = True,
         **kwargs: Any,
     ) -> None:
         """
@@ -1528,6 +1536,7 @@ class FastCRUD(
             db: The database session to use for the operation.
             db_row: Optional existing database row to delete. If provided, the method will attempt to delete this specific row, ignoring other filters.
             allow_multiple: If True, allows deleting multiple records that match the filters. If False, raises an error if more than one record matches the filters.
+            commit: If True, commits the transaction immediately. Default is True.
             **kwargs: Filters to identify the record(s) to delete, supporting advanced comparison operators for refined querying.
 
         Raises:
@@ -1560,10 +1569,12 @@ class FastCRUD(
             ):
                 setattr(db_row, self.is_deleted_column, True)
                 setattr(db_row, self.deleted_at_column, datetime.now(timezone.utc))
-                await db.commit()
+                if commit:
+                    await db.commit()
             else:
                 await db.delete(db_row)
-            await db.commit()
+            if commit:
+                await db.commit()
             return
 
         total_count = await self.count(db, **kwargs)
@@ -1585,4 +1596,5 @@ class FastCRUD(
             delete_stmt = delete(self.model).filter(*filters)
             await db.execute(delete_stmt)
 
-        await db.commit()
+        if commit:
+            await db.commit()

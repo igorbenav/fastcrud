@@ -91,66 +91,90 @@ class FastCRUD(
         ----------------------
         Create a FastCRUD instance for a User model and perform basic CRUD operations.
         ```python
-        user_crud = FastCRUD(User, UserCreateSchema, UserUpdateSchema)
-        async with db_session() as db:
-            # Create a new user
-            new_user = await user_crud.create(db, UserCreateSchema(name="Alice"))
-            # Read a user
-            user = await user_crud.get(db, id=new_user.id)
-            # Update a user
-            await user_crud.update(db, UserUpdateSchema(email="alice@example.com"), id=new_user.id)
-            # Delete a user
-            await user_crud.delete(db, id=new_user.id)
+        # Assuming you have a User model (either SQLAlchemy or SQLModel)
+        # pydantic schemas for creation, update and deletion and an async session `db`
+        CRUDUser = FastCRUD[User, UserCreateInternal, UserUpdate, UserUpdateInternal, UserDelete]
+        user_crud = CRUDUser(User)
+
+        # If you don't care about typing, you can also just ignore the CRUDUser part
+        # Straight up define user_crud with FastCRUD
+        user_crud = FastCRUD(User)
+
+        # Create a new user
+        new_user = await user_crud.create(db, UserCreateSchema(name="Alice"))
+        # Read a user
+        user = await user_crud.get(db, id=new_user.id)
+        # Update a user
+        await user_crud.update(db, UserUpdateSchema(email="alice@example.com"), id=new_user.id)
+        # Delete a user
+        await user_crud.delete(db, id=new_user.id)
         ```
 
         Example 2: Advanced Filtering and Pagination
         --------------------------------------------
         Use advanced filtering, sorting, and pagination for fetching records.
         ```python
-        product_crud = FastCRUD(Product, ProductCreateSchema)
-        async with db_session() as db:
-            products = await product_crud.get_multi(
-                db, offset=0, limit=10, sort_columns=['price'], sort_orders=['asc']
-            )
+        product_crud = FastCRUD(Product)
+        products = await product_crud.get_multi(
+            db,
+            offset=0,
+            limit=10,
+            sort_columns=['price'],
+            sort_orders=['asc'],
+        )
         ```
 
         Example 3: Join Operations with Custom Schemas
         ----------------------------------------------
         Perform join operations between two models using custom schemas for selection.
         ```python
-        order_crud = FastCRUD(Order, OrderCreateSchema, join_model=Product)
-        async with db_session() as db:
-            orders = await order_crud.get_multi_joined(
-                db, offset=0, limit=5, schema_to_select=OrderReadSchema, join_schema_to_select=ProductReadSchema
-            )
+        order_crud = FastCRUD(Order)
+        orders = await order_crud.get_multi_joined(
+            db,
+            offset=0,
+            limit=5,
+            join_model=Product,
+            join_prefix="product_",
+            schema_to_select=OrderReadSchema,
+            join_schema_to_select=ProductReadSchema,
+        )
         ```
 
         Example 4: Cursor Pagination
         ----------------------------
         Implement cursor-based pagination for efficient data retrieval in large datasets.
         ```python
-        comment_crud = FastCRUD(Comment, CommentCreateSchema)
-        async with db_session() as db:
-            first_page = await comment_crud.get_multi_by_cursor(db, limit=10)
-            next_cursor = first_page['next_cursor']
-            second_page = await comment_crud.get_multi_by_cursor(db, cursor=next_cursor, limit=10)
+        comment_crud = FastCRUD(Comment)
+
+        first_page = await comment_crud.get_multi_by_cursor(db, limit=10)
+        next_cursor = first_page['next_cursor']
+        second_page = await comment_crud.get_multi_by_cursor(db, cursor=next_cursor, limit=10)
         ```
 
         Example 5: Dynamic Filtering and Counting
         -----------------------------------------
         Dynamically filter records based on various criteria and count the results.
         ```python
-        task_crud = FastCRUD(Task, TaskCreateSchema)
-        async with db_session() as db:
-            completed_tasks = await task_crud.get_multi(db, status='completed')
-            high_priority_task_count = await task_crud.count(db, priority='high')
+        task_crud = FastCRUD(Task)
+        completed_tasks = await task_crud.get_multi(
+            db,
+            status='completed'
+        )
+        high_priority_task_count = await task_crud.count(
+            db,
+            priority='high'
+        )
         ```
 
         Example 6: Using Custom Column Names for Soft Delete
         ----------------------------------------------------
         If your model uses different column names for indicating a soft delete and its timestamp, you can specify these when creating the FastCRUD instance.
         ```python
-        custom_user_crud = FastCRUD(User, UserCreateSchema, UserUpdateSchema, is_deleted_column="archived", deleted_at_column="archived_at")
+        custom_user_crud = FastCRUD(
+            User,
+            is_deleted_column="archived",
+            deleted_at_column="archived_at"
+        )
         # Now 'archived' and 'archived_at' will be used for soft delete operations.
         ```
     """
@@ -312,7 +336,9 @@ class FastCRUD(
 
         return stmt
 
-    async def create(self, db: AsyncSession, object: CreateSchemaType, commit: bool = True) -> ModelType:
+    async def create(
+        self, db: AsyncSession, object: CreateSchemaType, commit: bool = True
+    ) -> ModelType:
         """
         Create a new record in the database.
 
@@ -349,12 +375,9 @@ class FastCRUD(
             '__ne' (not equal).
 
         Args:
-            schema_to_select (Optional[type[BaseModel]], optional):
-                Pydantic schema to determine which columns to include in the selection. If not provided, selects all columns of the model.
-            sort_columns (Optional[Union[str, list[str]]], optional):
-                A single column name or list of column names to sort the query results by. Must be used in conjunction with sort_orders.
-            sort_orders (Optional[Union[str, list[str]]], optional):
-                A single sort order ('asc' or 'desc') or a list of sort orders, corresponding to each column in sort_columns. If not specified, defaults to ascending order for all sort_columns.
+            schema_to_select: Pydantic schema to determine which columns to include in the selection. If not provided, selects all columns of the model.
+            sort_columns: A single column name or list of column names to sort the query results by. Must be used in conjunction with sort_orders.
+            sort_orders: A single sort order ('asc' or 'desc') or a list of sort orders, corresponding to each column in sort_columns. If not specified, defaults to ascending order for all sort_columns.
 
         Returns:
             Selectable: An SQL Alchemy `Select` statement object that can be executed or further modified.
@@ -1466,7 +1489,11 @@ class FastCRUD(
             await db.commit()
 
     async def db_delete(
-        self, db: AsyncSession, allow_multiple: bool = False, commit: bool = True, **kwargs: Any
+        self,
+        db: AsyncSession,
+        allow_multiple: bool = False,
+        commit: bool = True,
+        **kwargs: Any,
     ) -> None:
         """
         Deletes a record or multiple records from the database based on specified filters, with support for advanced filtering through comparison operators:

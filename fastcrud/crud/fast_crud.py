@@ -99,7 +99,7 @@ class FastCRUD(
         # If you don't care about typing, you can also just ignore the CRUDUser part
         # Straight up define user_crud with FastCRUD
         user_crud = FastCRUD(User)
-        
+
         # Create a new user
         new_user = await user_crud.create(db, UserCreateSchema(name="Alice"))
         # Read a user
@@ -145,7 +145,7 @@ class FastCRUD(
         Implement cursor-based pagination for efficient data retrieval in large datasets.
         ```python
         comment_crud = FastCRUD(Comment)
-        
+
         first_page = await comment_crud.get_multi_by_cursor(db, limit=10)
         next_cursor = first_page['next_cursor']
         second_page = await comment_crud.get_multi_by_cursor(db, cursor=next_cursor, limit=10)
@@ -157,11 +157,11 @@ class FastCRUD(
         ```python
         task_crud = FastCRUD(Task)
         completed_tasks = await task_crud.get_multi(
-            db, 
+            db,
             status='completed'
         )
         high_priority_task_count = await task_crud.count(
-            db, 
+            db,
             priority='high'
         )
         ```
@@ -171,8 +171,8 @@ class FastCRUD(
         If your model uses different column names for indicating a soft delete and its timestamp, you can specify these when creating the FastCRUD instance.
         ```python
         custom_user_crud = FastCRUD(
-            User, 
-            is_deleted_column="archived", 
+            User,
+            is_deleted_column="archived",
             deleted_at_column="archived_at"
         )
         # Now 'archived' and 'archived_at' will be used for soft delete operations.
@@ -336,7 +336,9 @@ class FastCRUD(
 
         return stmt
 
-    async def create(self, db: AsyncSession, object: CreateSchemaType, commit: bool = True) -> ModelType:
+    async def create(
+        self, db: AsyncSession, object: CreateSchemaType, commit: bool = True
+    ) -> ModelType:
         """
         Create a new record in the database.
 
@@ -1487,7 +1489,11 @@ class FastCRUD(
             await db.commit()
 
     async def db_delete(
-        self, db: AsyncSession, allow_multiple: bool = False, commit: bool = True, **kwargs: Any
+        self,
+        db: AsyncSession,
+        allow_multiple: bool = False,
+        commit: bool = True,
+        **kwargs: Any,
     ) -> None:
         """
         Deletes a record or multiple records from the database based on specified filters, with support for advanced filtering through comparison operators:

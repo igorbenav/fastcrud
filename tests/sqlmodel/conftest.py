@@ -297,6 +297,10 @@ def multi_pk_test_create_schema():
     return MultiPkCreate
 
 
+async def test_read_dep():
+    pass
+
+
 @pytest.fixture
 def client(
     test_model,
@@ -345,6 +349,7 @@ def client(
             crud=FastCRUD(multi_pk_model),
             create_schema=multi_pk_test_create_schema,
             update_schema=multi_pk_test_schema,
+            read_deps=[test_read_dep],
             delete_schema=multi_pk_test_schema,
             path="/multi_pk",
             tags=["multi_pk"],

@@ -1,7 +1,7 @@
 from typing import Type, TypeVar, Optional, Union, Sequence, Callable
 from enum import Enum
 
-from fastapi import APIRouter, params
+from fastapi import APIRouter
 from sqlalchemy.orm import DeclarativeBase
 from pydantic import BaseModel
 
@@ -23,13 +23,13 @@ def crud_router(
     path: str = "",
     tags: Optional[list[Union[str, Enum]]] = None,
     include_in_schema: bool = True,
-    create_deps: Sequence[params.Depends] = [],
-    read_deps: Sequence[params.Depends] = [],
-    read_multi_deps: Sequence[params.Depends] = [],
-    read_paginated_deps: Sequence[params.Depends] = [],
-    update_deps: Sequence[params.Depends] = [],
-    delete_deps: Sequence[params.Depends] = [],
-    db_delete_deps: Sequence[params.Depends] = [],
+    create_deps: Sequence[Callable] = [],
+    read_deps: Sequence[Callable] = [],
+    read_multi_deps: Sequence[Callable] = [],
+    read_paginated_deps: Sequence[Callable] = [],
+    update_deps: Sequence[Callable] = [],
+    delete_deps: Sequence[Callable] = [],
+    db_delete_deps: Sequence[Callable] = [],
     included_methods: Optional[list[str]] = None,
     deleted_methods: Optional[list[str]] = None,
     endpoint_creator: Optional[Type[EndpointCreator]] = None,
@@ -55,12 +55,12 @@ def crud_router(
         path: Base path for the CRUD endpoints.
         tags: Optional list of tags for grouping endpoints in the documentation.
         include_in_schema: Whether to include the created endpoints in the OpenAPI schema.
-        create_deps: Optional list of dependency injection functions for the create endpoint.
-        read_deps: Optional list of dependency injection functions for the read endpoint.
-        read_multi_deps: Optional list of dependency injection functions for the read multiple items endpoint.
-        update_deps: Optional list of dependency injection functions for the update endpoint.
-        delete_deps: Optional list of dependency injection functions for the delete endpoint.
-        db_delete_deps: Optional list of dependency injection functions for the hard delete endpoint.
+        create_deps: Optional list of functions to be injected as dependencies for the create endpoint.
+        read_deps: Optional list of functions to be injected as dependencies for the read endpoint.
+        read_multi_deps: Optional list of functions to be injected as dependencies for the read multiple items endpoint.
+        update_deps: Optional list of functions to be injected as dependencies for the update endpoint.
+        delete_deps: Optional list of functions to be injected as dependencies for the delete endpoint.
+        db_delete_deps: Optional list of functions to be injected as dependencies for the hard delete endpoint.
         included_methods: Optional list of CRUD methods to include. If None, all methods are included.
         deleted_methods: Optional list of CRUD methods to exclude.
         endpoint_creator: Optional custom class derived from EndpointCreator for advanced customization.

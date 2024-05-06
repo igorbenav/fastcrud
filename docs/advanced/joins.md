@@ -65,7 +65,7 @@ For simpler join requirements, FastCRUD allows specifying join parameters direct
 # Fetch tasks with user details, specifying a left join
 tasks_with_users = await task_crud.get_joined(
     db=db,
-    model=User,
+    join_model=User,
     join_on=Task.user_id == User.id,
     join_type="left"
 )
@@ -94,7 +94,7 @@ And join them with `FastCRUD`:
 ```python
 user_tier = await user_crud.get_joined(
     db=db,
-    model=Tier,
+    join_model=Tier,
     join_on=User.tier_id == Tier.id,
     join_type="left",
     join_prefix="tier_",,
@@ -118,7 +118,7 @@ If you want the joined data in a nested dictionary instead, you may just pass `n
 ```python
 user_tier = await user_crud.get_joined(
     db=db,
-    model=Tier,
+    join_model=Tier,
     join_on=User.tier_id == Tier.id,
     join_type="left",
     join_prefix="tier_",

@@ -100,6 +100,15 @@ items = await item_crud.get_multi(
 )
 ```
 
+Currently supported filter operators are:
+- __gt - greater than
+- __lt - less than
+- __gte - greater than or equal to
+- __lte - less than or equal to
+- __ne - not equal
+- __in - included in (tuple, list or set)
+- __not_in - not included in (tuple, list or set)
+
 #### Counting Records
 
 ```python

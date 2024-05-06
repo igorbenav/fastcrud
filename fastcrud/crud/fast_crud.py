@@ -383,9 +383,9 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
-            '__in' (included in [tuple, list or set]).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
             '__not_in' (not included in [tuple, list or set]).
 
         Args:
@@ -449,9 +449,9 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
-            '__in' (included in [tuple, list or set]).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
             '__not_in' (not included in [tuple, list or set]).
 
         Args:
@@ -509,9 +509,9 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
-            '__in' (included in [tuple, list or set]).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
             '__not_in' (not included in [tuple, list or set]).
 
         Args:
@@ -558,8 +558,8 @@ class FastCRUD(
         Counts records that match specified filters, supporting advanced filtering through comparison operators:
             '__gt' (greater than), '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and '__ne' (not equal).
-            '__in' (included in [tuple, list or set]).
+            '__lte' (less than or equal to), '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
             '__not_in' (not included in [tuple, list or set]).
         Can also count records based on a configuration of joins, useful for complex queries involving relationships.
 
@@ -684,9 +684,9 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
-            '__in' (included in [tuple, list or set]).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
             '__not_in' (not included in [tuple, list or set]).
 
         Args:
@@ -798,9 +798,9 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
-            '__in' (included in [tuple, list or set]).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
             '__not_in' (not included in [tuple, list or set]).
 
         Args:
@@ -1045,9 +1045,9 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
-            '__in' (included in [tuple, list or set]).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
             '__not_in' (not included in [tuple, list or set]).
 
         Args:
@@ -1367,9 +1367,9 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
-            '__in' (included in [tuple, list or set]).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
             '__not_in' (not included in [tuple, list or set]).
 
         Args:
@@ -1456,9 +1456,9 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
-            '__in' (included in [tuple, list or set]).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
             '__not_in' (not included in [tuple, list or set]).
 
         Args:
@@ -1530,9 +1530,9 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
-            '__in' (included in [tuple, list or set]).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
             '__not_in' (not included in [tuple, list or set]).
 
         Args:
@@ -1588,9 +1588,9 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
-            '__in' (included in [tuple, list or set]).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
             '__not_in' (not included in [tuple, list or set]).
 
         Args:

@@ -1375,11 +1375,11 @@ as selective method inclusions or exclusions.</p>
         <tr>
           <td><code>create_deps</code></td>
           <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="fastapi.params.Depends">Depends</span>]</code>
+                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Callable">Callable</span>]</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Optional list of dependency injection functions for the create endpoint.</p>
+              <p>Optional list of functions to be injected as dependencies for the create endpoint.</p>
             </div>
           </td>
           <td>
@@ -1389,11 +1389,11 @@ as selective method inclusions or exclusions.</p>
         <tr>
           <td><code>read_deps</code></td>
           <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="fastapi.params.Depends">Depends</span>]</code>
+                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Callable">Callable</span>]</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Optional list of dependency injection functions for the read endpoint.</p>
+              <p>Optional list of functions to be injected as dependencies for the read endpoint.</p>
             </div>
           </td>
           <td>
@@ -1403,11 +1403,11 @@ as selective method inclusions or exclusions.</p>
         <tr>
           <td><code>read_multi_deps</code></td>
           <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="fastapi.params.Depends">Depends</span>]</code>
+                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Callable">Callable</span>]</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Optional list of dependency injection functions for the read multiple items endpoint.</p>
+              <p>Optional list of functions to be injected as dependencies for the read multiple items endpoint.</p>
             </div>
           </td>
           <td>
@@ -1417,11 +1417,11 @@ as selective method inclusions or exclusions.</p>
         <tr>
           <td><code>update_deps</code></td>
           <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="fastapi.params.Depends">Depends</span>]</code>
+                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Callable">Callable</span>]</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Optional list of dependency injection functions for the update endpoint.</p>
+              <p>Optional list of functions to be injected as dependencies for the update endpoint.</p>
             </div>
           </td>
           <td>
@@ -1431,11 +1431,11 @@ as selective method inclusions or exclusions.</p>
         <tr>
           <td><code>delete_deps</code></td>
           <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="fastapi.params.Depends">Depends</span>]</code>
+                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Callable">Callable</span>]</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Optional list of dependency injection functions for the delete endpoint.</p>
+              <p>Optional list of functions to be injected as dependencies for the delete endpoint.</p>
             </div>
           </td>
           <td>
@@ -1445,11 +1445,11 @@ as selective method inclusions or exclusions.</p>
         <tr>
           <td><code>db_delete_deps</code></td>
           <td>
-                <code><span title="typing.Sequence">Sequence</span>[<span title="fastapi.params.Depends">Depends</span>]</code>
+                <code><span title="typing.Sequence">Sequence</span>[<span title="typing.Callable">Callable</span>]</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Optional list of dependency injection functions for the hard delete endpoint.</p>
+              <p>Optional list of functions to be injected as dependencies for the hard delete endpoint.</p>
             </div>
           </td>
           <td>
@@ -2012,13 +2012,13 @@ as selective method inclusions or exclusions.</p>
 </span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23"></a>    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24"></a>    <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25"></a>    <span class="n">include_in_schema</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="n">create_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">params</span><span class="o">.</span><span class="n">Depends</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="n">read_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">params</span><span class="o">.</span><span class="n">Depends</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">read_multi_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">params</span><span class="o">.</span><span class="n">Depends</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">read_paginated_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">params</span><span class="o">.</span><span class="n">Depends</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="n">update_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">params</span><span class="o">.</span><span class="n">Depends</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a>    <span class="n">delete_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">params</span><span class="o">.</span><span class="n">Depends</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a>    <span class="n">db_delete_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">params</span><span class="o">.</span><span class="n">Depends</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="n">create_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="n">read_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">read_multi_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">read_paginated_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="n">update_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a>    <span class="n">delete_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a>    <span class="n">db_delete_deps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
 </span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a>    <span class="n">included_methods</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34"></a>    <span class="n">deleted_methods</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a>    <span class="n">endpoint_creator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">EndpointCreator</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -2044,12 +2044,12 @@ as selective method inclusions or exclusions.</p>
 </span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">        path: Base path for the CRUD endpoints.</span>
 </span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">        tags: Optional list of tags for grouping endpoints in the documentation.</span>
 </span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">        include_in_schema: Whether to include the created endpoints in the OpenAPI schema.</span>
-</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">        create_deps: Optional list of dependency injection functions for the create endpoint.</span>
-</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">        read_deps: Optional list of dependency injection functions for the read endpoint.</span>
-</span><span id="__span-0-60"><a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">        read_multi_deps: Optional list of dependency injection functions for the read multiple items endpoint.</span>
-</span><span id="__span-0-61"><a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">        update_deps: Optional list of dependency injection functions for the update endpoint.</span>
-</span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">        delete_deps: Optional list of dependency injection functions for the delete endpoint.</span>
-</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">        db_delete_deps: Optional list of dependency injection functions for the hard delete endpoint.</span>
+</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">        create_deps: Optional list of functions to be injected as dependencies for the create endpoint.</span>
+</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">        read_deps: Optional list of functions to be injected as dependencies for the read endpoint.</span>
+</span><span id="__span-0-60"><a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">        read_multi_deps: Optional list of functions to be injected as dependencies for the read multiple items endpoint.</span>
+</span><span id="__span-0-61"><a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">        update_deps: Optional list of functions to be injected as dependencies for the update endpoint.</span>
+</span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">        delete_deps: Optional list of functions to be injected as dependencies for the delete endpoint.</span>
+</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">        db_delete_deps: Optional list of functions to be injected as dependencies for the hard delete endpoint.</span>
 </span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="sd">        included_methods: Optional list of CRUD methods to include. If None, all methods are included.</span>
 </span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="sd">        deleted_methods: Optional list of CRUD methods to exclude.</span>
 </span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="sd">        endpoint_creator: Optional custom class derived from EndpointCreator for advanced customization.</span>

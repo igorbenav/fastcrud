@@ -773,6 +773,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#typing-options-for-fastcrud" class="md-nav__link">
+    <span class="md-ellipsis">
+      Typing Options for FastCRUD
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#allow-multiple-updates-and-deletes" class="md-nav__link">
     <span class="md-ellipsis">
       Allow Multiple Updates and Deletes
@@ -850,6 +859,24 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skipping-database-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      Skipping Database Commit
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unpaginated-get_multi-and-get_multi_joined" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unpaginated get_multi and get_multi_joined
+    </span>
+  </a>
   
 </li>
       
@@ -1356,6 +1383,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#typing-options-for-fastcrud" class="md-nav__link">
+    <span class="md-ellipsis">
+      Typing Options for FastCRUD
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#allow-multiple-updates-and-deletes" class="md-nav__link">
     <span class="md-ellipsis">
       Allow Multiple Updates and Deletes
@@ -1433,6 +1469,24 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skipping-database-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      Skipping Database Commit
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unpaginated-get_multi-and-get_multi_joined" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unpaginated get_multi and get_multi_joined
+    </span>
+  </a>
   
 </li>
       
@@ -1570,99 +1624,170 @@
 
 <h1 id="advanced-use-of-fastcrud">Advanced Use of FastCRUD<a class="headerlink" href="#advanced-use-of-fastcrud" title="Permanent link">&para;</a></h1>
 <p>FastCRUD offers a flexible and powerful approach to handling CRUD operations in FastAPI applications, leveraging the SQLAlchemy ORM. Beyond basic CRUD functionality, FastCRUD provides advanced features like <code>allow_multiple</code> for updates and deletes, and support for advanced filters (e.g., less than, greater than). These features enable more complex and fine-grained data manipulation and querying capabilities.</p>
+<h2 id="typing-options-for-fastcrud">Typing Options for <code>FastCRUD</code><a class="headerlink" href="#typing-options-for-fastcrud" title="Permanent link">&para;</a></h2>
+<p>Note that when initializing <code>FastCRUD</code>, assuming you have a model like:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">Boolean</span><span class="p">,</span> <span class="n">Column</span><span class="p">,</span> <span class="n">DateTime</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">DeclarativeBase</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">class</span> <span class="nc">Base</span><span class="p">(</span><span class="n">DeclarativeBase</span><span class="p">):</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="k">pass</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s2">&quot;user&quot;</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">archived</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">archived_at</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">DateTime</span><span class="p">)</span>
+</span></code></pre></div>
+<p>You could just pass it to <code>FastCRUD</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FastCRUD</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">crud_user</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">User</span><span class="p">)</span>
+</span></code></pre></div>
+<p>But you also may want a more robust typing, for that purpose, you may also pass the relevant pydantic schemas in the following way:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">.models.user</span> <span class="kn">import</span> <span class="n">User</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span> <span class="nn">.schemas.user</span> <span class="kn">import</span> <span class="n">UserCreate</span><span class="p">,</span> <span class="n">UserUpdate</span><span class="p">,</span> <span class="n">UserUpdateInternal</span><span class="p">,</span> <span class="n">UserDelete</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Just pass None if you don&#39;t have one of the schemas</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">CRUDUser</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">[</span><span class="n">User</span><span class="p">,</span> <span class="n">UserCreate</span><span class="p">,</span> <span class="n">UserUpdate</span><span class="p">,</span> <span class="n">UserUpdateInternal</span><span class="p">,</span> <span class="n">UserDelete</span><span class="p">]</span>
+</span></code></pre></div>
+<p>Then you can initialize CRUDUser like you would any FastCRUD instance, but with the relevant types:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span> <span class="nn">.models.user</span> <span class="kn">import</span> <span class="n">User</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">crud_user</span> <span class="o">=</span> <span class="n">CRUDUser</span><span class="p">(</span><span class="n">User</span><span class="p">)</span>
+</span></code></pre></div>
 <h2 id="allow-multiple-updates-and-deletes">Allow Multiple Updates and Deletes<a class="headerlink" href="#allow-multiple-updates-and-deletes" title="Permanent link">&para;</a></h2>
 <p>One of FastCRUD's advanced features is the ability to update or delete multiple records at once based on specified conditions. This is particularly useful for batch operations where you need to modify or remove several records that match certain criteria.</p>
 <h3 id="updating-multiple-records">Updating Multiple Records<a class="headerlink" href="#updating-multiple-records" title="Permanent link">&para;</a></h3>
 <p>To update multiple records, you can set the <code>allow_multiple=True</code> parameter in the <code>update</code> method. This allows FastCRUD to apply the update to all records matching the given filters.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Assuming setup for FastCRUD instance `item_crud` and SQLAlchemy async session `db`</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Update all items priced below $10 to a new price</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">await</span> <span class="n">item_crud</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="nb">object</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">9.99</span><span class="p">},</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">allow_multiple</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">price__lt</span><span class="o">=</span><span class="mi">10</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Assuming setup for FastCRUD instance `item_crud` and SQLAlchemy async session `db`</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># Update all items priced below $10 to a new price</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">await</span> <span class="n">item_crud</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="nb">object</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">9.99</span><span class="p">},</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">allow_multiple</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">price__lt</span><span class="o">=</span><span class="mi">10</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="p">)</span>
 </span></code></pre></div>
 <h3 id="deleting-multiple-records">Deleting Multiple Records<a class="headerlink" href="#deleting-multiple-records" title="Permanent link">&para;</a></h3>
 <p>Similarly, you can delete multiple records by using the <code>allow_multiple=True</code> parameter in the <code>delete</code> or <code>db_delete</code> method, depending on whether you're performing a soft or hard delete.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Soft delete all items not sold in the last year</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">await</span> <span class="n">item_crud</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">allow_multiple</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">last_sold__lt</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">365</span><span class="p">)</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Soft delete all items not sold in the last year</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">await</span> <span class="n">item_crud</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">allow_multiple</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">last_sold__lt</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">365</span><span class="p">)</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="advanced-filters">Advanced Filters<a class="headerlink" href="#advanced-filters" title="Permanent link">&para;</a></h2>
 <p>FastCRUD supports advanced filtering options, allowing you to query records using operators such as greater than (<code>__gt</code>), less than (<code>__lt</code>), and their inclusive counterparts (<code>__gte</code>, <code>__lte</code>). These filters can be used in any method that retrieves or operates on records, including <code>get</code>, <code>get_multi</code>, <code>exists</code>, <code>count</code>, <code>update</code>, and <code>delete</code>.</p>
 <h3 id="using-advanced-filters">Using Advanced Filters<a class="headerlink" href="#using-advanced-filters" title="Permanent link">&para;</a></h3>
 <p>The following examples demonstrate how to use advanced filters for querying and manipulating data:</p>
 <h4 id="fetching-records-with-advanced-filters">Fetching Records with Advanced Filters<a class="headerlink" href="#fetching-records-with-advanced-filters" title="Permanent link">&para;</a></h4>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Fetch items priced between $5 and $20</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">items</span> <span class="o">=</span> <span class="k">await</span> <span class="n">item_crud</span><span class="o">.</span><span class="n">get_multi</span><span class="p">(</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">price__gte</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">price__lte</span><span class="o">=</span><span class="mi">20</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Fetch items priced between $5 and $20</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">items</span> <span class="o">=</span> <span class="k">await</span> <span class="n">item_crud</span><span class="o">.</span><span class="n">get_multi</span><span class="p">(</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">price__gte</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">price__lte</span><span class="o">=</span><span class="mi">20</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">)</span>
 </span></code></pre></div>
+<p>Currently supported filter operators are:
+- __gt - greater than
+- __lt - less than
+- __gte - greater than or equal to
+- __lte - less than or equal to
+- __ne - not equal
+- __in - included in (tuple, list or set)
+- __not_in - not included in (tuple, list or set)</p>
 <h4 id="counting-records">Counting Records<a class="headerlink" href="#counting-records" title="Permanent link">&para;</a></h4>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Count items added in the last month</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">item_count</span> <span class="o">=</span> <span class="k">await</span> <span class="n">item_crud</span><span class="o">.</span><span class="n">count</span><span class="p">(</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">added_at__gte</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Count items added in the last month</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">item_count</span> <span class="o">=</span> <span class="k">await</span> <span class="n">item_crud</span><span class="o">.</span><span class="n">count</span><span class="p">(</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">added_at__gte</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="p">)</span>
 </span></code></pre></div>
+<h2 id="skipping-database-commit">Skipping Database Commit<a class="headerlink" href="#skipping-database-commit" title="Permanent link">&para;</a></h2>
+<p>For <code>create</code>, <code>update</code>, <code>db_delete</code> and <code>delete</code> methods of <code>FastCRUD</code>, you have the option of passing <code>commit=False</code> so you don't commit the operations immediately.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FastCRUD</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="kn">from</span> <span class="nn">.models.item</span> <span class="kn">import</span> <span class="n">Item</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="kn">from</span> <span class="nn">.database</span> <span class="kn">import</span> <span class="n">session</span> <span class="k">as</span> <span class="n">db</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">crud_items</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">Item</span><span class="p">)</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="k">await</span> <span class="n">crud_items</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> 
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="n">commit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="nb">id</span><span class="o">=</span><span class="mi">1</span>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="p">)</span>
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="c1"># this will not actually delete until you run a db.commit()</span>
+</span></code></pre></div>
+<h2 id="unpaginated-get_multi-and-get_multi_joined">Unpaginated <code>get_multi</code> and <code>get_multi_joined</code><a class="headerlink" href="#unpaginated-get_multi-and-get_multi_joined" title="Permanent link">&para;</a></h2>
+<p>If you pass <code>None</code> to <code>limit</code> in <code>get_multi</code> and <code>get_multi_joined</code>, you get the whole unpaginated set of data that matches the filters. Use this with caution.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FastCRUD</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="kn">from</span> <span class="nn">.models.item</span> <span class="kn">import</span> <span class="n">Item</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="kn">from</span> <span class="nn">.database</span> <span class="kn">import</span> <span class="n">session</span> <span class="k">as</span> <span class="n">db</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="n">crud_items</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">Item</span><span class="p">)</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">items</span> <span class="o">=</span> <span class="k">await</span> <span class="n">crud_items</span><span class="o">.</span><span class="n">get_multi</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1"># this will return all items in the db</span>
+</span></code></pre></div>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>Be cautious when returning all the data in your database, and you should almost never allow your API user to do this.</p>
+</div>
 <h2 id="using-get_joined-and-get_multi_joined-for-multiple-models">Using <code>get_joined</code> and <code>get_multi_joined</code> for multiple models<a class="headerlink" href="#using-get_joined-and-get_multi_joined-for-multiple-models" title="Permanent link">&para;</a></h2>
 <p>To facilitate complex data relationships, <code>get_joined</code> and <code>get_multi_joined</code> can be configured to handle joins with multiple models. This is achieved using the <code>joins_config</code> parameter, where you can specify a list of <code>JoinConfig</code> instances, each representing a distinct join configuration.</p>
 <h4 id="example-joining-user-tier-and-department-models">Example: Joining User, Tier, and Department Models<a class="headerlink" href="#example-joining-user-tier-and-department-models" title="Permanent link">&para;</a></h4>
 <p>Consider a scenario where you want to retrieve users along with their associated tier and department information. Here's how you can achieve this using <code>get_multi_joined</code>.</p>
 <p>Start by creating a list of the multiple models to be joined:</p>
-<div class="language-python highlight"><span class="filename">Join Configurations</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="hll"><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">JoinConfig</span>
-</span></span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="hll"><span class="n">joins_config</span> <span class="o">=</span> <span class="p">[</span>
-</span></span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="hll">    <span class="n">JoinConfig</span><span class="p">(</span>
-</span></span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="hll">        <span class="n">model</span><span class="o">=</span><span class="n">Tier</span><span class="p">,</span>
-</span></span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="hll">        <span class="n">join_on</span><span class="o">=</span><span class="n">User</span><span class="o">.</span><span class="n">tier_id</span> <span class="o">==</span> <span class="n">Tier</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-</span></span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="hll">        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;tier_&quot;</span><span class="p">,</span>
-</span></span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="hll">        <span class="n">schema_to_select</span><span class="o">=</span><span class="n">TierSchema</span><span class="p">,</span>
-</span></span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="hll">        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
-</span></span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="hll">    <span class="p">),</span>
-</span></span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
-</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="hll">    <span class="n">JoinConfig</span><span class="p">(</span>
-</span></span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="hll">        <span class="n">model</span><span class="o">=</span><span class="n">Department</span><span class="p">,</span>
-</span></span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="hll">        <span class="n">join_on</span><span class="o">=</span><span class="n">User</span><span class="o">.</span><span class="n">department_id</span> <span class="o">==</span> <span class="n">Department</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-</span></span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="hll">        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;dept_&quot;</span><span class="p">,</span>
-</span></span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="hll">        <span class="n">schema_to_select</span><span class="o">=</span><span class="n">DepartmentSchema</span><span class="p">,</span>
-</span></span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="hll">        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
-</span></span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="hll">    <span class="p">)</span>
-</span></span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="hll"><span class="p">]</span>
-</span></span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
-</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="n">users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">user_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
-</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>    <span class="n">db</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
-</span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">UserSchema</span><span class="p">,</span>
-</span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>    <span class="n">joins_config</span><span class="o">=</span><span class="n">joins_config</span><span class="p">,</span>
-</span><span id="__span-4-25"><a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>    <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-4-26"><a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-4-27"><a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>    <span class="n">sort_columns</span><span class="o">=</span><span class="s1">&#39;username&#39;</span><span class="p">,</span>
-</span><span id="__span-4-28"><a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>    <span class="n">sort_orders</span><span class="o">=</span><span class="s1">&#39;asc&#39;</span>
-</span><span id="__span-4-29"><a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="p">)</span>
+<div class="language-python highlight"><span class="filename">Join Configurations</span><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="hll"><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">JoinConfig</span>
+</span></span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="hll"><span class="n">joins_config</span> <span class="o">=</span> <span class="p">[</span>
+</span></span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="hll">    <span class="n">JoinConfig</span><span class="p">(</span>
+</span></span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="hll">        <span class="n">model</span><span class="o">=</span><span class="n">Tier</span><span class="p">,</span>
+</span></span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="hll">        <span class="n">join_on</span><span class="o">=</span><span class="n">User</span><span class="o">.</span><span class="n">tier_id</span> <span class="o">==</span> <span class="n">Tier</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+</span></span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="hll">        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;tier_&quot;</span><span class="p">,</span>
+</span></span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="hll">        <span class="n">schema_to_select</span><span class="o">=</span><span class="n">TierSchema</span><span class="p">,</span>
+</span></span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="hll">        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
+</span></span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="hll">    <span class="p">),</span>
+</span></span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>
+</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="hll">    <span class="n">JoinConfig</span><span class="p">(</span>
+</span></span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="hll">        <span class="n">model</span><span class="o">=</span><span class="n">Department</span><span class="p">,</span>
+</span></span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="hll">        <span class="n">join_on</span><span class="o">=</span><span class="n">User</span><span class="o">.</span><span class="n">department_id</span> <span class="o">==</span> <span class="n">Department</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+</span></span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="hll">        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;dept_&quot;</span><span class="p">,</span>
+</span></span><span id="__span-10-16"><a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="hll">        <span class="n">schema_to_select</span><span class="o">=</span><span class="n">DepartmentSchema</span><span class="p">,</span>
+</span></span><span id="__span-10-17"><a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="hll">        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
+</span></span><span id="__span-10-18"><a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="hll">    <span class="p">)</span>
+</span></span><span id="__span-10-19"><a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="hll"><span class="p">]</span>
+</span></span><span id="__span-10-20"><a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>
+</span><span id="__span-10-21"><a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="n">users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">user_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
+</span><span id="__span-10-22"><a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>    <span class="n">db</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
+</span><span id="__span-10-23"><a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">UserSchema</span><span class="p">,</span>
+</span><span id="__span-10-24"><a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a>    <span class="n">joins_config</span><span class="o">=</span><span class="n">joins_config</span><span class="p">,</span>
+</span><span id="__span-10-25"><a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a>    <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-10-26"><a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-10-27"><a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a>    <span class="n">sort_columns</span><span class="o">=</span><span class="s1">&#39;username&#39;</span><span class="p">,</span>
+</span><span id="__span-10-28"><a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a>    <span class="n">sort_orders</span><span class="o">=</span><span class="s1">&#39;asc&#39;</span>
+</span><span id="__span-10-29"><a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a><span class="p">)</span>
 </span></code></pre></div>
 <p>Then just pass this list to joins_config:</p>
-<div class="language-python highlight"><span class="filename">Passing to get_multi_joined</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">JoinConfig</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">joins_config</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="o">...</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">]</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">user_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">db</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">UserSchema</span><span class="p">,</span>
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="hll">    <span class="n">joins_config</span><span class="o">=</span><span class="n">joins_config</span><span class="p">,</span>
-</span></span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>    <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="n">sort_columns</span><span class="o">=</span><span class="s1">&#39;username&#39;</span><span class="p">,</span>
-</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>    <span class="n">sort_orders</span><span class="o">=</span><span class="s1">&#39;asc&#39;</span>
-</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="p">)</span>
+<div class="language-python highlight"><span class="filename">Passing to get_multi_joined</span><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">JoinConfig</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">joins_config</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="o">...</span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="p">]</span>
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="n">users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">user_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
+</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="n">db</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
+</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">UserSchema</span><span class="p">,</span>
+</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="hll">    <span class="n">joins_config</span><span class="o">=</span><span class="n">joins_config</span><span class="p">,</span>
+</span></span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-11-12"><a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-11-13"><a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>    <span class="n">sort_columns</span><span class="o">=</span><span class="s1">&#39;username&#39;</span><span class="p">,</span>
+</span><span id="__span-11-14"><a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>    <span class="n">sort_orders</span><span class="o">=</span><span class="s1">&#39;asc&#39;</span>
+</span><span id="__span-11-15"><a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="p">)</span>
 </span></code></pre></div>
 <p>In this example, users are joined with the <code>Tier</code> and <code>Department</code> models. The <code>join_on</code> parameter specifies the condition for the join, <code>join_prefix</code> assigns a prefix to columns from the joined models (to avoid naming conflicts), and <code>join_type</code> determines whether it's a left or inner join.</p>
 <div class="admonition warning">
@@ -1675,65 +1800,65 @@
 <h4 id="example-joining-the-same-model-multiple-times">Example: Joining the Same Model Multiple Times<a class="headerlink" href="#example-joining-the-same-model-multiple-times" title="Permanent link">&para;</a></h4>
 <p>Consider a task management application where tasks have both an owner and an assigned user, represented by the same <code>UserModel</code>. To fetch tasks with details of both users, we use aliases to join the <code>UserModel</code> twice, distinguishing between owners and assigned users.</p>
 <p>Let's start by creating the aliases and passing them to the join configuration. Don't forget to use the alias for <code>join_on</code>:</p>
-<div class="language-python highlight"><span class="filename">Join Configurations with Aliases</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FastCRUD</span><span class="p">,</span> <span class="n">JoinConfig</span><span class="p">,</span> <span class="n">aliased</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># Create aliases for UserModel to distinguish between the owner and the assigned user</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="hll"><span class="n">owner_alias</span> <span class="o">=</span> <span class="n">aliased</span><span class="p">(</span><span class="n">UserModel</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;owner&quot;</span><span class="p">)</span>
-</span></span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="hll"><span class="n">assigned_user_alias</span> <span class="o">=</span> <span class="n">aliased</span><span class="p">(</span><span class="n">UserModel</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;assigned_user&quot;</span><span class="p">)</span>
-</span></span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Configure joins with aliases</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">joins_config</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">JoinConfig</span><span class="p">(</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>        <span class="n">model</span><span class="o">=</span><span class="n">UserModel</span><span class="p">,</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="hll">        <span class="n">join_on</span><span class="o">=</span><span class="n">Task</span><span class="o">.</span><span class="n">owner_id</span> <span class="o">==</span> <span class="n">owner_alias</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-</span></span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;owner_&quot;</span><span class="p">,</span>
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>        <span class="n">schema_to_select</span><span class="o">=</span><span class="n">UserSchema</span><span class="p">,</span>
-</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
-</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="hll">        <span class="n">alias</span><span class="o">=</span><span class="n">owner_alias</span>  <span class="c1"># Pass the aliased class instance</span>
-</span></span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    <span class="p">),</span>
-</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>    <span class="n">JoinConfig</span><span class="p">(</span>
-</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>        <span class="n">model</span><span class="o">=</span><span class="n">UserModel</span><span class="p">,</span>
-</span><span id="__span-6-19"><a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="hll">        <span class="n">join_on</span><span class="o">=</span><span class="n">Task</span><span class="o">.</span><span class="n">assigned_user_id</span> <span class="o">==</span> <span class="n">assigned_user_alias</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-</span></span><span id="__span-6-20"><a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;assigned_&quot;</span><span class="p">,</span>
-</span><span id="__span-6-21"><a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>        <span class="n">schema_to_select</span><span class="o">=</span><span class="n">UserSchema</span><span class="p">,</span>
-</span><span id="__span-6-22"><a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
-</span><span id="__span-6-23"><a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="hll">        <span class="n">alias</span><span class="o">=</span><span class="n">assigned_user_alias</span>  <span class="c1"># Pass the aliased class instance</span>
-</span></span><span id="__span-6-24"><a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>    <span class="p">)</span>
-</span><span id="__span-6-25"><a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="p">]</span>
-</span><span id="__span-6-26"><a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>
-</span><span id="__span-6-27"><a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="c1"># Initialize your FastCRUD instance for TaskModel</span>
-</span><span id="__span-6-28"><a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="n">task_crud</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">TaskModel</span><span class="p">)</span>
-</span><span id="__span-6-29"><a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>
-</span><span id="__span-6-30"><a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="c1"># Fetch tasks with joined user details</span>
-</span><span id="__span-6-31"><a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="n">tasks</span> <span class="o">=</span> <span class="k">await</span> <span class="n">task_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
-</span><span id="__span-6-32"><a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>    <span class="n">db</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
-</span><span id="__span-6-33"><a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">TaskSchema</span><span class="p">,</span>
-</span><span id="__span-6-34"><a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a>    <span class="n">joins_config</span><span class="o">=</span><span class="n">joins_config</span><span class="p">,</span>
-</span><span id="__span-6-35"><a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a>    <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-6-36"><a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">10</span>
-</span><span id="__span-6-37"><a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a><span class="p">)</span>
+<div class="language-python highlight"><span class="filename">Join Configurations with Aliases</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FastCRUD</span><span class="p">,</span> <span class="n">JoinConfig</span><span class="p">,</span> <span class="n">aliased</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="c1"># Create aliases for UserModel to distinguish between the owner and the assigned user</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="hll"><span class="n">owner_alias</span> <span class="o">=</span> <span class="n">aliased</span><span class="p">(</span><span class="n">UserModel</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;owner&quot;</span><span class="p">)</span>
+</span></span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="hll"><span class="n">assigned_user_alias</span> <span class="o">=</span> <span class="n">aliased</span><span class="p">(</span><span class="n">UserModel</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;assigned_user&quot;</span><span class="p">)</span>
+</span></span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># Configure joins with aliases</span>
+</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="n">joins_config</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>    <span class="n">JoinConfig</span><span class="p">(</span>
+</span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>        <span class="n">model</span><span class="o">=</span><span class="n">UserModel</span><span class="p">,</span>
+</span><span id="__span-12-11"><a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="hll">        <span class="n">join_on</span><span class="o">=</span><span class="n">Task</span><span class="o">.</span><span class="n">owner_id</span> <span class="o">==</span> <span class="n">owner_alias</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+</span></span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;owner_&quot;</span><span class="p">,</span>
+</span><span id="__span-12-13"><a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>        <span class="n">schema_to_select</span><span class="o">=</span><span class="n">UserSchema</span><span class="p">,</span>
+</span><span id="__span-12-14"><a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
+</span><span id="__span-12-15"><a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="hll">        <span class="n">alias</span><span class="o">=</span><span class="n">owner_alias</span>  <span class="c1"># Pass the aliased class instance</span>
+</span></span><span id="__span-12-16"><a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>    <span class="p">),</span>
+</span><span id="__span-12-17"><a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>    <span class="n">JoinConfig</span><span class="p">(</span>
+</span><span id="__span-12-18"><a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>        <span class="n">model</span><span class="o">=</span><span class="n">UserModel</span><span class="p">,</span>
+</span><span id="__span-12-19"><a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="hll">        <span class="n">join_on</span><span class="o">=</span><span class="n">Task</span><span class="o">.</span><span class="n">assigned_user_id</span> <span class="o">==</span> <span class="n">assigned_user_alias</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+</span></span><span id="__span-12-20"><a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;assigned_&quot;</span><span class="p">,</span>
+</span><span id="__span-12-21"><a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>        <span class="n">schema_to_select</span><span class="o">=</span><span class="n">UserSchema</span><span class="p">,</span>
+</span><span id="__span-12-22"><a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
+</span><span id="__span-12-23"><a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a><span class="hll">        <span class="n">alias</span><span class="o">=</span><span class="n">assigned_user_alias</span>  <span class="c1"># Pass the aliased class instance</span>
+</span></span><span id="__span-12-24"><a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a>    <span class="p">)</span>
+</span><span id="__span-12-25"><a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="p">]</span>
+</span><span id="__span-12-26"><a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a>
+</span><span id="__span-12-27"><a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a><span class="c1"># Initialize your FastCRUD instance for TaskModel</span>
+</span><span id="__span-12-28"><a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a><span class="n">task_crud</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">TaskModel</span><span class="p">)</span>
+</span><span id="__span-12-29"><a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a>
+</span><span id="__span-12-30"><a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a><span class="c1"># Fetch tasks with joined user details</span>
+</span><span id="__span-12-31"><a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a><span class="n">tasks</span> <span class="o">=</span> <span class="k">await</span> <span class="n">task_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
+</span><span id="__span-12-32"><a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a>    <span class="n">db</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
+</span><span id="__span-12-33"><a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">TaskSchema</span><span class="p">,</span>
+</span><span id="__span-12-34"><a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a>    <span class="n">joins_config</span><span class="o">=</span><span class="n">joins_config</span><span class="p">,</span>
+</span><span id="__span-12-35"><a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a>    <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-12-36"><a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">10</span>
+</span><span id="__span-12-37"><a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a><span class="p">)</span>
 </span></code></pre></div>
 <p>Then just pass this joins_config to <code>get_multi_joined</code>:</p>
-<div class="language-python highlight"><span class="filename">Passing joins_config to get_multi_joined</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FastCRUD</span><span class="p">,</span> <span class="n">JoinConfig</span><span class="p">,</span> <span class="n">aliased</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="o">...</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># Configure joins with aliases</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">joins_config</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="o">...</span>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="p">]</span>
-</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
-</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># Initialize your FastCRUD instance for TaskModel</span>
-</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="n">task_crud</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">TaskModel</span><span class="p">)</span>
-</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
-</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="c1"># Fetch tasks with joined user details</span>
-</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="n">tasks</span> <span class="o">=</span> <span class="k">await</span> <span class="n">task_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
-</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>    <span class="n">db</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
-</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">TaskSchema</span><span class="p">,</span>
-</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="hll">    <span class="n">joins_config</span><span class="o">=</span><span class="n">joins_config</span><span class="p">,</span>
-</span></span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>    <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">10</span>
-</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="p">)</span>
+<div class="language-python highlight"><span class="filename">Passing joins_config to get_multi_joined</span><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FastCRUD</span><span class="p">,</span> <span class="n">JoinConfig</span><span class="p">,</span> <span class="n">aliased</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="o">...</span>
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="c1"># Configure joins with aliases</span>
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="n">joins_config</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="o">...</span>
+</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="p">]</span>
+</span><span id="__span-13-9"><a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>
+</span><span id="__span-13-10"><a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="c1"># Initialize your FastCRUD instance for TaskModel</span>
+</span><span id="__span-13-11"><a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="n">task_crud</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">TaskModel</span><span class="p">)</span>
+</span><span id="__span-13-12"><a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
+</span><span id="__span-13-13"><a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="c1"># Fetch tasks with joined user details</span>
+</span><span id="__span-13-14"><a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="n">tasks</span> <span class="o">=</span> <span class="k">await</span> <span class="n">task_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
+</span><span id="__span-13-15"><a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    <span class="n">db</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
+</span><span id="__span-13-16"><a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">TaskSchema</span><span class="p">,</span>
+</span><span id="__span-13-17"><a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="hll">    <span class="n">joins_config</span><span class="o">=</span><span class="n">joins_config</span><span class="p">,</span>
+</span></span><span id="__span-13-18"><a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>    <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-13-19"><a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">10</span>
+</span><span id="__span-13-20"><a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="p">)</span>
 </span></code></pre></div>
 <p>In this example, <code>owner_alias</code> and <code>assigned_user_alias</code> are created from <code>UserModel</code> to distinguish between the task's owner and the assigned user within the task management system. By using aliases, you can join the same model multiple times for different purposes in your queries, enhancing expressiveness and eliminating ambiguity.</p>
 <h3 id="many-to-many-relationships-with-get_multi_joined">Many-to-Many Relationships with <code>get_multi_joined</code><a class="headerlink" href="#many-to-many-relationships-with-get_multi_joined" title="Permanent link">&para;</a></h3>
@@ -1750,41 +1875,41 @@
 <p class="admonition-title">Tip</p>
 <p>Note that the first one can be the model defined in <code>FastCRUD(Model)</code>.</p>
 </div>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Fetch projects with their participants via a many-to-many relationship</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">joins_config</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">JoinConfig</span><span class="p">(</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>        <span class="n">model</span><span class="o">=</span><span class="n">ProjectsParticipantsAssociation</span><span class="p">,</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>        <span class="n">join_on</span><span class="o">=</span><span class="n">Project</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">ProjectsParticipantsAssociation</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;pp_&quot;</span>
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="p">),</span>
-</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">JoinConfig</span><span class="p">(</span>
-</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>        <span class="n">model</span><span class="o">=</span><span class="n">Participant</span><span class="p">,</span>
-</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>        <span class="n">join_on</span><span class="o">=</span><span class="n">ProjectsParticipantsAssociation</span><span class="o">.</span><span class="n">participant_id</span> <span class="o">==</span> <span class="n">Participant</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
-</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;participant_&quot;</span>
-</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>    <span class="p">)</span>
-</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="p">]</span>
-</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
-</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="n">crud_project</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">Project</span><span class="p">)</span>
-</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>
-</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="n">projects_with_participants</span> <span class="o">=</span> <span class="k">await</span> <span class="n">project_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
-</span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
-</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">ProjectSchema</span><span class="p">,</span>
-</span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>    <span class="n">joins_config</span><span class="o">=</span><span class="n">joins_config</span>
-</span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Fetch projects with their participants via a many-to-many relationship</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">joins_config</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="n">JoinConfig</span><span class="p">(</span>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>        <span class="n">model</span><span class="o">=</span><span class="n">ProjectsParticipantsAssociation</span><span class="p">,</span>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>        <span class="n">join_on</span><span class="o">=</span><span class="n">Project</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">ProjectsParticipantsAssociation</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span>
+</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
+</span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;pp_&quot;</span>
+</span><span id="__span-14-8"><a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    <span class="p">),</span>
+</span><span id="__span-14-9"><a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    <span class="n">JoinConfig</span><span class="p">(</span>
+</span><span id="__span-14-10"><a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>        <span class="n">model</span><span class="o">=</span><span class="n">Participant</span><span class="p">,</span>
+</span><span id="__span-14-11"><a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>        <span class="n">join_on</span><span class="o">=</span><span class="n">ProjectsParticipantsAssociation</span><span class="o">.</span><span class="n">participant_id</span> <span class="o">==</span> <span class="n">Participant</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+</span><span id="__span-14-12"><a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span>
+</span><span id="__span-14-13"><a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>        <span class="n">join_prefix</span><span class="o">=</span><span class="s2">&quot;participant_&quot;</span>
+</span><span id="__span-14-14"><a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>    <span class="p">)</span>
+</span><span id="__span-14-15"><a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="p">]</span>
+</span><span id="__span-14-16"><a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>
+</span><span id="__span-14-17"><a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="n">crud_project</span> <span class="o">=</span> <span class="n">FastCRUD</span><span class="p">(</span><span class="n">Project</span><span class="p">)</span>
+</span><span id="__span-14-18"><a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>
+</span><span id="__span-14-19"><a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a><span class="n">projects_with_participants</span> <span class="o">=</span> <span class="k">await</span> <span class="n">project_crud</span><span class="o">.</span><span class="n">get_multi_joined</span><span class="p">(</span>
+</span><span id="__span-14-20"><a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+</span><span id="__span-14-21"><a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>    <span class="n">schema_to_select</span><span class="o">=</span><span class="n">ProjectSchema</span><span class="p">,</span>
+</span><span id="__span-14-22"><a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>    <span class="n">joins_config</span><span class="o">=</span><span class="n">joins_config</span>
+</span><span id="__span-14-23"><a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a><span class="p">)</span>
 </span></code></pre></div>
 <p>For a more detailed explanation, read <a href="../joins/#many-to-many-relationships-with-get_multi_joined">this part of the docs</a>.</p>
 <h2 id="enhanced-query-capabilities-with-method-chaining">Enhanced Query Capabilities with Method Chaining<a class="headerlink" href="#enhanced-query-capabilities-with-method-chaining" title="Permanent link">&para;</a></h2>
 <p>The <code>select</code> method in FastCRUD is designed for flexibility, enabling you to build complex queries through method chaining.</p>
 <h3 id="the-select-method">The <code>select</code> Method<a class="headerlink" href="#the-select-method" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">async</span> <span class="k">def</span> <span class="nf">select</span><span class="p">(</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">schema_to_select</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">sort_columns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="n">sort_orders</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Selectable</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="k">async</span> <span class="k">def</span> <span class="nf">select</span><span class="p">(</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span>
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="n">schema_to_select</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">sort_columns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">sort_orders</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Selectable</span>
 </span></code></pre></div>
 <p>This method constructs a SQL Alchemy <code>Select</code> statement, offering optional column selection, filtering, and sorting. It's designed for flexibility, allowing you to chain additional SQLAlchemy methods for even more complex queries.</p>
 <h4 id="features">Features:<a class="headerlink" href="#features" title="Permanent link">&para;</a></h4>
@@ -1795,9 +1920,9 @@
 <li><strong>Chaining</strong>: Chain with other SQLAlchemy methods for advanced query construction.</li>
 </ul>
 <h4 id="usage-example">Usage Example:<a class="headerlink" href="#usage-example" title="Permanent link">&para;</a></h4>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">stmt</span> <span class="o">=</span> <span class="k">await</span> <span class="n">my_model_crud</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">schema_to_select</span><span class="o">=</span><span class="n">MySchema</span><span class="p">,</span> <span class="n">sort_columns</span><span class="o">=</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">name__like</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%e</span><span class="s1">xample%&#39;</span><span class="p">)</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">stmt</span> <span class="o">=</span> <span class="n">stmt</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">additional_conditions</span><span class="p">)</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">stmt</span> <span class="o">=</span> <span class="k">await</span> <span class="n">my_model_crud</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">schema_to_select</span><span class="o">=</span><span class="n">MySchema</span><span class="p">,</span> <span class="n">sort_columns</span><span class="o">=</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">name__like</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%e</span><span class="s1">xample%&#39;</span><span class="p">)</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">stmt</span> <span class="o">=</span> <span class="n">stmt</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">additional_conditions</span><span class="p">)</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
 </span></code></pre></div>
 <p>This example demonstrates selecting a subset of columns, applying a filter, and chaining additional conditions like <code>where</code> and <code>limit</code>. Note that <code>select</code> returns a <code>Selectable</code> object, allowing for further modifications before execution.</p>
 <h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>

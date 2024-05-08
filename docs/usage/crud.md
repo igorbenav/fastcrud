@@ -51,7 +51,8 @@ FastCRUD offers a comprehensive suite of methods for CRUD operations, each desig
 ```python
 create(
     db: AsyncSession,
-    object: CreateSchemaType
+    object: CreateSchemaType,
+    commit: bool = True
 ) -> ModelType
 ```
 
@@ -120,7 +121,7 @@ count = await item_crud.count(db, category="Books")
 get_multi(
     db: AsyncSession,
     offset: int = 0,
-    limit: int = 100,
+    limit: Optional[int] = 100,
     schema_to_select: Optional[type[BaseModel]] = None,
     sort_columns: Optional[Union[str, list[str]]] = None,
     sort_orders: Optional[Union[str, list[str]]] = None,
@@ -144,6 +145,7 @@ update(
     db: AsyncSession, 
     object: Union[UpdateSchemaType, dict[str, Any]], 
     allow_multiple: bool = False,
+    commit: bool = True,
     **kwargs: Any
 ) -> None
 ```
@@ -162,6 +164,7 @@ delete(
     db: AsyncSession, 
     db_row: Optional[Row] = None, 
     allow_multiple: bool = False,
+    commit: bool = True,
     **kwargs: Any
 ) -> None
 ```
@@ -179,6 +182,7 @@ await item_crud.delete(db, id=item_id)
 db_delete(
     db: AsyncSession, 
     allow_multiple: bool = False,
+    commit: bool = True,
     **kwargs: Any
 ) -> None
 ```
@@ -202,7 +206,7 @@ FastCRUD extends its functionality with advanced methods tailored for complex qu
 get_multi(
     db: AsyncSession,
     offset: int = 0,
-    limit: int = 100,
+    limit: Optional[int] = 100,
     schema_to_select: Optional[type[BaseModel]] = None,
     sort_columns: Optional[Union[str, list[str]]] = None,
     sort_orders: Optional[Union[str, list[str]]] = None,
@@ -265,7 +269,7 @@ get_multi_joined(
     join_filters: Optional[dict] = None,
     nest_joins: bool = False,
     offset: int = 0,
-    limit: int = 100,
+    limit: Optional[int] = 100,
     sort_columns: Optional[Union[str, list[str]]] = None,
     sort_orders: Optional[Union[str, list[str]]] = None,
     return_as_model: bool = False,

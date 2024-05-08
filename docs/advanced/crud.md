@@ -119,6 +119,44 @@ item_count = await item_crud.count(
 )
 ```
 
+## Skipping Database Commit
+
+For `create`, `update`, `db_delete` and `delete` methods of `FastCRUD`, you have the option of passing `commit=False` so you don't commit the operations immediately.
+
+```python
+from fastcrud import FastCRUD
+
+from .models.item import Item
+from .database import session as db
+
+crud_items = FastCRUD(Item)
+
+await crud_items.delete(
+    db=db, 
+    commit=False, 
+    id=1
+)
+# this will not actually delete until you run a db.commit()
+```
+
+## Unpaginated `get_multi` and `get_multi_joined`
+
+If you pass `None` to `limit` in `get_multi` and `get_multi_joined`, you get the whole unpaginated set of data that matches the filters. Use this with caution.
+
+```python
+from fastcrud import FastCRUD
+
+from .models.item import Item
+from .database import session as db
+
+crud_items = FastCRUD(Item)
+items = await crud_items.get_multi(db=db, limit=None)
+# this will return all items in the db
+```
+
+!!! CAUTION
+    Be cautious when returning all the data in your database, and you should almost never allow your API user to do this.
+
 ## Using `get_joined` and `get_multi_joined` for multiple models
 
 To facilitate complex data relationships, `get_joined` and `get_multi_joined` can be configured to handle joins with multiple models. This is achieved using the `joins_config` parameter, where you can specify a list of `JoinConfig` instances, each representing a distinct join configuration.

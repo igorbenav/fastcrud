@@ -161,6 +161,12 @@ class FastCRUD(
         ----------------------------
         Implement cursor-based pagination for efficient data retrieval in large datasets.
         ```python
+        class Comment(Base):
+            id = Column(Integer, primary_key=True)
+            user_id = Column(Integer, ForeignKey("user.id"))
+            subject = Column(String)
+            body = Column(String)
+
         comment_crud = FastCRUD(Comment)
 
         first_page = await comment_crud.get_multi_by_cursor(db, limit=10)

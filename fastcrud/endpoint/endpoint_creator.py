@@ -4,6 +4,7 @@ from enum import Enum
 
 from fastapi import Depends, Body, Query, APIRouter
 from pydantic import BaseModel, ValidationError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 
@@ -221,6 +222,31 @@ class EndpointCreator:
         }
         self.endpoint_names = {**self.default_endpoint_names, **(endpoint_names or {})}
 
+    def _base_statement(self):
+        """Generic statement used across router endpoints unless overridden
+        in specific method.
+        """
+        return
+
+    def _base_read_statement(self):
+        """Returns sql statement for object reading."""
+        return self._base_statement()
+
+    def _base_create_statement(self):
+        """Returns sql statement for object creation."""
+        return self._base_statement()
+
+    @staticmethod
+    def _base_filter(stmt):
+        """Generic filter used across router endpoints unless overridden
+        in specific method.
+        """
+        return stmt
+
+    def _read_filter(self, stmt):
+        """Read specific filter."""
+        return self._base_filter(stmt)
+
     def _create_item(self):
         """Creates an endpoint for creating items in the database."""
 
@@ -228,19 +254,13 @@ class EndpointCreator:
             db: AsyncSession = Depends(self.session),
             item: self.create_schema = Body(...),  # type: ignore
         ):
-            unique_columns = _extract_unique_columns(self.model)
-
-            for column in unique_columns:
-                col_name = column.name
-                if hasattr(item, col_name):
-                    value = getattr(item, col_name)
-                    exists = await self.crud.exists(db, **{col_name: value})
-                    if exists:  # pragma: no cover
-                        raise DuplicateValueException(
-                            f"Value {value} is already registered"
-                        )
-
-            return await self.crud.create(db, item)
+            try:
+                if stmt := self._base_create_statement():
+                    return await db.execute(stmt)
+                else:
+                    return await self.crud.create(db, item)
+            except IntegrityError as exception:
+                raise DuplicateValueException(detail=str(exception.detail))
 
         return endpoint
 
@@ -249,9 +269,13 @@ class EndpointCreator:
 
         @apply_model_pk(**self._primary_keys_types)
         async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
-            item = await self.crud.get(db, **pkeys)
+            if stmt := self._base_read_statement():
+                stmt = self._read_filter(stmt)
+                item = await db.execute(stmt)
+            else:
+                item = await self.crud.get(db, **pkeys)
             if not item:  # pragma: no cover
-                raise NotFoundException(detail="Item not found")
+                raise NotFoundException(detail="Object not found")
             return item  # pragma: no cover
 
         return endpoint

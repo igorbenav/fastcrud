@@ -84,7 +84,7 @@ def _extract_unique_columns(
 
 def _temporary_dependency_handling(
     funcs: Optional[Sequence[Callable]] = None,
-) -> Union[Sequence[params.Depends], None]:
+) -> Union[Sequence[params.Depends], None]: # pragma: no cover
     """
     Checks if any function in the provided sequence is an instance of params.Depends.
     Issues a deprecation warning once if such instances are found, and returns the sequence if any params.Depends are found.
@@ -111,7 +111,7 @@ def _inject_dependencies(
 ) -> Optional[Sequence[params.Depends]]:
     """Wraps a list of functions in FastAPI's Depends."""
     temp_handling = _temporary_dependency_handling(funcs)
-    if temp_handling is not None:
+    if temp_handling is not None: # pragma: no cover
         return temp_handling
 
     if funcs is not None:

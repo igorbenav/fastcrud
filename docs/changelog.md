@@ -6,6 +6,17 @@ The Changelog documents all notable changes made to FastCRUD. This includes new 
 
 ___
 
+## [0.12.1] - May 10, 2024
+
+#### Added
+- Deprecation Warning for dependency handling.
+
+#### Detailed Changes
+If you pass a sequence of `params.Depends` type variables to any `*_deps` parameter in `EndpointCreator` and `crud_router`, you'll get a warning. Support will be completely removed in 0.15.0.
+
+**Full Changelog**: https://github.com/igorbenav/fastcrud/compare/v0.12.0...v0.12.1
+
+
 ## [0.12.0] - May 8, 2024
 
 #### Added

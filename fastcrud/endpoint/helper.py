@@ -1,4 +1,6 @@
 from typing import Optional, Union, Annotated, Sequence, Callable
+import warnings
+
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import field_validator
 from fastapi import Depends, params
@@ -80,13 +82,39 @@ def _extract_unique_columns(
     return unique_columns
 
 
+def _temporary_dependency_handling(
+    funcs: Optional[Sequence[Callable]] = None,
+) -> Union[Sequence[params.Depends], None]: # pragma: no cover
+    """
+    Checks if any function in the provided sequence is an instance of params.Depends.
+    Issues a deprecation warning once if such instances are found, and returns the sequence if any params.Depends are found.
+
+    Args:
+        funcs: Optional sequence of callables or params.Depends instances.
+    """
+    if funcs is not None:
+        if any(isinstance(func, params.Depends) for func in funcs):
+            warnings.warn(
+                "Passing a function wrapped in `Depends` directly to dependency handlers is deprecated and will be removed in version 0.15.0.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return [
+                func if isinstance(func, params.Depends) else Depends(func)
+                for func in funcs
+            ]
+    return None
+
+
 def _inject_dependencies(
     funcs: Optional[Sequence[Callable]] = None,
-) -> Sequence[params.Depends]:
+) -> Optional[Sequence[params.Depends]]:
     """Wraps a list of functions in FastAPI's Depends."""
-    dependencies = []
+    temp_handling = _temporary_dependency_handling(funcs)
+    if temp_handling is not None: # pragma: no cover
+        return temp_handling
+
     if funcs is not None:
-        for func in funcs:
-            dependency = Depends(func)
-            dependencies.append(dependency)
-    return dependencies
+        return [Depends(func) for func in funcs]
+
+    return None

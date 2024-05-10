@@ -215,15 +215,11 @@ class FastCRUD(
                     filters.append(column != value)
                 elif op == "in":
                     if not isinstance(value, (tuple, list, set)):
-                        raise ValueError(
-                            "in filter must be tuple, list or set"
-                        )
+                        raise ValueError("in filter must be tuple, list or set")
                     filters.append(column.in_(value))
                 elif op == "not_in":
                     if not isinstance(value, (tuple, list, set)):
-                        raise ValueError(
-                            "in filter must be tuple, list or set"
-                        )
+                        raise ValueError("in filter must be tuple, list or set")
                     filters.append(column.not_in(value))
             else:
                 column = getattr(model, key, None)

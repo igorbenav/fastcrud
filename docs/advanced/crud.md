@@ -108,6 +108,7 @@ Currently supported filter operators are:
 - __ne - not equal
 - __in - included in (tuple, list or set)
 - __not_in - not included in (tuple, list or set)
+- __startswith - starts with
 
 #### Counting Records
 

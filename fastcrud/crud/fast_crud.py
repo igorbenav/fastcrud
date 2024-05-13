@@ -221,6 +221,8 @@ class FastCRUD(
                     if not isinstance(value, (tuple, list, set)):
                         raise ValueError("in filter must be tuple, list or set")
                     filters.append(column.not_in(value))
+                elif op == "startswith":
+                    filters.append(column.startswith(value))
             else:
                 column = getattr(model, key, None)
                 if column is not None:
@@ -382,7 +384,8 @@ class FastCRUD(
             '__lte' (less than or equal to),
             '__ne' (not equal),
             '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+            '__not_in' (not included in [tuple, list or set]),
+            '__startswith' (start with)
 
         Args:
             schema_to_select: Pydantic schema to determine which columns to include in the selection. If not provided, selects all columns of the model.
@@ -448,7 +451,8 @@ class FastCRUD(
             '__lte' (less than or equal to),
             '__ne' (not equal),
             '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+            '__not_in' (not included in [tuple, list or set]),
+            '__startswith' (start with)
 
         Args:
             db: The database session to use for the operation.
@@ -508,7 +512,8 @@ class FastCRUD(
             '__lte' (less than or equal to),
             '__ne' (not equal),
             '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+            '__not_in' (not included in [tuple, list or set]),
+            '__startswith' (start with)
 
         Args:
             db: The database session to use for the operation.
@@ -552,11 +557,13 @@ class FastCRUD(
     ) -> int:
         """
         Counts records that match specified filters, supporting advanced filtering through comparison operators:
-            '__gt' (greater than), '__lt' (less than),
+            '__gt' (greater than), 
+            '__lt' (less than),
             '__gte' (greater than or equal to),
             '__lte' (less than or equal to), '__ne' (not equal),
             '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+            '__not_in' (not included in [tuple, list or set]),
+            '__startswith' (start with)
         Can also count records based on a configuration of joins, useful for complex queries involving relationships.
 
         Args:
@@ -683,7 +690,8 @@ class FastCRUD(
             '__lte' (less than or equal to),
             '__ne' (not equal),
             '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+            '__not_in' (not included in [tuple, list or set]),
+            '__startswith' (start with)
 
         Args:
             db: The database session to use for the operation.
@@ -797,7 +805,8 @@ class FastCRUD(
             '__lte' (less than or equal to),
             '__ne' (not equal),
             '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+            '__not_in' (not included in [tuple, list or set]),
+            '__startswith' (start with)
 
         Args:
             db: The SQLAlchemy async session.
@@ -1044,7 +1053,8 @@ class FastCRUD(
             '__lte' (less than or equal to),
             '__ne' (not equal),
             '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+            '__not_in' (not included in [tuple, list or set]),
+            '__startswith' (start with)
 
         Args:
             db: The SQLAlchemy async session.
@@ -1366,7 +1376,8 @@ class FastCRUD(
             '__lte' (less than or equal to),
             '__ne' (not equal),
             '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+            '__not_in' (not included in [tuple, list or set]),
+            '__startswith' (start with)
 
         Args:
             db: The SQLAlchemy async session.
@@ -1455,7 +1466,8 @@ class FastCRUD(
             '__lte' (less than or equal to),
             '__ne' (not equal),
             '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+            '__not_in' (not included in [tuple, list or set]),
+            '__startswith' (start with)
 
         Args:
             db: The database session to use for the operation.
@@ -1529,7 +1541,8 @@ class FastCRUD(
             '__lte' (less than or equal to),
             '__ne' (not equal),
             '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+            '__not_in' (not included in [tuple, list or set]),
+            '__startswith' (start with)
 
         Args:
             db: The database session to use for the operation.
@@ -1587,7 +1600,8 @@ class FastCRUD(
             '__lte' (less than or equal to),
             '__ne' (not equal),
             '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+            '__not_in' (not included in [tuple, list or set]),
+            '__startswith' (start with)
 
         Args:
             db: The database session to use for the operation.

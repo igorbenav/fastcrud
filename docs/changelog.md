@@ -90,7 +90,8 @@ You may now pass `__in` and `__not_in` to methods that accept advanced queries:
 - `__lte`: less than or equal to,
 - `__ne`: not equal,
 - `__in`: included in [tuple, list or set],
-- `__not_in`: not included in [tuple, list or set].
+- `__not_in`: not included in [tuple, list or set],
+- `__startswith`: starts with.
 
 #### What's Changed
 - Add unpaginated versions of multi-row get methods (w/tests) by [@slaarti](https://github.com/slaarti) 🎉

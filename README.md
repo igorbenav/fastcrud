@@ -1,30 +1,29 @@
 <p align="center">
-  <a href="https://igorbenav.github.io/fastcrud/">
-    <img src="https://github.com/igorbenav/fastcrud/blob/main/assets/fastcrud.png?raw=true" alt="FastCRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto">
+  <a href="https://mithunthomas2003.github.io/FastAPICRUD/">
+    <!-- <img src="https://github.com/mithunthomas2003/FastAPICRUD/blob/main/assets/FastAPICRUD.png?raw=true" alt="FastAPICRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto"> -->
   </a>
 </p>
 <p align="center" markdown=1>
   <i>Powerful CRUD methods and automatic endpoint creation for FastAPI.</i>
 </p>
 <p align="center" markdown=1>
-<a href="https://github.com/igorbenav/fastcrud/actions/workflows/tests.yml">
-  <img src="https://github.com/igorbenav/fastcrud/actions/workflows/tests.yml/badge.svg" alt="Tests"/>
+<a href="https://github.com/mithunthomas2003/FastAPICRUD/actions/workflows/tests.yml">
+  <img src="https://github.com/mithunthomas2003/FastAPICRUD/actions/workflows/tests.yml/badge.svg" alt="Tests"/>
 </a>
-<a href="https://pypi.org/project/fastcrud/">
-  <img src="https://img.shields.io/pypi/v/fastcrud?color=%2334D058&label=pypi%20package" alt="PyPi Version"/>
+<a href="https://pypi.org/project/FastAPICRUD/">
+  <img src="https://img.shields.io/pypi/v/FastAPICRUD?color=%2334D058&label=pypi%20package" alt="PyPi Version"/>
 </a>
-<a href="https://pypi.org/project/fastcrud/">
-  <img src="https://img.shields.io/pypi/pyversions/fastcrud.svg?color=%2334D058" alt="Supported Python Versions"/>
+<a href="https://pypi.org/project/FastAPICRUD/">
+  <img src="https://img.shields.io/pypi/pyversions/FastAPICRUD.svg?color=%2334D058" alt="Supported Python Versions"/>
 </a>
-<a href="https://codecov.io/gh/igorbenav/fastcrud" > 
-  <img src="https://codecov.io/gh/igorbenav/fastcrud/graph/badge.svg?token=J7XUP29RKU"/> 
+<a href="https://codecov.io/gh/mithunthomas2003/FastAPICRUD" > 
+  <img src="https://codecov.io/gh/mithunthomas2003/FastAPICRUD/graph/badge.svg?token=J7XUP29RKU"/> 
 </a>
 </p>
 <hr>
 <p align="justify">
-<b>FastCRUD</b> is a Python package for <b>FastAPI</b>, offering robust async CRUD operations and flexible endpoint creation utilities, streamlined through advanced features like <b>auto-detected join</b> conditions, <b>dynamic sorting</b>, and offset and cursor <b>pagination</b>.
+<b>FastAPICRUD</b> is a Python package for <b>FastAPI</b>, offering robust async CRUD operations and flexible endpoint creation utilities, streamlined through advanced features like <b>auto-detected join</b> conditions, <b>dynamic sorting</b>, and offset and cursor <b>pagination</b>.
 </p>
-<p><b>Documentation</b>: <a href="https://igorbenav.github.io/fastcrud/">igorbenav.github.io/fastcrud</a></p>
 <hr>
 <h2>Features</h2>
 
@@ -39,12 +38,12 @@
 - 🛣️ **Auto-generated Endpoints**: Streamlines the process of adding CRUD endpoints with custom dependencies and configurations.
 
 <h2>Requirements</h2>
-<p>Before installing FastCRUD, ensure you have the following prerequisites:</p>
+<p>Before installing FastAPICRUD, ensure you have the following prerequisites:</p>
 <ul>
   <li><b>Python:</b> Version 3.9 or newer.</li>
-  <li><b>FastAPI:</b> FastCRUD is built to work with FastAPI, so having FastAPI in your project is essential.</li>
-  <li><b>SQLAlchemy:</b> Version 2.0.21 or newer. FastCRUD uses SQLAlchemy for database operations.</li>
-  <li><b>Pydantic:</b> Version 2.4.1 or newer. FastCRUD leverages Pydantic models for data validation and serialization.</li>
+  <li><b>FastAPI:</b> FastAPICRUD is built to work with FastAPI, so having FastAPI in your project is essential.</li>
+  <li><b>SQLAlchemy:</b> Version 2.0.21 or newer. FastAPICRUD uses SQLAlchemy for database operations.</li>
+  <li><b>Pydantic:</b> Version 2.4.1 or newer. FastAPICRUD leverages Pydantic models for data validation and serialization.</li>
   <li><b>SQLAlchemy-Utils:</b> Optional, but recommended for additional SQLAlchemy utilities.</li>
 </ul>
 
@@ -53,21 +52,21 @@
 To install, just run:
 
 ```sh
-pip install fastcrud
+pip install FastAPICRUD
 ```
 
 Or, if using poetry:
 
 ```sh
-poetry add fastcrud
+poetry add FastAPICRUD
 ```
 
 <h2>Usage</h2>
 
-FastCRUD offers two primary ways to use its functionalities:
+FastAPICRUD offers two primary ways to use its functionalities:
 
 1. By using `crud_router` for automatic endpoint creation.
-2. By integrating `FastCRUD` directly into your FastAPI endpoints for more control.
+2. By integrating `FastAPICRUD` directly into your FastAPI endpoints for more control.
 
 Below are examples demonstrating both approaches:
 
@@ -107,7 +106,7 @@ class ItemUpdateSchema(BaseModel):
     description: str
 ```
 
-<h4>Set Up FastAPI and FastCRUD</h4>
+<h4>Set Up FastAPI and FastAPICRUD</h4>
 
 **main.py**
 
@@ -115,7 +114,7 @@ class ItemUpdateSchema(BaseModel):
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
-from fastcrud import FastCRUD, crud_router
+from FastAPICRUD import FastAPICRUD, crud_router
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -155,9 +154,9 @@ app.include_router(item_router)
 
 ```
 
-<h3>Using FastCRUD in User-Defined FastAPI Endpoints</h3>
+<h3>Using FastAPICRUD in User-Defined FastAPI Endpoints</h3>
 
-For more control over your endpoints, you can use FastCRUD directly within your custom FastAPI route functions. Here's an example:
+For more control over your endpoints, you can use FastAPICRUD directly within your custom FastAPI route functions. Here's an example:
 
 **main.py**
 
@@ -167,7 +166,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from fastcrud import FastCRUD
+from FastAPICRUD import FastAPICRUD
 
 from models import Base, Item
 from schemas import ItemCreateSchema, ItemUpdateSchema
@@ -191,8 +190,8 @@ async def lifespan(app: FastAPI):
 # FastAPI app
 app = FastAPI(lifespan=lifespan)
 
-# Instantiate FastCRUD with your model
-item_crud = FastCRUD(Item)
+# Instantiate FastAPICRUD with your model
+item_crud = FastAPICRUD(Item)
 
 @app.post("/custom/items/")
 async def create_item(
@@ -210,9 +209,8 @@ async def read_item(item_id: int, db: AsyncSession = Depends(get_session)):
 # You can add more routes for update and delete operations in a similar fashion
 ```
 
-In this example, we define custom endpoints for creating and reading items using FastCRUD directly, providing more flexibility in how the endpoints are structured and how the responses are handled.
+In this example, we define custom endpoints for creating and reading items using FastAPICRUD directly, providing more flexibility in how the endpoints are structured and how the responses are handled.
 
-To read more detailed descriptions, go to the <a href="https://igorbenav.github.io/fastcrud/">documentation</a>.
 
 ## References
 
@@ -231,5 +229,4 @@ To read more detailed descriptions, go to the <a href="https://igorbenav.github.
 
 ## Contact
 
-Igor Magalhaes – [@igormagalhaesr](https://twitter.com/igormagalhaesr) – igormagalhaesr@gmail.com
-[github.com/igorbenav](https://github.com/igorbenav/)
+[github.com/mithunthomas2003](https://github.com/mithunthomas2003/)

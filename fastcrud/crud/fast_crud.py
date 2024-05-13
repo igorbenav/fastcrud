@@ -215,7 +215,14 @@ class FastCRUD(
         self.deleted_at_column = deleted_at_column
         self.updated_at_column = updated_at_column
 
-    def get_sqlalchemy_filter(self, operator: str) -> Callable[[str], str]:
+    def get_sqlalchemy_filter(
+        self, operator: str, value: Any,
+    ) -> Callable[[str], str] | None:
+        if operator == 'in' or operator == 'not_in':
+            if not isinstance(value, (tuple, list, set)):
+                raise ValueError(
+                    "in filter must be tuple, list or set"
+                )
         return self._SUPPORTED_FILTERS.get(operator)
 
     def _parse_filters(
@@ -230,8 +237,18 @@ class FastCRUD(
                 column = getattr(model, field_name, None)
                 if column is None:
                     raise ValueError(f"Invalid filter column: {field_name}")
-                if sqlalchemy_filter := self.get_sqlalchemy_filter(op):
-                    filters.append(sqlalchemy_filter(value))
+                if op == 'or':
+                    # get_multi(
+                    #     last_name__or={'startswith': 'foo', 'endswith': 'bar'}
+                    # )
+                    or_filters = [
+                        self.get_sqlalchemy_filter(or_key, or_value)(column)(or_value)
+                        for or_key, or_value in value
+                        if self.get_sqlalchemy_filter(or_key, value)
+                    ]
+                    filters.append(column.or_(or_filters))
+                elif sqlalchemy_filter := self.get_sqlalchemy_filter(op, value):
+                    filters.append(sqlalchemy_filter(column)(value))
             else:
                 column = getattr(model, key, None)
                 if column is not None:

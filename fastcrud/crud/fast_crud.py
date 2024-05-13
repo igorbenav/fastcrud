@@ -1,4 +1,4 @@
-from typing import Any, Generic, TypeVar, Union, Optional
+from typing import Any, Generic, TypeVar, Union, Optional, Callable
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, ValidationError
@@ -26,6 +26,7 @@ CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 UpdateSchemaInternalType = TypeVar("UpdateSchemaInternalType", bound=BaseModel)
 DeleteSchemaType = TypeVar("DeleteSchemaType", bound=BaseModel)
+
 
 
 class FastCRUD(
@@ -178,6 +179,29 @@ class FastCRUD(
         # Now 'archived' and 'archived_at' will be used for soft delete operations.
         ```
     """
+    _SUPPORTED_FILTERS = {
+        'gt': lambda column: column.__gt__,
+        "lt": lambda column: column.__lt__,
+        "gte": lambda column: column.__ge__,
+        "lte": lambda column: column.__le__,
+        "ne": lambda column: column.__ne__,
+        "between": lambda column: column.between,
+        "in": lambda column: column.in_,
+        "not_in": lambda column: column.not_in,
+        "is": lambda column: column.is_,
+        "is_not": lambda column: column.is_not,
+        "like": lambda column: column.like,
+        "notlike": lambda column: column.notlike,
+        "ilike": lambda column: column.ilike,  # only Postgres
+        "notilike": lambda column: column.notilike,  # only Postgres
+        "startswith": lambda column: column.startswith,
+        "endswith": lambda column: column.endswith,
+        "contains": lambda column: column.contains,
+        "match": lambda column: column.match,  # FTS in Postgres
+    }
+    # On top of those, these could be a thing, but need dialect treatment:
+    # column("x").regexp_match("word").compile(dialect=mysql.dialect())
+    # column("x").regexp_match("word").compile(dialect=postgresql.dialect())
 
     def __init__(
         self,
@@ -191,36 +215,23 @@ class FastCRUD(
         self.deleted_at_column = deleted_at_column
         self.updated_at_column = updated_at_column
 
+    def get_sqlalchemy_filter(self, operator: str) -> Callable[[str], str]:
+        return self._SUPPORTED_FILTERS.get(operator)
+
     def _parse_filters(
         self, model: Optional[Union[type[ModelType], AliasedClass]] = None, **kwargs
     ) -> list[BinaryExpression]:
         model = model or self.model
         filters = []
+
         for key, value in kwargs.items():
             if "__" in key:
                 field_name, op = key.rsplit("__", 1)
                 column = getattr(model, field_name, None)
                 if column is None:
                     raise ValueError(f"Invalid filter column: {field_name}")
-
-                if op == "gt":
-                    filters.append(column > value)
-                elif op == "lt":
-                    filters.append(column < value)
-                elif op == "gte":
-                    filters.append(column >= value)
-                elif op == "lte":
-                    filters.append(column <= value)
-                elif op == "ne":
-                    filters.append(column != value)
-                elif op == "in":
-                    if not isinstance(value, (tuple, list, set)):
-                        raise ValueError("in filter must be tuple, list or set")
-                    filters.append(column.in_(value))
-                elif op == "not_in":
-                    if not isinstance(value, (tuple, list, set)):
-                        raise ValueError("in filter must be tuple, list or set")
-                    filters.append(column.not_in(value))
+                if sqlalchemy_filter := self.get_sqlalchemy_filter(op):
+                    filters.append(sqlalchemy_filter(value))
             else:
                 column = getattr(model, key, None)
                 if column is not None:

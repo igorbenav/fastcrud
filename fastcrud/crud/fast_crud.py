@@ -511,6 +511,7 @@ class FastCRUD(
         return_as_model: bool = False,
     ) -> Union[BaseModel, Dict[str, Any], None]:
         """Update the instance or create it if it doesn't exists.
+        Note: This method will perform two transactions to the database (get and create or update).
 
         Args:
             db (AsyncSession): The database session to use for the operation.

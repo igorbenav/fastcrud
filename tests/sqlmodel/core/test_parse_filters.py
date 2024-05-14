@@ -22,6 +22,22 @@ async def test_parse_filters_multiple_conditions(test_model):
 
 
 @pytest.mark.asyncio
+async def test_parse_filters_contained_in(test_model):
+    fast_crud = FastCRUD(test_model)
+    filters = fast_crud._parse_filters(category_id__in=[1, 2])
+    assert len(filters) == 1
+    assert str(filters[0]) == "test.category_id IN (__[POSTCOMPILE_category_id_1])"
+
+
+@pytest.mark.asyncio
+async def test_parse_filters_contained_in_exception(test_model):
+    fast_crud = FastCRUD(test_model)
+    with pytest.raises(ValueError) as exc:
+        fast_crud._parse_filters(category_id__in=1)
+    assert str(exc.value) == "in filter must be tuple, list or set"
+
+
+@pytest.mark.asyncio
 async def test_parse_filters_invalid_column(test_model):
     fast_crud = FastCRUD(test_model)
 

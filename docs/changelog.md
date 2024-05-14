@@ -6,6 +6,212 @@ The Changelog documents all notable changes made to FastCRUD. This includes new 
 
 ___
 
+## [0.12.1] - May 10, 2024
+
+#### Added
+- Deprecation Warning for dependency handling.
+
+#### Detailed Changes
+If you pass a sequence of `params.Depends` type variables to any `*_deps` parameter in `EndpointCreator` and `crud_router`, you'll get a warning. Support will be completely removed in 0.15.0.
+
+**Full Changelog**: https://github.com/igorbenav/fastcrud/compare/v0.12.0...v0.12.1
+
+
+## [0.12.0] - May 8, 2024
+
+#### Added
+- Unpaginated versions of multi-row get methods by @slaarti in #62  🎉
+- Nested Join bug fixes
+- Dependency handling now working as docs say
+- Option to Skip commit in some fastcrud methods
+- Docstring example fixes
+- `__in` and `__not_in` filters by @JakNowy 🎉
+- Fastapi 0.111.0 support
+
+#### Detailed Changes
+##### Unpaginated versions of multi-row get methods
+Now, if you pass `None` to `limit` in `get_multi` and `get_multi_joined`, you get the whole unpaginated set of data that matches the filters. Use this with caution.
+
+```python
+from fastcrud import FastCRUD
+from .models.item import Item
+from .database import session as db
+
+crud_items = FastCRUD(Item)
+items = await crud_items.get_multi(db=db, limit=None)
+# this will return all items in the db
+```
+
+##### Dependency handling now working as docs say
+Now, you may pass dependencies to `crud_router` or `EndpointCreator` as simple functions instead of needing to wrap them in `fastapi.Depends`.
+
+```python
+from .dependencies import get_superuser
+app.include_router(
+    crud_router(
+        session=db,
+        model=Item,
+        create_schema=ItemCreate,
+        update_schema=ItemUpdate,
+        delete_schema=ItemDelete,
+        create_deps=[get_superuser],
+        update_deps=[get_superuser],
+        delete_deps=[get_superuser],
+        path="/item",
+        tags=["item"],
+    )
+)
+```
+
+##### Option to Skip commit in some fastcrud methods
+For `create`, `update`, `db_delete` and `delete` methods of `FastCRUD`, now you have the option of passing `commit=False` so you don't commit the operations immediately.
+
+```python
+from fastcrud import FastCRUD
+from .models.item import Item
+from .database import session as db
+
+crud_items = FastCRUD(Item)
+
+await crud_items.delete(
+    db=db, 
+    commit=False, 
+    id=1
+)
+# this will not actually delete until you run a db.commit()
+```
+
+##### `__in` and `__not_in` filters
+You may now pass `__in` and `__not_in` to methods that accept advanced queries:
+
+- `__gt`: greater than,
+- `__lt`: less than,
+- `__gte`: greater than or equal to,
+- `__lte`: less than or equal to,
+- `__ne`: not equal,
+- `__in`: included in [tuple, list or set],
+- `__not_in`: not included in [tuple, list or set].
+
+#### What's Changed
+- Add unpaginated versions of multi-row get methods (w/tests) by [@slaarti](https://github.com/slaarti) 🎉
+- Join fixes
+- Dependencies
+- Skip commit
+- Docstring fix
+- feat: filter __in by [@JakNowy](https://github.com/JakNowy) 🎉
+- python support for 0.111.0 added
+- version bump in pyproject.toml for 0.12.0
+
+#### New Contributors
+* [@slaarti](https://github.com/slaarti) made their first contribution in https://github.com/igorbenav/fastcrud/pull/62 🎉
+
+**Full Changelog**: https://github.com/igorbenav/fastcrud/compare/v0.11.1...v0.12.0
+
+
+## [0.11.1] - Apr 22, 2024
+
+#### Added
+- `one_or_none` parameter to FastCRUD `get` method (default `False`)
+- `nest_joins` parameter to FastCRUD `get_joined` and `get_multi_joined` (default `False`)
+
+#### Detailed Changes
+##### `get`
+By default, the `get` method in `FastCRUD` returns the `first` object matching all the filters it finds.
+
+If you want to ensure the `one_or_none` behavior, you may pass the parameter as `True`:
+
+```python
+crud.get(
+    async_session, 
+    one_or_none=True, 
+    category_id=1
+)
+```
+
+##### `get_joined` and `get_multi_joined`
+By default, `FastCRUD` joins all the data and returns it in a single dictionary.
+Let's define two tables:
+```python
+class User(Base):
+    __tablename__ = "user"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    tier_id = Column(Integer, ForeignKey("tier.id"))
+
+
+class Tier(Base):
+    __tablename__ = "tier"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+```
+
+And join them with `FastCRUD`:
+
+```python
+user_tier = await user_crud.get_joined(
+    db=db,
+    model=Tier,
+    join_on=User.tier_id == Tier.id,
+    join_type="left",
+    join_prefix="tier_",,
+    id=1
+)
+```
+
+We'll get:
+
+```javascript
+{
+    "id": 1,
+    "name": "Example",
+    "tier_id": 1,
+    "tier_name": "Free",
+}
+```
+
+Now, if you want the joined data in a nested dictionary instead, you may just pass `nest_joins=True`:
+
+```python
+user_tier = await user_crud.get_joined(
+    db=db,
+    model=Tier,
+    join_on=User.tier_id == Tier.id,
+    join_type="left",
+    join_prefix="tier_",
+    nest_joins=True,
+    id=1,
+)
+```
+
+And you will get:
+
+```javascript
+{
+    "id": 1,
+    "name": "Example",
+    "tier": {
+        "id": 1,
+        "name": "Free",
+    },
+}
+```
+
+This works for both `get_joined` and `get_multi_joined`.
+
+!!! WARNING
+    Note that the final `"_"` in the passed `"tier_"` is stripped.
+
+#### What's Changed
+- Reuse of `select` method in `FastCRUD`
+- Skip count call when possible
+- Add `one_or_none` parameter to FastCRUD `get` method
+- Add `nest_joins` parameter to FastCRUD `get_joined` and `get_multi_joined`
+
+#### New Contributors
+- [@JakNowy](https://github.com/JakNowy) made their first contribution in PR #51.
+
+**Full Changelog**: [View the full changelog](https://github.com/igorbenav/fastcrud/compare/v0.11.0...v0.11.1)
+
 ## [0.11.0] - Apr 7, 2024
 
 #### Added

@@ -56,6 +56,32 @@ async def test_get_multi_joined_basic(async_session, test_data, test_data_tier):
 
 
 @pytest.mark.asyncio
+async def test_get_multi_joined_unpaginated(async_session, test_data, test_data_tier):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    await async_session.commit()
+
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+    result = await crud.get_multi_joined(
+        db=async_session,
+        join_model=TierModel,
+        join_prefix="tier_",
+        schema_to_select=CreateSchemaTest,
+        join_schema_to_select=TierSchemaTest,
+        offset=0,
+        limit=None,
+    )
+
+    assert len(result["data"]) == len(test_data)
+    assert result["total_count"] == len(test_data)
+    assert all("tier_name" in item for item in result["data"])
+
+
+@pytest.mark.asyncio
 async def test_get_multi_joined_sorting(async_session, test_data, test_data_tier):
     for tier_item in test_data_tier:
         async_session.add(TierModel(**tier_item))
@@ -622,7 +648,11 @@ async def test_get_multi_joined_with_joined_model_filters(
 
 
 @pytest.mark.asyncio
-async def test_get_multi_joined_missing_schema_to_select(async_session):
+async def test_get_multi_joined_missing_schema_to_select(async_session, test_data):
+    for test_item in test_data:
+        async_session.add(ModelTest(**test_item))
+    await async_session.commit()
+
     crud = FastCRUD(ModelTest)
     with pytest.raises(ValueError) as exc_info:
         await crud.get_multi_joined(
@@ -666,3 +696,126 @@ async def test_get_multi_joined_validation_error(
     assert "Data validation error for schema CustomCreateSchemaTest:" in str(
         exc_info.value
     )
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_with_nesting(async_session, test_data, test_data_tier):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    await async_session.commit()
+
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+
+    result = await crud.get_multi_joined(
+        db=async_session,
+        joins_config=[
+            JoinConfig(
+                model=TierModel,
+                join_on=ModelTest.tier_id == TierModel.id,
+                join_prefix="tier_",
+                schema_to_select=TierSchemaTest,
+                join_type="left",
+            ),
+            JoinConfig(
+                model=CategoryModel,
+                join_on=ModelTest.category_id == CategoryModel.id,
+                join_prefix="category_",
+                schema_to_select=CategorySchemaTest,
+                join_type="left",
+            ),
+        ],
+        schema_to_select=CreateSchemaTest,
+        nest_joins=True,
+        offset=0,
+        limit=10,
+    )
+
+    assert result is not None, "Expected non-None result for multi joined query"
+    assert "data" in result, "Result should contain 'data' key"
+    assert isinstance(result["data"], list), "'data' should be a list"
+
+    if result["data"]:
+        for item in result["data"]:
+            assert "tier" in item, "Nested tier data should be present under key 'tier'"
+            assert (
+                "category" in item
+            ), "Nested category data should be present under key 'category'"
+            assert isinstance(
+                item["tier"], dict
+            ), "Nested tier data should be a dictionary"
+            assert isinstance(
+                item["category"], dict
+            ), "Nested category data should be a dictionary"
+            assert (
+                "tier_" not in item["tier"]
+            ), "No prefix should be present in the nested tier keys"
+            assert (
+                "category_" not in item["category"]
+            ), "No prefix should be present in the nested category keys"
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_no_prefix_regular(
+    async_session, test_data, test_data_tier
+):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    await async_session.commit()
+
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+
+    result = await crud.get_multi_joined(
+        db=async_session,
+        join_model=TierModel,
+        schema_to_select=CreateSchemaTest,
+        join_schema_to_select=TierSchemaTest,
+        limit=10,
+    )
+
+    print(result)
+    assert result and result["data"], "Expected data in the result."
+    for item in result["data"]:
+        assert "name" in item, "Expected user name in each item."
+        assert "name_1" in item, "Expected tier name in each item without prefix."
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_no_prefix_nested(
+    async_session, test_data, test_data_tier
+):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    await async_session.commit()
+
+    for user_item in test_data:
+        async_session.add(ModelTest(**user_item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+
+    result = await crud.get_multi_joined(
+        db=async_session,
+        join_model=TierModel,
+        schema_to_select=CreateSchemaTest,
+        join_schema_to_select=TierSchemaTest,
+        nest_joins=True,
+        limit=10,
+    )
+
+    assert result and result["data"], "Expected data in the result."
+    for item in result["data"]:
+        assert "name" in item, "Expected user name in each item."
+        assert (
+            TierModel.__tablename__ in item
+        ), f"Expected nested '{TierModel.__tablename__}' key in each item."
+        assert (
+            "name" in item[TierModel.__tablename__]
+        ), f"Expected 'name' field inside nested '{TierModel.__tablename__}' dictionary."

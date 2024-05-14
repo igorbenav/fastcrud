@@ -15,6 +15,7 @@ from sqlalchemy.sql.selectable import Select
 from .helper import (
     _extract_matching_columns_from_schema,
     _auto_detect_join_condition,
+    _nest_join_data,
     JoinConfig,
 )
 
@@ -90,66 +91,90 @@ class FastCRUD(
         ----------------------
         Create a FastCRUD instance for a User model and perform basic CRUD operations.
         ```python
-        user_crud = FastCRUD(User, UserCreateSchema, UserUpdateSchema)
-        async with db_session() as db:
-            # Create a new user
-            new_user = await user_crud.create(db, UserCreateSchema(name="Alice"))
-            # Read a user
-            user = await user_crud.get(db, id=new_user.id)
-            # Update a user
-            await user_crud.update(db, UserUpdateSchema(email="alice@example.com"), id=new_user.id)
-            # Delete a user
-            await user_crud.delete(db, id=new_user.id)
+        # Assuming you have a User model (either SQLAlchemy or SQLModel)
+        # pydantic schemas for creation, update and deletion and an async session `db`
+        CRUDUser = FastCRUD[User, UserCreateInternal, UserUpdate, UserUpdateInternal, UserDelete]
+        user_crud = CRUDUser(User)
+
+        # If you don't care about typing, you can also just ignore the CRUDUser part
+        # Straight up define user_crud with FastCRUD
+        user_crud = FastCRUD(User)
+
+        # Create a new user
+        new_user = await user_crud.create(db, UserCreateSchema(name="Alice"))
+        # Read a user
+        user = await user_crud.get(db, id=new_user.id)
+        # Update a user
+        await user_crud.update(db, UserUpdateSchema(email="alice@example.com"), id=new_user.id)
+        # Delete a user
+        await user_crud.delete(db, id=new_user.id)
         ```
 
         Example 2: Advanced Filtering and Pagination
         --------------------------------------------
         Use advanced filtering, sorting, and pagination for fetching records.
         ```python
-        product_crud = FastCRUD(Product, ProductCreateSchema)
-        async with db_session() as db:
-            products = await product_crud.get_multi(
-                db, offset=0, limit=10, sort_columns=['price'], sort_orders=['asc']
-            )
+        product_crud = FastCRUD(Product)
+        products = await product_crud.get_multi(
+            db,
+            offset=0,
+            limit=10,
+            sort_columns=['price'],
+            sort_orders=['asc'],
+        )
         ```
 
         Example 3: Join Operations with Custom Schemas
         ----------------------------------------------
         Perform join operations between two models using custom schemas for selection.
         ```python
-        order_crud = FastCRUD(Order, OrderCreateSchema, join_model=Product)
-        async with db_session() as db:
-            orders = await order_crud.get_multi_joined(
-                db, offset=0, limit=5, schema_to_select=OrderReadSchema, join_schema_to_select=ProductReadSchema
-            )
+        order_crud = FastCRUD(Order)
+        orders = await order_crud.get_multi_joined(
+            db,
+            offset=0,
+            limit=5,
+            join_model=Product,
+            join_prefix="product_",
+            schema_to_select=OrderReadSchema,
+            join_schema_to_select=ProductReadSchema,
+        )
         ```
 
         Example 4: Cursor Pagination
         ----------------------------
         Implement cursor-based pagination for efficient data retrieval in large datasets.
         ```python
-        comment_crud = FastCRUD(Comment, CommentCreateSchema)
-        async with db_session() as db:
-            first_page = await comment_crud.get_multi_by_cursor(db, limit=10)
-            next_cursor = first_page['next_cursor']
-            second_page = await comment_crud.get_multi_by_cursor(db, cursor=next_cursor, limit=10)
+        comment_crud = FastCRUD(Comment)
+
+        first_page = await comment_crud.get_multi_by_cursor(db, limit=10)
+        next_cursor = first_page['next_cursor']
+        second_page = await comment_crud.get_multi_by_cursor(db, cursor=next_cursor, limit=10)
         ```
 
         Example 5: Dynamic Filtering and Counting
         -----------------------------------------
         Dynamically filter records based on various criteria and count the results.
         ```python
-        task_crud = FastCRUD(Task, TaskCreateSchema)
-        async with db_session() as db:
-            completed_tasks = await task_crud.get_multi(db, status='completed')
-            high_priority_task_count = await task_crud.count(db, priority='high')
+        task_crud = FastCRUD(Task)
+        completed_tasks = await task_crud.get_multi(
+            db,
+            status='completed'
+        )
+        high_priority_task_count = await task_crud.count(
+            db,
+            priority='high'
+        )
         ```
 
         Example 6: Using Custom Column Names for Soft Delete
         ----------------------------------------------------
         If your model uses different column names for indicating a soft delete and its timestamp, you can specify these when creating the FastCRUD instance.
         ```python
-        custom_user_crud = FastCRUD(User, UserCreateSchema, UserUpdateSchema, is_deleted_column="archived", deleted_at_column="archived_at")
+        custom_user_crud = FastCRUD(
+            User,
+            is_deleted_column="archived",
+            deleted_at_column="archived_at"
+        )
         # Now 'archived' and 'archived_at' will be used for soft delete operations.
         ```
     """
@@ -189,6 +214,14 @@ class FastCRUD(
                     filters.append(column <= value)
                 elif op == "ne":
                     filters.append(column != value)
+                elif op == "in":
+                    if not isinstance(value, (tuple, list, set)):
+                        raise ValueError("in filter must be tuple, list or set")
+                    filters.append(column.in_(value))
+                elif op == "not_in":
+                    if not isinstance(value, (tuple, list, set)):
+                        raise ValueError("in filter must be tuple, list or set")
+                    filters.append(column.not_in(value))
             else:
                 column = getattr(model, key, None)
                 if column is not None:
@@ -271,13 +304,57 @@ class FastCRUD(
 
         return stmt
 
-    async def create(self, db: AsyncSession, object: CreateSchemaType) -> ModelType:
+    def _prepare_and_apply_joins(
+        self,
+        stmt: Select,
+        joins_config: list[JoinConfig],
+        use_temporary_prefix: bool = False,
+    ):
+        """
+        Applies joins to the given SQL statement based on a list of JoinConfig objects.
+
+        Args:
+            stmt: The initial SQL statement.
+            joins_config: Configurations for all joins.
+            use_temporary_prefix: Whether to use or not an aditional prefix for joins. Default False.
+
+        Returns:
+            Select: The modified SQL statement with joins applied.
+        """
+        for join in joins_config:
+            model = join.alias or join.model
+            join_select = _extract_matching_columns_from_schema(
+                model,
+                join.schema_to_select,
+                join.join_prefix,
+                join.alias,
+                use_temporary_prefix,
+            )
+            joined_model_filters = self._parse_filters(
+                model=model, **(join.filters or {})
+            )
+
+            if join.join_type == "left":
+                stmt = stmt.outerjoin(model, join.join_on).add_columns(*join_select)
+            elif join.join_type == "inner":
+                stmt = stmt.join(model, join.join_on).add_columns(*join_select)
+            else:
+                raise ValueError(f"Unsupported join type: {join.join_type}.")
+            if joined_model_filters:
+                stmt = stmt.filter(*joined_model_filters)
+
+        return stmt
+
+    async def create(
+        self, db: AsyncSession, object: CreateSchemaType, commit: bool = True
+    ) -> ModelType:
         """
         Create a new record in the database.
 
         Args:
             db: The SQLAlchemy async session.
             object: The Pydantic schema containing the data to be saved.
+            commit: If True, commits the transaction immediately. Default is True.
 
         Returns:
             The created database object.
@@ -285,7 +362,8 @@ class FastCRUD(
         object_dict = object.model_dump()
         db_object: ModelType = self.model(**object_dict)
         db.add(db_object)
-        await db.commit()
+        if commit:
+            await db.commit()
         return db_object
 
     async def select(
@@ -302,16 +380,15 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
+            '__not_in' (not included in [tuple, list or set]).
 
         Args:
-            schema_to_select (Optional[type[BaseModel]], optional):
-                Pydantic schema to determine which columns to include in the selection. If not provided, selects all columns of the model.
-            sort_columns (Optional[Union[str, list[str]]], optional):
-                A single column name or list of column names to sort the query results by. Must be used in conjunction with sort_orders.
-            sort_orders (Optional[Union[str, list[str]]], optional):
-                A single sort order ('asc' or 'desc') or a list of sort orders, corresponding to each column in sort_columns. If not specified, defaults to ascending order for all sort_columns.
+            schema_to_select: Pydantic schema to determine which columns to include in the selection. If not provided, selects all columns of the model.
+            sort_columns: A single column name or list of column names to sort the query results by. Must be used in conjunction with sort_orders.
+            sort_orders: A single sort order ('asc' or 'desc') or a list of sort orders, corresponding to each column in sort_columns. If not specified, defaults to ascending order for all sort_columns.
 
         Returns:
             Selectable: An SQL Alchemy `Select` statement object that can be executed or further modified.
@@ -369,8 +446,10 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
+            '__not_in' (not included in [tuple, list or set]).
 
         Args:
             db: The database session to use for the operation.
@@ -381,7 +460,6 @@ class FastCRUD(
 
         Raises:
             ValueError: If return_as_model is True but schema_to_select is not provided.
-            MultipleResultsFound: if `one_or_none` is False and many result correspond to the passed filter.
 
         Returns:
             A dictionary or a Pydantic model instance of the fetched database row, or None if no match is found.
@@ -474,8 +552,10 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
+            '__not_in' (not included in [tuple, list or set]).
 
         Args:
             db: The database session to use for the operation.
@@ -521,7 +601,9 @@ class FastCRUD(
         Counts records that match specified filters, supporting advanced filtering through comparison operators:
             '__gt' (greater than), '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and '__ne' (not equal).
+            '__lte' (less than or equal to), '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
+            '__not_in' (not included in [tuple, list or set]).
         Can also count records based on a configuration of joins, useful for complex queries involving relationships.
 
         Args:
@@ -632,7 +714,7 @@ class FastCRUD(
         self,
         db: AsyncSession,
         offset: int = 0,
-        limit: int = 100,
+        limit: Optional[int] = 100,
         schema_to_select: Optional[type[BaseModel]] = None,
         sort_columns: Optional[Union[str, list[str]]] = None,
         sort_orders: Optional[Union[str, list[str]]] = None,
@@ -645,13 +727,15 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
+            '__not_in' (not included in [tuple, list or set]).
 
         Args:
             db: The database session to use for the operation.
             offset: Starting index for records to fetch, useful for pagination.
-            limit: Maximum number of records to fetch in one call.
+            limit: Maximum number of records to fetch in one call. Use `None` for "no limit", fetching all matching rows. Note that in order to use `limit=None`, you'll have to provide a custom endpoint to facilitate it, which you should only do if you really seriously want to allow the user to get all the data at once.
             schema_to_select: Optional Pydantic schema for selecting specific columns. Required if `return_as_model` is True.
             sort_columns: Column names to sort the results by.
             sort_orders: Corresponding sort orders ('asc', 'desc') for each column in sort_columns.
@@ -696,7 +780,7 @@ class FastCRUD(
             users = await crud.get_multi(db, 0, 10, is_active=True, sort_columns=['username', 'email'], sort_orders=['asc', 'desc'])
             ```
         """
-        if limit < 0 or offset < 0:
+        if (limit is not None and limit < 0) or offset < 0:
             raise ValueError("Limit and offset must be non-negative.")
 
         stmt = await self.select(
@@ -706,7 +790,11 @@ class FastCRUD(
             **kwargs,
         )
 
-        stmt = stmt.offset(offset).limit(limit)
+        if offset:
+            stmt = stmt.offset(offset)
+        if limit is not None:
+            stmt = stmt.limit(limit)
+
         result = await db.execute(stmt)
         data = [dict(row) for row in result.mappings()]
 
@@ -743,6 +831,7 @@ class FastCRUD(
         alias: Optional[AliasedClass] = None,
         join_filters: Optional[dict] = None,
         joins_config: Optional[list[JoinConfig]] = None,
+        nest_joins: bool = False,
         **kwargs: Any,
     ) -> Optional[dict[str, Any]]:
         """
@@ -752,8 +841,10 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
+            '__not_in' (not included in [tuple, list or set]).
 
         Args:
             db: The SQLAlchemy async session.
@@ -766,6 +857,7 @@ class FastCRUD(
             alias: An instance of `AliasedClass` for the join model, useful for self-joins or multiple joins on the same model. Result of `aliased(join_model)`.
             join_filters: Filters applied to the joined model, specified as a dictionary mapping column names to their expected values.
             joins_config: A list of JoinConfig instances, each specifying a model to join with, join condition, optional prefix for column names, schema for selecting specific columns, and the type of join. This parameter enables support for multiple joins.
+            nest_joins: If True, nested data structures will be returned where joined model data are nested under the join_prefix as a dictionary.
             **kwargs: Filters to apply to the primary model query, supporting advanced comparison operators for refined searching.
 
         Returns:
@@ -893,6 +985,34 @@ class FastCRUD(
                 joins_config=joins_config
             )
             ```
+
+            Example of using 'joins_config' for multiple joins with nested joins enabled:
+            ```python
+            from fastcrud import JoinConfig
+
+            result = await crud_user.get_joined(
+                db=session,
+                schema_to_select=UserSchema,
+                joins_config=[
+                    JoinConfig(
+                        model=Tier,
+                        join_on=User.tier_id == Tier.id,
+                        join_prefix="tier_",
+                        schema_to_select=TierSchema,
+                        join_type="left",
+                    ),
+                    JoinConfig(
+                        model=Department,
+                        join_on=User.department_id == Department.id,
+                        join_prefix="dept_",
+                        schema_to_select=DepartmentSchema,
+                        join_type="inner",
+                    )
+                ],
+                nest_joins=True
+            )
+            # Expect 'result' to have 'tier' and 'dept' as nested dictionaries
+            ```
         """
         if joins_config and (
             join_model or join_prefix or join_on or join_schema_to_select or alias
@@ -923,31 +1043,9 @@ class FastCRUD(
                 )
             )
 
-        for join in join_definitions:
-            model = join.alias or join.model
-            joined_model_filters = (
-                self._parse_filters(model=model, **join.filters)
-                if join.filters
-                else None
-            )
-
-            join_select = _extract_matching_columns_from_schema(
-                model=join.model,
-                schema=join.schema_to_select,
-                prefix=join.join_prefix,
-                alias=join.alias,
-            )
-
-            if join.join_type == "left":
-                stmt = stmt.outerjoin(model, join.join_on).add_columns(*join_select)
-            elif join.join_type == "inner":
-                stmt = stmt.join(model, join.join_on).add_columns(*join_select)
-            else:
-                raise ValueError(f"Unsupported join type: {join.join_type}.")
-
-            if joined_model_filters is not None:
-                stmt = stmt.filter(*joined_model_filters)
-
+        stmt = self._prepare_and_apply_joins(
+            stmt=stmt, joins_config=join_definitions, use_temporary_prefix=nest_joins
+        )
         primary_filters = self._parse_filters(**kwargs)
         if primary_filters:
             stmt = stmt.filter(*primary_filters)
@@ -955,8 +1053,11 @@ class FastCRUD(
         db_row = await db.execute(stmt)
         result: Optional[Row] = db_row.first()
         if result is not None:
-            out: dict = dict(result._mapping)
-            return out
+            data: dict = dict(result._mapping)
+            if nest_joins:
+                data = _nest_join_data(data, join_definitions)
+
+            return data
 
         return None
 
@@ -971,8 +1072,9 @@ class FastCRUD(
         join_type: str = "left",
         alias: Optional[AliasedClass[Any]] = None,
         join_filters: Optional[dict] = None,
+        nest_joins: bool = False,
         offset: int = 0,
-        limit: int = 100,
+        limit: Optional[int] = 100,
         sort_columns: Optional[Union[str, list[str]]] = None,
         sort_orders: Optional[Union[str, list[str]]] = None,
         return_as_model: bool = False,
@@ -986,8 +1088,10 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
+            '__not_in' (not included in [tuple, list or set]).
 
         Args:
             db: The SQLAlchemy async session.
@@ -999,8 +1103,9 @@ class FastCRUD(
             join_type: Specifies the type of join operation to perform. Can be "left" for a left outer join or "inner" for an inner join.
             alias: An instance of `AliasedClass` for the join model, useful for self-joins or multiple joins on the same model. Result of `aliased(join_model)`.
             join_filters: Filters applied to the joined model, specified as a dictionary mapping column names to their expected values.
+            nest_joins: If True, nested data structures will be returned where joined model data are nested under the join_prefix as a dictionary.
             offset: The offset (number of records to skip) for pagination.
-            limit: The limit (maximum number of records to return) for pagination.
+            limit: Maximum number of records to fetch in one call. Use `None` for "no limit", fetching all matching rows. Note that in order to use `limit=None`, you'll have to provide a custom endpoint to facilitate it, which you should only do if you really seriously want to allow the user to get all the data at once.
             sort_columns: A single column name or a list of column names on which to apply sorting.
             sort_orders: A single sort order ('asc' or 'desc') or a list of sort orders corresponding to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
             return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
@@ -1177,6 +1282,36 @@ class FastCRUD(
                 limit=10
             )
             ```
+
+            Fetching a list of projects, each with nested details of associated tasks and task creators, using nested joins:
+            ```python
+            projects = await crud.get_multi_joined(
+                db=session,
+                schema_to_select=ProjectSchema,
+                joins_config=[
+                    JoinConfig(
+                        model=Task,
+                        join_on=Project.id == Task.project_id,
+                        join_prefix="task_",
+                        schema_to_select=TaskSchema,
+                        join_type="left",
+                    ),
+                    JoinConfig(
+                        model=User,
+                        join_on=Task.creator_id == User.id,
+                        join_prefix="creator_",
+                        schema_to_select=UserSchema,
+                        join_type="left",
+                        alias=aliased(User, name="task_creator")
+                    )
+                ],
+                nest_joins=True,
+                offset=0,
+                limit=5,
+                sort_columns='project_name',
+                sort_orders='asc'
+            )
+        ```
         """
         if joins_config and (
             join_model or join_prefix or join_on or join_schema_to_select or alias
@@ -1187,7 +1322,7 @@ class FastCRUD(
         elif not joins_config and not join_model:
             raise ValueError("You need one of join_model or joins_config.")
 
-        if limit < 0 or offset < 0:
+        if (limit is not None and limit < 0) or offset < 0:
             raise ValueError("Limit and offset must be non-negative.")
 
         primary_select = _extract_matching_columns_from_schema(
@@ -1210,30 +1345,9 @@ class FastCRUD(
                 )
             )
 
-        for join in join_definitions:
-            model = join.alias or join.model
-            joined_model_filters = (
-                self._parse_filters(model=model, **join.filters)
-                if join.filters
-                else None
-            )
-
-            join_select = _extract_matching_columns_from_schema(
-                model=join.model,
-                schema=join.schema_to_select,
-                prefix=join.join_prefix,
-                alias=join.alias,
-            )
-
-            if join.join_type == "left":
-                stmt = stmt.outerjoin(model, join.join_on).add_columns(*join_select)
-            elif join.join_type == "inner":
-                stmt = stmt.join(model, join.join_on).add_columns(*join_select)
-            else:
-                raise ValueError(f"Unsupported join type: {join.join_type}.")
-
-            if joined_model_filters is not None:
-                stmt = stmt.filter(*joined_model_filters)
+        stmt = self._prepare_and_apply_joins(
+            stmt=stmt, joins_config=join_definitions, use_temporary_prefix=nest_joins
+        )
 
         primary_filters = self._parse_filters(**kwargs)
         if primary_filters:
@@ -1242,29 +1356,41 @@ class FastCRUD(
         if sort_columns:
             stmt = self._apply_sorting(stmt, sort_columns, sort_orders)
 
-        stmt = stmt.offset(offset).limit(limit)
+        if offset:
+            stmt = stmt.offset(offset)
+        if limit is not None:
+            stmt = stmt.limit(limit)
 
         result = await db.execute(stmt)
-        data: list[dict] = [dict(row) for row in result.mappings().all()]
+        data: list[Union[dict, BaseModel]] = []
+        for row in result.mappings().all():
+            row_dict = dict(row)
+
+            if nest_joins:
+                row_dict = _nest_join_data(row_dict, join_definitions)
+
+            if return_as_model:
+                if schema_to_select is None:
+                    raise ValueError(
+                        "schema_to_select must be provided when return_as_model is True."
+                    )
+                try:
+                    model_instance = schema_to_select(**row_dict)
+                    data.append(model_instance)
+                except ValidationError as e:
+                    raise ValueError(
+                        f"Data validation error for schema {schema_to_select.__name__}: {e}"
+                    )
+            else:
+                data.append(row_dict)
 
         response: dict[str, Any] = {"data": data}
 
         if return_total_count:
-            total_count = await self.count(db=db, joins_config=joins_config, **kwargs)
+            total_count: int = await self.count(
+                db=db, joins_config=joins_config, **kwargs
+            )
             response["total_count"] = total_count
-
-        if return_as_model:
-            if not schema_to_select:
-                raise ValueError(
-                    "schema_to_select must be provided when return_as_model is True."
-                )
-            try:
-                model_data: list[BaseModel] = [schema_to_select(**row) for row in data]
-                response["data"] = model_data
-            except ValidationError as e:
-                raise ValueError(
-                    f"Data validation error for schema {schema_to_select.__name__}: {e}"
-                )
 
         return response
 
@@ -1284,8 +1410,10 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
+            '__not_in' (not included in [tuple, list or set]).
 
         Args:
             db: The SQLAlchemy async session.
@@ -1362,6 +1490,7 @@ class FastCRUD(
         db: AsyncSession,
         object: Union[UpdateSchemaType, dict[str, Any]],
         allow_multiple: bool = False,
+        commit: bool = True,
         **kwargs: Any,
     ) -> None:
         """
@@ -1370,13 +1499,16 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
+            '__not_in' (not included in [tuple, list or set]).
 
         Args:
             db: The database session to use for the operation.
             object: A Pydantic schema or dictionary containing the update data.
             allow_multiple: If True, allows updating multiple records that match the filters. If False, raises an error if more than one record matches the filters.
+            commit: If True, commits the transaction immediately. Default is True.
             **kwargs: Filters to identify the record(s) to update, supporting advanced comparison operators for refined querying.
 
         Returns:
@@ -1426,22 +1558,30 @@ class FastCRUD(
         stmt = update(self.model).filter(*filters).values(update_data)
 
         await db.execute(stmt)
-        await db.commit()
+        if commit:
+            await db.commit()
 
     async def db_delete(
-        self, db: AsyncSession, allow_multiple: bool = False, **kwargs: Any
+        self,
+        db: AsyncSession,
+        allow_multiple: bool = False,
+        commit: bool = True,
+        **kwargs: Any,
     ) -> None:
         """
         Deletes a record or multiple records from the database based on specified filters, with support for advanced filtering through comparison operators:
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
+            '__not_in' (not included in [tuple, list or set]).
 
         Args:
             db: The database session to use for the operation.
             allow_multiple: If True, allows deleting multiple records that match the filters. If False, raises an error if more than one record matches the filters.
+            commit: If True, commits the transaction immediately. Default is True.
             **kwargs: Filters to identify the record(s) to delete, including advanced comparison operators for detailed querying.
 
         Returns:
@@ -1474,13 +1614,15 @@ class FastCRUD(
         filters = self._parse_filters(**kwargs)
         stmt = delete(self.model).filter(*filters)
         await db.execute(stmt)
-        await db.commit()
+        if commit:
+            await db.commit()
 
     async def delete(
         self,
         db: AsyncSession,
         db_row: Optional[Row] = None,
         allow_multiple: bool = False,
+        commit: bool = True,
         **kwargs: Any,
     ) -> None:
         """
@@ -1489,13 +1631,16 @@ class FastCRUD(
             '__gt' (greater than),
             '__lt' (less than),
             '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), and
-            '__ne' (not equal).
+            '__lte' (less than or equal to),
+            '__ne' (not equal),
+            '__in' (included in [tuple, list or set]),
+            '__not_in' (not included in [tuple, list or set]).
 
         Args:
             db: The database session to use for the operation.
             db_row: Optional existing database row to delete. If provided, the method will attempt to delete this specific row, ignoring other filters.
             allow_multiple: If True, allows deleting multiple records that match the filters. If False, raises an error if more than one record matches the filters.
+            commit: If True, commits the transaction immediately. Default is True.
             **kwargs: Filters to identify the record(s) to delete, supporting advanced comparison operators for refined querying.
 
         Raises:
@@ -1528,10 +1673,12 @@ class FastCRUD(
             ):
                 setattr(db_row, self.is_deleted_column, True)
                 setattr(db_row, self.deleted_at_column, datetime.now(timezone.utc))
-                await db.commit()
+                if commit:
+                    await db.commit()
             else:
                 await db.delete(db_row)
-            await db.commit()
+            if commit:
+                await db.commit()
             return
 
         total_count = await self.count(db, **kwargs)
@@ -1553,4 +1700,5 @@ class FastCRUD(
             delete_stmt = delete(self.model).filter(*filters)
             await db.execute(delete_stmt)
 
-        await db.commit()
+        if commit:
+            await db.commit()

@@ -65,11 +65,85 @@ For simpler join requirements, FastCRUD allows specifying join parameters direct
 # Fetch tasks with user details, specifying a left join
 tasks_with_users = await task_crud.get_joined(
     db=db,
-    model=User,
+    join_model=User,
     join_on=Task.user_id == User.id,
     join_type="left"
 )
 ```
+
+#### Getting Joined Data Nested
+
+Note that by default, `FastCRUD` joins all the data and returns it in a single dictionary.
+Let's define two tables:
+```python
+class User(Base):
+    __tablename__ = "user"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    tier_id = Column(Integer, ForeignKey("tier.id"))
+
+
+class Tier(Base):
+    __tablename__ = "tier"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+```
+
+And join them with `FastCRUD`:
+
+```python
+user_tier = await user_crud.get_joined(
+    db=db,
+    join_model=Tier,
+    join_on=User.tier_id == Tier.id,
+    join_type="left",
+    join_prefix="tier_",,
+    id=1
+)
+```
+
+We'll get:
+
+```javascript
+{
+    "id": 1,
+    "name": "Example",
+    "tier_id": 1,
+    "tier_name": "Free",
+}
+```
+
+If you want the joined data in a nested dictionary instead, you may just pass `nest_joins=True`:
+
+```python
+user_tier = await user_crud.get_joined(
+    db=db,
+    join_model=Tier,
+    join_on=User.tier_id == Tier.id,
+    join_type="left",
+    join_prefix="tier_",
+    nest_joins=True,
+    id=1,
+)
+```
+
+And you will get:
+
+```javascript
+{
+    "id": 1,
+    "name": "Example",
+    "tier": {
+        "id": 1,
+        "name": "Free",
+    },
+}
+```
+
+This works for both `get_joined` and `get_multi_joined`.
+
+!!! WARNING
+    Note that the final `"_"` in the passed `"tier_"` is stripped.
 
 ### Complex Joins Using `JoinConfig`
 

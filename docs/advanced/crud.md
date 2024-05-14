@@ -3,6 +3,51 @@
 
 FastCRUD offers a flexible and powerful approach to handling CRUD operations in FastAPI applications, leveraging the SQLAlchemy ORM. Beyond basic CRUD functionality, FastCRUD provides advanced features like `allow_multiple` for updates and deletes, and support for advanced filters (e.g., less than, greater than). These features enable more complex and fine-grained data manipulation and querying capabilities.
 
+## Typing Options for `FastCRUD`
+
+Note that when initializing `FastCRUD`, assuming you have a model like:
+
+```python
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
+from sqlalchemy.orm import DeclarativeBase
+
+class Base(DeclarativeBase):
+    pass
+
+class User(Base):
+    __tablename__ = "user"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    archived = Column(Boolean, default=False)
+    archived_at = Column(DateTime)
+```
+
+You could just pass it to `FastCRUD`:
+
+```python
+from fastcrud import FastCRUD
+
+crud_user = FastCRUD(User)
+```
+
+But you also may want a more robust typing, for that purpose, you may also pass the relevant pydantic schemas in the following way:
+
+```python
+from .models.user import User
+from .schemas.user import UserCreate, UserUpdate, UserUpdateInternal, UserDelete
+
+# Just pass None if you don't have one of the schemas
+CRUDUser = FastCRUD[User, UserCreate, UserUpdate, UserUpdateInternal, UserDelete]
+```
+
+Then you can initialize CRUDUser like you would any FastCRUD instance, but with the relevant types:
+
+```python
+from .models.user import User
+
+crud_user = CRUDUser(User)
+```
+
 ## Allow Multiple Updates and Deletes
 
 One of FastCRUD's advanced features is the ability to update or delete multiple records at once based on specified conditions. This is particularly useful for batch operations where you need to modify or remove several records that match certain criteria.
@@ -55,6 +100,15 @@ items = await item_crud.get_multi(
 )
 ```
 
+Currently supported filter operators are:
+- __gt - greater than
+- __lt - less than
+- __gte - greater than or equal to
+- __lte - less than or equal to
+- __ne - not equal
+- __in - included in (tuple, list or set)
+- __not_in - not included in (tuple, list or set)
+
 #### Counting Records
 
 ```python
@@ -64,6 +118,44 @@ item_count = await item_crud.count(
     added_at__gte=datetime.datetime.now() - datetime.timedelta(days=30)
 )
 ```
+
+## Skipping Database Commit
+
+For `create`, `update`, `db_delete` and `delete` methods of `FastCRUD`, you have the option of passing `commit=False` so you don't commit the operations immediately.
+
+```python
+from fastcrud import FastCRUD
+
+from .models.item import Item
+from .database import session as db
+
+crud_items = FastCRUD(Item)
+
+await crud_items.delete(
+    db=db, 
+    commit=False, 
+    id=1
+)
+# this will not actually delete until you run a db.commit()
+```
+
+## Unpaginated `get_multi` and `get_multi_joined`
+
+If you pass `None` to `limit` in `get_multi` and `get_multi_joined`, you get the whole unpaginated set of data that matches the filters. Use this with caution.
+
+```python
+from fastcrud import FastCRUD
+
+from .models.item import Item
+from .database import session as db
+
+crud_items = FastCRUD(Item)
+items = await crud_items.get_multi(db=db, limit=None)
+# this will return all items in the db
+```
+
+!!! CAUTION
+    Be cautious when returning all the data in your database, and you should almost never allow your API user to do this.
 
 ## Using `get_joined` and `get_multi_joined` for multiple models
 

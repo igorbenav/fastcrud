@@ -1,4 +1,4 @@
-from typing import Any, Generic, TypeVar, Union, Optional
+from typing import Any, Dict, Generic, TypeVar, Union, Optional
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, ValidationError
@@ -190,6 +190,7 @@ class FastCRUD(
         self.is_deleted_column = is_deleted_column
         self.deleted_at_column = deleted_at_column
         self.updated_at_column = updated_at_column
+        self._primary_keys = _get_primary_keys(self.model)
 
     def _parse_filters(
         self, model: Optional[Union[type[ModelType], AliasedClass]] = None, **kwargs
@@ -453,6 +454,7 @@ class FastCRUD(
         Args:
             db: The database session to use for the operation.
             schema_to_select: Optional Pydantic schema for selecting specific columns.
+            return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
             one_or_none: Flag to get strictly one or no result. Multiple results are not allowed.
             **kwargs: Filters to apply to the query, using field names for direct matches or appending comparison operators for advanced queries.
 
@@ -497,6 +499,52 @@ class FastCRUD(
                 "schema_to_select must be provided when return_as_model is True."
             )
         return schema_to_select(**out)
+
+    def _get_pk_dict(self, instance):
+        return {pk.name: getattr(instance, pk.name) for pk in self._primary_keys}
+
+    async def upsert(
+        self,
+        db: AsyncSession,
+        instance: Union[UpdateSchemaType, CreateSchemaType],
+        schema_to_select: Optional[type[BaseModel]] = None,
+        return_as_model: bool = False,
+    ) -> Union[BaseModel, Dict[str, Any], None]:
+        """Update the instance or create it if it doesn't exists.
+        Note: This method will perform two transactions to the database (get and create or update).
+
+        Args:
+            db (AsyncSession): The database session to use for the operation.
+            instance (Union[UpdateSchemaType, type[BaseModel]]): A Pydantic schema representing the instance.
+            schema_to_select (Optional[type[BaseModel]], optional): Optional Pydantic schema for selecting specific columns. Defaults to None.
+            return_as_model (bool, optional): If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
+
+        Returns:
+            BaseModel: the created or updated instance
+        """
+        _pks = self._get_pk_dict(instance)
+        schema_to_select = schema_to_select or type(instance)
+        db_instance = await self.get(
+            db,
+            schema_to_select=schema_to_select,
+            return_as_model=return_as_model,
+            **_pks,
+        )
+        if db_instance is None:
+            db_instance = await self.create(db, instance)  # type: ignore
+            db_instance = schema_to_select.model_validate(
+                db_instance, from_attributes=True
+            )
+        else:
+            await self.update(db, instance)  # type: ignore
+            db_instance = await self.get(
+                db,
+                schema_to_select=schema_to_select,
+                return_as_model=return_as_model,
+                **_pks,
+            )
+
+        return db_instance
 
     async def exists(self, db: AsyncSession, **kwargs: Any) -> bool:
         """

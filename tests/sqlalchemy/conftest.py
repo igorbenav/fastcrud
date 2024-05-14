@@ -370,7 +370,7 @@ def client(
 
 
 @pytest.fixture
-def endpoint_creator() -> EndpointCreator:
+def endpoint_creator(test_model) -> EndpointCreator:
     """Fixture to create an instance of EndpointCreator."""
     return EndpointCreator(
         session=get_session_local,

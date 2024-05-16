@@ -187,6 +187,7 @@ class FastCRUD(
         updated_at_column: str = "updated_at",
     ) -> None:
         self.model = model
+        self.model_col_names = [col.key for col in model.__table__.columns]
         self.is_deleted_column = is_deleted_column
         self.deleted_at_column = deleted_at_column
         self.updated_at_column = updated_at_column
@@ -1690,7 +1691,7 @@ class FastCRUD(
                 f"Expected exactly one record to delete, found {total_count}."
             )
 
-        if self.is_deleted_column in self.model.__table__.columns:
+        if self.is_deleted_column in self.model_col_names:
             update_stmt = (
                 update(self.model)
                 .filter(*filters)

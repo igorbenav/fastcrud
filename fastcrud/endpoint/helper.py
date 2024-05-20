@@ -184,26 +184,29 @@ def _apply_model_pk(**pkeys: dict[str, type]):
 
 
 def _create_dynamic_filters(
-    filter_config: Optional[FilterConfig] = None,
-    column_types: Optional[dict[str, type]] = None,
+    filter_config: Optional[FilterConfig], column_types: dict[str, type]
 ) -> Callable[..., dict[str, Any]]:
     if filter_config is None:
         return lambda: {}
 
-    filter_params = filter_config.get_params()
+    def filters(
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        filtered_params = {}
+        for key, value in kwargs.items():
+            if value is not None:
+                filtered_params[key] = value
+        return filtered_params
 
-    def filters(**kwargs: Any) -> dict[str, Any]:
-        return {k: v for k, v in kwargs.items() if v is not None}
-
-    params = [
-        inspect.Parameter(
-            name=key,
-            kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            default=Query(value),
-            annotation=column_types.get(key, str) if column_types else str,
+    params = []
+    for key, value in filter_config.filters.items():
+        params.append(
+            inspect.Parameter(
+                key,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                default=Query(value, alias=key),
+            )
         )
-        for key, value in filter_params.items()
-    ]
 
     sig = inspect.Signature(params)
     setattr(filters, "__signature__", sig)

@@ -14,7 +14,7 @@ from sqlalchemy.sql import func
 
 from fastcrud.crud.fast_crud import FastCRUD
 from fastcrud.endpoint.crud_router import crud_router
-from fastcrud import EndpointCreator
+from fastcrud import EndpointCreator, FilterConfig
 
 
 class MultiPKModel(SQLModel, table=True):
@@ -357,6 +357,82 @@ def client(
     )
 
     return TestClient(app)
+
+
+@pytest.fixture
+def filtered_client(
+    test_model,
+    create_schema,
+    update_schema,
+    delete_schema,
+):
+    app = FastAPI()
+
+    app.include_router(
+        crud_router(
+            session=get_session_local,
+            model=test_model,
+            crud=FastCRUD(test_model),
+            create_schema=create_schema,
+            update_schema=update_schema,
+            delete_schema=delete_schema,
+            filter_config=FilterConfig(tier_id=None, name=None),
+            path="/test",
+            tags=["test"],
+        )
+    )
+
+    return TestClient(app)
+
+
+@pytest.fixture
+def dict_filtered_client(
+    test_model,
+    create_schema,
+    update_schema,
+    delete_schema,
+):
+    app = FastAPI()
+
+    app.include_router(
+        crud_router(
+            session=get_session_local,
+            model=test_model,
+            crud=FastCRUD(test_model),
+            create_schema=create_schema,
+            update_schema=update_schema,
+            delete_schema=delete_schema,
+            filter_config={"tier_id": None, "name": None},
+            path="/test",
+            tags=["test"],
+        )
+    )
+
+    return TestClient(app)
+
+
+@pytest.fixture
+def invalid_filtered_client(
+    test_model,
+    create_schema,
+    update_schema,
+    delete_schema,
+):
+    filter_config = {"invalid_column": None}
+
+    with pytest.raises(
+        ValueError, match="Invalid filter column 'invalid_column': not found in model"
+    ):
+        EndpointCreator(
+            session=get_session_local,
+            model=test_model,
+            create_schema=create_schema,
+            update_schema=update_schema,
+            delete_schema=delete_schema,
+            filter_config=filter_config,
+            path="/test",
+            tags=["test"],
+        )
 
 
 @pytest.fixture

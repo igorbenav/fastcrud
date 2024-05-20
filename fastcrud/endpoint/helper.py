@@ -99,7 +99,7 @@ def _get_python_type(column: Column) -> Optional[type]:
             )
 
 
-def _get_column_types(model: type[DeclarativeBase]) -> dict[str, type]:
+def _get_column_types(model: type[DeclarativeBase]) -> dict[str, Union[type, None]]:
     """Get a dictionary of column names and their corresponding Python types from a SQLAlchemy model."""
     inspector = sa_inspect(model).mapper
     column_types = {}
@@ -200,7 +200,7 @@ def _create_dynamic_filters(
             name=key,
             kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
             default=Query(value),
-            annotation=column_types.get(key, str) if column_types else str
+            annotation=column_types.get(key, str) if column_types else str,
         )
         for key, value in filter_params.items()
     ]

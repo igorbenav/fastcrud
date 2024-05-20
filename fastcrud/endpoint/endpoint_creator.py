@@ -19,6 +19,7 @@ from .helper import (
     _inject_dependencies,
     _apply_model_pk,
     _create_dynamic_filters,
+    _get_column_types,
 )
 
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -52,7 +53,7 @@ class EndpointCreator:
         endpoint_names: Optional dictionary to customize endpoint names for CRUD operations. Keys are operation types
                         ("create", "read", "update", "delete", "db_delete", "read_multi", "read_paginated"), and
                         values are the custom names to use. Unspecified operations will use default names.
-        filter_config: Optional FilterConfig instance to configure filters for the `read_multi` and `read_paginated` endpoints.
+        filter_config: Optional FilterConfig instance or dictionary to configure filters for the `read_multi` and `read_paginated` endpoints.
 
     Raises:
         ValueError: If both `included_methods` and `deleted_methods` are provided.
@@ -218,7 +219,7 @@ class EndpointCreator:
         deleted_at_column: str = "deleted_at",
         updated_at_column: str = "updated_at",
         endpoint_names: Optional[dict[str, str]] = None,
-        filter_config: Optional[FilterConfig] = None,
+        filter_config: Optional[Union[FilterConfig, dict]] = None,
     ) -> None:
         self._primary_keys = _get_primary_keys(model)
         self._primary_keys_types = {
@@ -254,9 +255,11 @@ class EndpointCreator:
         }
         self.endpoint_names = {**self.default_endpoint_names, **(endpoint_names or {})}
         if filter_config:
+            if isinstance(filter_config, dict):
+                filter_config = FilterConfig(**filter_config)
             self._validate_filter_config(filter_config)
-
         self.filter_config = filter_config
+        self.column_types = _get_column_types(model)
 
     def _validate_filter_config(self, filter_config: FilterConfig) -> None:
         model_columns = self.crud.model_col_names
@@ -303,7 +306,7 @@ class EndpointCreator:
 
     def _read_items(self):
         """Creates an endpoint for reading multiple items from the database."""
-        dynamic_filters = _create_dynamic_filters(self.filter_config)
+        dynamic_filters = _create_dynamic_filters(self.filter_config, self.column_types)
 
         async def endpoint(
             db: AsyncSession = Depends(self.session),
@@ -317,7 +320,7 @@ class EndpointCreator:
 
     def _read_paginated(self):
         """Creates an endpoint for reading multiple items from the database with pagination."""
-        dynamic_filters = _create_dynamic_filters(self.filter_config)
+        dynamic_filters = _create_dynamic_filters(self.filter_config, self.column_types)
 
         async def endpoint(
             db: AsyncSession = Depends(self.session),

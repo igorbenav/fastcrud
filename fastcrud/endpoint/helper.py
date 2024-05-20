@@ -99,6 +99,15 @@ def _get_python_type(column: Column) -> Optional[type]:
             )
 
 
+def _get_column_types(model: type[DeclarativeBase]) -> dict[str, type]:
+    """Get a dictionary of column names and their corresponding Python types from a SQLAlchemy model."""
+    inspector = sa_inspect(model).mapper
+    column_types = {}
+    for column in inspector.columns:
+        column_types[column.name] = _get_python_type(column)
+    return column_types
+
+
 def _extract_unique_columns(
     model: type[DeclarativeBase],
 ) -> Sequence[KeyedColumnElement]:
@@ -176,6 +185,7 @@ def _apply_model_pk(**pkeys: dict[str, type]):
 
 def _create_dynamic_filters(
     filter_config: Optional[FilterConfig] = None,
+    column_types: Optional[dict[str, type]] = None,
 ) -> Callable[..., dict[str, Any]]:
     if filter_config is None:
         return lambda: {}
@@ -187,7 +197,10 @@ def _create_dynamic_filters(
 
     params = [
         inspect.Parameter(
-            name=key, kind=inspect.Parameter.POSITIONAL_OR_KEYWORD, default=value
+            name=key,
+            kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            default=Query(value),
+            annotation=column_types.get(key, str) if column_types else str
         )
         for key, value in filter_params.items()
     ]

@@ -38,7 +38,7 @@ def crud_router(
     deleted_at_column: str = "deleted_at",
     updated_at_column: str = "updated_at",
     endpoint_names: Optional[dict[str, str]] = None,
-    filter_config: Optional[FilterConfig] = None,
+    filter_config: Optional[Union[FilterConfig, dict]] = None,
 ) -> APIRouter:
     """
     Creates and configures a FastAPI router with CRUD endpoints for a given model.
@@ -72,7 +72,7 @@ def crud_router(
         endpoint_names: Optional dictionary to customize endpoint names for CRUD operations. Keys are operation types
                         ("create", "read", "update", "delete", "db_delete", "read_multi", "read_paginated"), and
                         values are the custom names to use. Unspecified operations will use default names.
-        filter_config: Optional FilterConfig instance to configure filters for the `read_multi` and `read_paginated` endpoints.
+        filter_config: Optional FilterConfig instance or dictionary to configure filters for the `read_multi` and `read_paginated` endpoints.
 
     Returns:
         Configured APIRouter instance with the CRUD endpoints.

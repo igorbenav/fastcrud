@@ -22,7 +22,6 @@ class Base(DeclarativeBase):
 
 class MultiPkModel(Base):
     __tablename__ = "multi_pk"
-    # tests = relationship("ModelTest", back_populates="category")
     id = Column(Integer, primary_key=True)
     uuid = Column(String(32), primary_key=True)
     name = Column(String, unique=True)
@@ -328,7 +327,7 @@ def client(
 
     app.include_router(
         crud_router(
-            session=get_session_local,
+            session=lambda: local_session(),
             model=test_model,
             crud=FastCRUD(test_model),
             create_schema=create_schema,
@@ -341,7 +340,7 @@ def client(
 
     app.include_router(
         crud_router(
-            session=get_session_local,
+            session=lambda: local_session(),
             model=tier_model,
             crud=FastCRUD(tier_model),
             create_schema=tier_schema,
@@ -354,7 +353,7 @@ def client(
 
     app.include_router(
         crud_router(
-            session=get_session_local,
+            session=lambda: local_session(),
             model=multi_pk_model,
             crud=FastCRUD(multi_pk_model),
             create_schema=multi_pk_test_create_schema,
@@ -380,7 +379,7 @@ def filtered_client(
 
     app.include_router(
         crud_router(
-            session=get_session_local,
+            session=lambda: local_session(),
             model=test_model,
             crud=FastCRUD(test_model),
             create_schema=create_schema,
@@ -406,7 +405,7 @@ def dict_filtered_client(
 
     app.include_router(
         crud_router(
-            session=get_session_local,
+            session=lambda: local_session(),
             model=test_model,
             crud=FastCRUD(test_model),
             create_schema=create_schema,
@@ -434,7 +433,7 @@ def invalid_filtered_client(
         ValueError, match="Invalid filter column 'invalid_column': not found in model"
     ):
         EndpointCreator(
-            session=get_session_local,
+            session=lambda: local_session(),
             model=test_model,
             create_schema=create_schema,
             update_schema=update_schema,
@@ -449,7 +448,7 @@ def invalid_filtered_client(
 def endpoint_creator(test_model) -> EndpointCreator:
     """Fixture to create an instance of EndpointCreator."""
     return EndpointCreator(
-        session=get_session_local,
+        session=lambda: local_session(),
         model=ModelTest,
         crud=FastCRUD(test_model),
         create_schema=CreateSchemaTest,

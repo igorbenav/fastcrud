@@ -327,7 +327,7 @@ def client(
 
     app.include_router(
         crud_router(
-            session=lambda: local_session(),
+            session=get_session_local,
             model=test_model,
             crud=FastCRUD(test_model),
             create_schema=create_schema,
@@ -340,7 +340,7 @@ def client(
 
     app.include_router(
         crud_router(
-            session=lambda: local_session(),
+            session=get_session_local,
             model=tier_model,
             crud=FastCRUD(tier_model),
             create_schema=tier_schema,
@@ -353,7 +353,7 @@ def client(
 
     app.include_router(
         crud_router(
-            session=lambda: local_session(),
+            session=get_session_local,
             model=multi_pk_model,
             crud=FastCRUD(multi_pk_model),
             create_schema=multi_pk_test_create_schema,
@@ -379,7 +379,7 @@ def filtered_client(
 
     app.include_router(
         crud_router(
-            session=lambda: local_session(),
+            session=get_session_local,
             model=test_model,
             crud=FastCRUD(test_model),
             create_schema=create_schema,
@@ -405,7 +405,7 @@ def dict_filtered_client(
 
     app.include_router(
         crud_router(
-            session=lambda: local_session(),
+            session=get_session_local,
             model=test_model,
             crud=FastCRUD(test_model),
             create_schema=create_schema,
@@ -433,7 +433,7 @@ def invalid_filtered_client(
         ValueError, match="Invalid filter column 'invalid_column': not found in model"
     ):
         EndpointCreator(
-            session=lambda: local_session(),
+            session=get_session_local,
             model=test_model,
             create_schema=create_schema,
             update_schema=update_schema,
@@ -448,7 +448,7 @@ def invalid_filtered_client(
 def endpoint_creator(test_model) -> EndpointCreator:
     """Fixture to create an instance of EndpointCreator."""
     return EndpointCreator(
-        session=lambda: local_session(),
+        session=get_session_local,
         model=ModelTest,
         crud=FastCRUD(test_model),
         create_schema=CreateSchemaTest,

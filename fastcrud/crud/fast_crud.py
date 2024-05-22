@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine.row import Row
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm.util import AliasedClass
-from sqlalchemy.sql.elements import BinaryExpression
+from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 from sqlalchemy.sql.selectable import Select
 
 from .helper import (
@@ -225,7 +225,7 @@ class FastCRUD(
 
     def _parse_filters(
         self, model: Optional[Union[type[ModelType], AliasedClass]] = None, **kwargs
-    ) -> list[BinaryExpression]:
+    ) -> list[ColumnElement]:
         model = model or self.model
         filters = []
 

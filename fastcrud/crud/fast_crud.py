@@ -2,7 +2,7 @@ from typing import Any, Dict, Generic, TypeVar, Union, Optional, Callable
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import select, update, delete, func, inspect, asc, desc
+from sqlalchemy import select, update, delete, func, inspect, asc, desc, or_
 from sqlalchemy.exc import ArgumentError, MultipleResultsFound, NoResultFound
 from sqlalchemy.sql import Join
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -191,16 +191,13 @@ class FastCRUD(
         "is_not": lambda column: column.is_not,
         "like": lambda column: column.like,
         "notlike": lambda column: column.notlike,
-        "ilike": lambda column: column.ilike,  # only Postgres
-        "notilike": lambda column: column.notilike,  # only Postgres
+        "ilike": lambda column: column.ilike,
+        "notilike": lambda column: column.notilike,
         "startswith": lambda column: column.startswith,
         "endswith": lambda column: column.endswith,
         "contains": lambda column: column.contains,
-        "match": lambda column: column.match,  # FTS in Postgres
+        "match": lambda column: column.match,
     }
-    # On top of those, these could be a thing, but need dialect treatment:
-    # column("x").regexp_match("word").compile(dialect=mysql.dialect())
-    # column("x").regexp_match("word").compile(dialect=postgresql.dialect())
 
     def __init__(
         self,
@@ -244,10 +241,10 @@ class FastCRUD(
                     # )
                     or_filters = [
                         self.get_sqlalchemy_filter(or_key, or_value)(column)(or_value)
-                        for or_key, or_value in value
+                        for or_key, or_value in value.items()
                         if self.get_sqlalchemy_filter(or_key, value)
                     ]
-                    filters.append(column.or_(or_filters))
+                    filters.append(or_(*or_filters))
                 elif sqlalchemy_filter := self.get_sqlalchemy_filter(op, value):
                     filters.append(sqlalchemy_filter(column)(value))
             else:

@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from .endpoint_creator import EndpointCreator
 from ..crud.fast_crud import FastCRUD
+from .helper import FilterConfig
 
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
@@ -37,6 +38,7 @@ def crud_router(
     deleted_at_column: str = "deleted_at",
     updated_at_column: str = "updated_at",
     endpoint_names: Optional[dict[str, str]] = None,
+    filter_config: Optional[Union[FilterConfig, dict]] = None,
 ) -> APIRouter:
     """
     Creates and configures a FastAPI router with CRUD endpoints for a given model.
@@ -70,6 +72,7 @@ def crud_router(
         endpoint_names: Optional dictionary to customize endpoint names for CRUD operations. Keys are operation types
                         ("create", "read", "update", "delete", "db_delete", "read_multi", "read_paginated"), and
                         values are the custom names to use. Unspecified operations will use default names.
+        filter_config: Optional FilterConfig instance or dictionary to configure filters for the `read_multi` and `read_paginated` endpoints.
 
     Returns:
         Configured APIRouter instance with the CRUD endpoints.
@@ -229,6 +232,60 @@ def crud_router(
             }
         )
         ```
+
+        Using FilterConfig with dict:
+        ```python
+        from fastapi import FastAPI
+        from fastcrud import crud_router
+        from myapp.models import MyModel
+        from myapp.schemas import CreateMyModel, UpdateMyModel
+        from myapp.database import async_session
+
+        app = FastAPI()
+
+        router = crud_router(
+            session=async_session,
+            model=MyModel,
+            create_schema=CreateMyModel,
+            update_schema=UpdateMyModel,
+            filter_config=FilterConfig(filters={"id": None, "name": "default"})
+        )
+        # Adds CRUD routes with filtering capabilities
+        app.include_router(router, prefix="/mymodel")
+
+        # Explanation:
+        # The FilterConfig specifies that 'id' should be a query parameter with no default value
+        # and 'name' should be a query parameter with a default value of 'default'.
+        # When fetching multiple items, you can filter by these parameters.
+        # Example GET request: /mymodel/get_multi?id=1&name=example
+        ```
+
+        Using FilterConfig with keyword arguments:
+        ```python
+        from fastapi import FastAPI
+        from fastcrud import crud_router
+        from myapp.models import MyModel
+        from myapp.schemas import CreateMyModel, UpdateMyModel
+        from myapp.database import async_session
+
+        app = FastAPI()
+
+        router = crud_router(
+            session=async_session,
+            model=MyModel,
+            create_schema=CreateMyModel,
+            update_schema=UpdateMyModel,
+            filter_config=FilterConfig(id=None, name="default")
+        )
+        # Adds CRUD routes with filtering capabilities
+        app.include_router(router, prefix="/mymodel")
+
+        # Explanation:
+        # The FilterConfig specifies that 'id' should be a query parameter with no default value
+        # and 'name' should be a query parameter with a default value of 'default'.
+        # When fetching multiple items, you can filter by these parameters.
+        # Example GET request: /mymodel/get_multi?id=1&name=example
+        ```
     """
     crud = crud or FastCRUD(
         model=model,
@@ -252,6 +309,7 @@ def crud_router(
         deleted_at_column=deleted_at_column,
         updated_at_column=updated_at_column,
         endpoint_names=endpoint_names,
+        filter_config=filter_config,
     )
 
     endpoint_creator_instance.add_routes_to_router(

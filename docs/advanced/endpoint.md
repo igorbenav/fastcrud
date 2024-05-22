@@ -438,6 +438,102 @@ This setup ensures that the soft delete functionality within your application ut
 
 By specifying custom column names for soft deletion, you can adapt FastCRUD to fit the design of your database models, providing a flexible solution for handling deleted records in a way that best suits your application's needs.
 
+## Using Filters in FastCRUD
+
+FastCRUD provides filtering capabilities, allowing you to filter query results based on various conditions. Filters can be applied to `read_multi` and `read_paginated` endpoints. This section explains how to configure and use filters in FastCRUD.
+
+### Defining Filters
+
+Filters are either defined using the `FilterConfig` class or just passed as a dictionary. This class allows you to specify default filter values and validate filter types. Here's an example of how to define filters for a model:
+
+```python
+from fastcrud import FilterConfig
+
+# Define filter configuration for a model
+filter_config = FilterConfig(
+    tier_id=None,  # Default filter value for tier_id
+    name=None  # Default filter value for name
+)
+```
+
+And the same thing using a `dict`:
+```python
+filter_config = {
+    "tier_id": None,  # Default filter value for tier_id
+    "name": None,  # Default filter value for name
+}
+```
+
+By using `FilterConfig` you get better error messages.
+
+### Applying Filters to Endpoints
+
+You can apply filters to your endpoints by passing the `filter_config` to the `crud_router` or `EndpointCreator`. Here's an example:
+
+```python
+from fastcrud import crud_router
+from yourapp.models import YourModel
+from yourapp.schemas import CreateYourModelSchema, UpdateYourModelSchema
+from yourapp.database import async_session
+
+# Apply filters using crud_router
+app.include_router(
+    crud_router(
+        session=async_session,
+        model=YourModel,
+        create_schema=CreateYourModelSchema,
+        update_schema=UpdateYourModelSchema,
+        filter_config=filter_config,  # Apply the filter configuration
+        path="/yourmodel",
+        tags=["YourModel"]
+    )
+)
+```
+
+### Using Filters in Requests
+
+Once filters are configured, you can use them in your API requests. Filters are passed as query parameters. Here's an example of how to use filters in a request to a paginated endpoint:
+
+```http
+GET /yourmodel/get_paginated?page=1&itemsPerPage=3&tier_id=1&name=Alice
+```
+
+### Custom Filter Validation
+
+The `FilterConfig` class includes a validator to check filter types. If an invalid filter type is provided, a `ValueError` is raised. You can customize the validation logic by extending the `FilterConfig` class:
+
+```python
+from fastcrud import FilterConfig
+from pydantic import ValidationError
+
+class CustomFilterConfig(FilterConfig):
+    @field_validator("filters")
+    def check_filter_types(cls, filters: dict[str, Any]) -> dict[str, Any]:
+        for key, value in filters.items():
+            if not isinstance(value, (type(None), str, int, float, bool)):
+                raise ValueError(f"Invalid default value for '{key}': {value}")
+        return filters
+
+try:
+    # Example of invalid filter configuration
+    invalid_filter_config = CustomFilterConfig(invalid_field=[])
+except ValidationError as e:
+    print(e)
+```
+
+### Handling Invalid Filter Columns
+
+FastCRUD ensures that filters are applied only to valid columns in your model. If an invalid filter column is specified, a `ValueError` is raised:
+
+```python
+try:
+    # Example of invalid filter column
+    invalid_filter_config = FilterConfig(non_existent_column=None)
+except ValueError as e:
+    print(e)  # Output: Invalid filter column 'non_existent_column': not found in model
+```
+
+
 ## Conclusion
 
 The `EndpointCreator` class in FastCRUD offers flexibility and control over CRUD operations and custom endpoint creation. By extending this class or using the `included_methods` and `deleted_methods` parameters, you can tailor your API's functionality to your specific requirements, ensuring a more customizable and streamlined experience.

@@ -13,7 +13,7 @@ from sqlalchemy.sql import func
 
 from fastcrud.crud.fast_crud import FastCRUD
 from fastcrud.endpoint.crud_router import crud_router
-from fastcrud import EndpointCreator
+from fastcrud import EndpointCreator, FilterConfig
 
 
 class Base(DeclarativeBase):
@@ -22,7 +22,6 @@ class Base(DeclarativeBase):
 
 class MultiPkModel(Base):
     __tablename__ = "multi_pk"
-    # tests = relationship("ModelTest", back_populates="category")
     id = Column(Integer, primary_key=True)
     uuid = Column(String(32), primary_key=True)
     name = Column(String, unique=True)
@@ -370,7 +369,83 @@ def client(
 
 
 @pytest.fixture
-def endpoint_creator() -> EndpointCreator:
+def filtered_client(
+    test_model,
+    create_schema,
+    update_schema,
+    delete_schema,
+):
+    app = FastAPI()
+
+    app.include_router(
+        crud_router(
+            session=get_session_local,
+            model=test_model,
+            crud=FastCRUD(test_model),
+            create_schema=create_schema,
+            update_schema=update_schema,
+            delete_schema=delete_schema,
+            filter_config=FilterConfig(tier_id=None, name=None),
+            path="/test",
+            tags=["test"],
+        )
+    )
+
+    return TestClient(app)
+
+
+@pytest.fixture
+def dict_filtered_client(
+    test_model,
+    create_schema,
+    update_schema,
+    delete_schema,
+):
+    app = FastAPI()
+
+    app.include_router(
+        crud_router(
+            session=get_session_local,
+            model=test_model,
+            crud=FastCRUD(test_model),
+            create_schema=create_schema,
+            update_schema=update_schema,
+            delete_schema=delete_schema,
+            filter_config={"tier_id": None, "name": None},
+            path="/test",
+            tags=["test"],
+        )
+    )
+
+    return TestClient(app)
+
+
+@pytest.fixture
+def invalid_filtered_client(
+    test_model,
+    create_schema,
+    update_schema,
+    delete_schema,
+):
+    filter_config = {"invalid_column": None}
+
+    with pytest.raises(
+        ValueError, match="Invalid filter column 'invalid_column': not found in model"
+    ):
+        EndpointCreator(
+            session=get_session_local,
+            model=test_model,
+            create_schema=create_schema,
+            update_schema=update_schema,
+            delete_schema=delete_schema,
+            filter_config=filter_config,
+            path="/test",
+            tags=["test"],
+        )
+
+
+@pytest.fixture
+def endpoint_creator(test_model) -> EndpointCreator:
     """Fixture to create an instance of EndpointCreator."""
     return EndpointCreator(
         session=get_session_local,

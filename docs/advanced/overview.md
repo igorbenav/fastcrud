@@ -39,5 +39,10 @@ Explore different ways of joining models in FastCRUD with examples and tips.
 
 - [Joining Models](joins.md#applying-joins-in-fastcrud-methods)
 
+### 8. Filters in Automatic Endpoints
+Learn how to add query parameters to your `get_multi` and `get_paginated` endpoints.
+
+- [Filters in Endpoints](endpoint.md#defining-filters)
+
 ## Prerequisites
 Advanced usage assumes a solid understanding of the basic features and functionalities of our application. Knowledge of FastAPI, SQLAlchemy, and Pydantic is highly recommended to fully grasp the concepts discussed.

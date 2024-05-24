@@ -90,6 +90,21 @@ class Participant(SQLModel, table=True):
     )
 
 
+class Card(SQLModel, table=True):
+    __tablename__ = "cards"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    articles: list["Article"] = Relationship(back_populates="card")
+
+
+class Article(SQLModel, table=True):
+    __tablename__ = "articles"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    card_id: int = Field(foreign_key="cards.id")
+    card: Optional[Card] = Relationship(back_populates="articles")
+
+
 class CreateSchemaTest(SQLModel):
     model_config = ConfigDict(extra="forbid")
     name: str
@@ -154,6 +169,18 @@ class MultiPkCreate(SQLModel):
 class MultiPkSchema(SQLModel):
     name: str
     test_id: int = None
+
+
+class ArticleSchema(SQLModel):
+    id: int
+    title: str
+    card_id: int
+
+
+class CardSchema(SQLModel):
+    id: int
+    title: str
+    articles: Optional[list[ArticleSchema]] = []
 
 
 async_engine = create_async_engine(

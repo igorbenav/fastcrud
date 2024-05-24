@@ -1,13 +1,16 @@
-from typing import Any, Optional, NamedTuple, Union
+from typing import Any, Optional, Union, Sequence
 
 from sqlalchemy import inspect
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql import ColumnElement
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+from pydantic.functional_validators import field_validator
+
+from ..endpoint.helper import _get_primary_key
 
 
-class JoinConfig(NamedTuple):
+class JoinConfig(BaseModel):
     model: Any
     join_on: Any
     join_prefix: Optional[str] = None
@@ -15,6 +18,23 @@ class JoinConfig(NamedTuple):
     join_type: str = "left"
     alias: Optional[AliasedClass] = None
     filters: Optional[dict] = None
+    relationship_type: Optional[str] = None
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    @field_validator("relationship_type")
+    def check_valid_relationship_type(cls, value):
+        valid_relationship_types = {"one-to-one", "one-to-many"}
+        if value is not None and value not in valid_relationship_types:
+            raise ValueError(f"Invalid relationship type: {value}")  # pragma: no cover
+        return value
+
+    @field_validator("join_type")
+    def check_valid_join_type(cls, value):
+        valid_join_types = {"left", "inner"}
+        if value not in valid_join_types:
+            raise ValueError(f"Unsupported join type: {value}")
+        return value
 
 
 def _extract_matching_columns_from_schema(
@@ -118,34 +138,379 @@ def _auto_detect_join_condition(
     return join_on
 
 
+def _handle_one_to_one(nested_data, nested_key, nested_field, value):
+    """
+    Handles the nesting of one-to-one relationships in the data.
+
+    Args:
+        nested_data: The current state of the nested data.
+        nested_key: The key under which the nested data should be stored.
+        nested_field: The field name of the nested data to be added.
+        value: The value of the nested data to be added.
+
+    Returns:
+        dict[str, Any]: The updated nested data dictionary.
+
+    Examples:
+        Input:
+        nested_data = {
+            'id': 1,
+            'name': 'Test User'
+        }
+        nested_key = 'profile'
+        nested_field = 'bio'
+        value = 'This is a bio.'
+
+        Output:
+        {
+            'id': 1,
+            'name': 'Test User',
+            'profile': {
+                'bio': 'This is a bio.'
+            }
+        }
+    """
+    if nested_key not in nested_data:
+        nested_data[nested_key] = {}
+    nested_data[nested_key][nested_field] = value
+    return nested_data
+
+
+def _handle_one_to_many(nested_data, nested_key, nested_field, value):
+    """
+    Handles the nesting of one-to-many relationships in the data.
+
+    Args:
+        nested_data: The current state of the nested data.
+        nested_key: The key under which the nested data should be stored.
+        nested_field: The field name of the nested data to be added.
+        value: The value of the nested data to be added.
+
+    Returns:
+        dict[str, Any]: The updated nested data dictionary.
+
+    Examples:
+        Input:
+        nested_data = {
+            'id': 1,
+            'name': 'Test User',
+            'posts': [
+                {
+                    'title': 'First Post',
+                    'content': 'Content of the first post'
+                }
+            ]
+        }
+        nested_key = 'posts'
+        nested_field = 'title'
+        value = 'Second Post'
+
+        Output:
+        {
+            'id': 1,
+            'name': 'Test User',
+            'posts': [
+                {
+                    'title': 'First Post',
+                    'content': 'Content of the first post'
+                },
+                {
+                    'title': 'Second Post'
+                }
+            ]
+        }
+
+        Input:
+        nested_data = {
+            'id': 1,
+            'name': 'Test User',
+            'posts': []
+        }
+        nested_key = 'posts'
+        nested_field = 'title'
+        value = 'First Post'
+
+        Output:
+        {
+            'id': 1,
+            'name': 'Test User',
+            'posts': [
+                {
+                    'title': 'First Post'
+                }
+            ]
+        }
+    """
+    if nested_key not in nested_data or not isinstance(nested_data[nested_key], list):
+        nested_data[nested_key] = []
+
+    if not nested_data[nested_key] or nested_field in nested_data[nested_key][-1]:
+        nested_data[nested_key].append({nested_field: value})
+    else:
+        nested_data[nested_key][-1][nested_field] = value
+
+    return nested_data
+
+
 def _nest_join_data(
-    data: dict[str, Any],
+    data: dict,
     join_definitions: list[JoinConfig],
     temp_prefix: str = "joined__",
-) -> dict[str, Any]:
-    nested_data: dict = {}
+    nested_data: Optional[dict[str, Any]] = None,
+) -> dict:
+    """
+    Nests joined data based on join definitions provided. This function processes the input `data` dictionary, identifying keys
+    that correspond to joined tables using the provided `join_definitions` and nest them under their respective table keys.
+
+    Args:
+        data: The flat dictionary containing data with potentially prefixed keys from joined tables.
+        join_definitions: A list of JoinConfig instances defining the join configurations, including prefixes.
+        temp_prefix: The temporary prefix applied to joined columns to differentiate them. Defaults to "joined__".
+        nested_data: The nested dictionary to which the data will be added. If None, a new dictionary is created. Defaults to None.
+
+    Returns:
+        dict[str, Any]: A dictionary with nested structures for joined table data.
+
+    Examples:
+        Input:
+        data = {
+            'id': 1,
+            'title': 'Test Card',
+            'joined__articles_id': 1,
+            'joined__articles_title': 'Article 1',
+            'joined__articles_card_id': 1
+        }
+
+        join_definitions = [
+            JoinConfig(
+                model=Article,
+                join_prefix='articles_',
+                relationship_type='one-to-many'
+            )
+        ]
+
+        Output:
+        {
+            'id': 1,
+            'title': 'Test Card',
+            'articles': [
+                {
+                    'id': 1,
+                    'title': 'Article 1',
+                    'card_id': 1
+                }
+            ]
+        }
+
+        Input:
+        data = {
+            'id': 1,
+            'title': 'Test Card',
+            'joined__author_id': 1,
+            'joined__author_name': 'Author 1'
+        }
+
+        join_definitions = [
+            JoinConfig(
+                model=Author,
+                join_prefix='author_',
+                relationship_type='one-to-one'
+            )
+        ]
+
+        Output:
+        {
+            'id': 1,
+            'title': 'Test Card',
+            'author': {
+                'id': 1,
+                'name': 'Author 1'
+            }
+        }
+    """
+    if nested_data is None:
+        nested_data = {}
+
     for key, value in data.items():
         nested = False
         for join in join_definitions:
-            full_prefix = (
-                f"{temp_prefix}{join.join_prefix}" if join.join_prefix else temp_prefix
-            )
-            if key.startswith(full_prefix):
+            join_prefix = join.join_prefix or ""
+            full_prefix = f"{temp_prefix}{join_prefix}"
+
+            if isinstance(key, str) and key.startswith(full_prefix):
                 nested_key = (
-                    join.join_prefix.rstrip("_")
-                    if join.join_prefix
-                    else join.model.__tablename__
+                    join_prefix.rstrip("_") if join_prefix else join.model.__tablename__
                 )
                 nested_field = key[len(full_prefix) :]
-                if nested_key not in nested_data:
-                    nested_data[nested_key] = {}
-                nested_data[nested_key][nested_field] = value
+
+                if join.relationship_type == "one-to-many":
+                    nested_data = _handle_one_to_many(
+                        nested_data, nested_key, nested_field, value
+                    )
+                else:
+                    nested_data = _handle_one_to_one(
+                        nested_data, nested_key, nested_field, value
+                    )
+
                 nested = True
                 break
+
         if not nested:
             stripped_key = (
-                key[len(temp_prefix) :] if key.startswith(temp_prefix) else key
+                key[len(temp_prefix) :]
+                if isinstance(key, str) and key.startswith(temp_prefix)
+                else key
             )
+            if nested_data is None:  # pragma: no cover
+                nested_data = {}
+
             nested_data[stripped_key] = value
+
+    if nested_data is None:  # pragma: no cover
+        nested_data = {}
+
+    for join in join_definitions:
+        join_primary_key = _get_primary_key(join.model)
+        nested_key = (
+            join.join_prefix.rstrip("_")
+            if join.join_prefix
+            else join.model.__tablename__
+        )
+        if join.relationship_type == "one-to-many" and nested_key in nested_data:
+            if isinstance(nested_data.get(nested_key, []), list):
+                if any(
+                    item[join_primary_key] is None for item in nested_data[nested_key]
+                ):
+                    nested_data[nested_key] = []
+
+    assert nested_data is not None, "Couldn't nest the data."
+    return nested_data
+
+
+def _nest_multi_join_data(
+    base_primary_key: str,
+    data: list[Union[dict, BaseModel]],
+    joins_config: Sequence[JoinConfig],
+    return_as_model: bool = False,
+    schema_to_select: Optional[type[BaseModel]] = None,
+    nested_schema_to_select: Optional[dict[str, type[BaseModel]]] = None,
+) -> Sequence[Union[dict, BaseModel]]:
+    """
+    Nests joined data based on join definitions provided for multiple records. This function processes the input list of
+    dictionaries, identifying keys that correspond to joined tables using the provided joins_config, and nests them
+    under their respective table keys.
+
+    Args:
+        base_primary_key: The primary key of the base model.
+        data: The list of dictionaries containing the records with potentially nested data.
+        joins_config: The list of join configurations containing the joined model classes and related settings.
+        schema_to_select: Pydantic schema for selecting specific columns from the primary model. Used for converting
+                          dictionaries back to Pydantic models.
+        return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
+        nested_schema_to_select: A dictionary mapping join prefixes to their corresponding Pydantic schemas.
+
+    Returns:
+        Sequence[Union[dict, BaseModel]]: A list of dictionaries with nested structures for joined table data or Pydantic models.
+
+    Example:
+        Input:
+        data = [
+            {'id': 1, 'title': 'Test Card', 'articles': [{'id': 1, 'title': 'Article 1', 'card_id': 1}]},
+            {'id': 2, 'title': 'Test Card 2', 'articles': [{'id': 2, 'title': 'Article 2', 'card_id': 2}]},
+            {'id': 2, 'title': 'Test Card 2', 'articles': [{'id': 3, 'title': 'Article 3', 'card_id': 2}]},
+            {'id': 3, 'title': 'Test Card 3', 'articles': [{'id': None, 'title': None, 'card_id': None}]}
+        ]
+
+        joins_config = [
+            JoinConfig(model=Article, join_prefix='articles_', relationship_type='one-to-many')
+        ]
+
+        Output:
+        [
+            {
+                'id': 1,
+                'title': 'Test Card',
+                'articles': [
+                    {
+                        'id': 1,
+                        'title': 'Article 1',
+                        'card_id': 1
+                    }
+                ]
+            },
+            {
+                'id': 2,
+                'title': 'Test Card 2',
+                'articles': [
+                    {
+                        'id': 2,
+                        'title': 'Article 2',
+                        'card_id': 2
+                    },
+                    {
+                        'id': 3,
+                        'title': 'Article 3',
+                        'card_id': 2
+                    }
+                ]
+            },
+            {
+                'id': 3,
+                'title': 'Test Card 3',
+                'articles': []
+            }
+        ]
+    """
+    pre_nested_data = {}
+
+    for join_config in joins_config:
+        join_primary_key = _get_primary_key(join_config.model)
+
+        for row in data:
+            if isinstance(row, BaseModel):
+                new_row = {
+                    key: (value[:] if isinstance(value, list) else value)
+                    for key, value in row.model_dump().items()
+                }
+            else:
+                new_row = {
+                    key: (value[:] if isinstance(value, list) else value)
+                    for key, value in row.items()
+                }
+
+            primary_key_value = new_row[base_primary_key]
+
+            if primary_key_value not in pre_nested_data:
+                for key, value in new_row.items():
+                    if isinstance(value, list) and any(
+                        item[join_primary_key] is None for item in value
+                    ):
+                        new_row[key] = []
+
+                pre_nested_data[primary_key_value] = new_row
+            else:
+                existing_row = pre_nested_data[primary_key_value]
+                for key, value in new_row.items():
+                    if isinstance(value, list):
+                        if any(item[join_primary_key] is None for item in value):
+                            existing_row[key] = []
+                        else:
+                            existing_row[key].extend(value)
+
+    nested_data: list = list(pre_nested_data.values())
+
+    if return_as_model:
+        for i, item in enumerate(nested_data):
+            if nested_schema_to_select:
+                for prefix, schema in nested_schema_to_select.items():
+                    if prefix in item:
+                        if isinstance(item[prefix], list):
+                            item[prefix] = [
+                                schema(**nested_item) for nested_item in item[prefix]
+                            ]
+                        else:
+                            item[prefix] = schema(**item[prefix])
+            if schema_to_select:
+                nested_data[i] = schema_to_select(**item)
 
     return nested_data

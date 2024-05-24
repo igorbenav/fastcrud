@@ -211,12 +211,6 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-# Association table for the many-to-many relationship
-projects_participants_association = Table('projects_participants_association', Base.metadata,
-    Column('project_id', Integer, ForeignKey('projects.id'), primary_key=True),
-    Column('participant_id', Integer, ForeignKey('participants.id'), primary_key=True)
-)
-
 class Project(Base):
     __tablename__ = 'projects'
     id = Column(Integer, primary_key=True)
@@ -232,6 +226,12 @@ class Participant(Base):
     role = Column(String)
     # Relationship to Project through the association table
     projects = relationship("Project", secondary=projects_participants_association)
+
+# Association table for the many-to-many relationship
+class ProjectsParticipantsAssociation(Base):
+    __tablename__ = "projects_participants_association"
+    project_id = Column(Integer, ForeignKey("projects.id"), primary_key=True)
+    participant_id = Column(Integer, ForeignKey("participants.id"), primary_key=True)
 ```
 
 ##### Fetching Data with `get_multi_joined`

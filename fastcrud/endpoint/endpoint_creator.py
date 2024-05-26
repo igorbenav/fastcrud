@@ -119,8 +119,8 @@ class EndpointCreator:
         other_endpoint_creator = EndpointCreator(
             session=async_session,
             model=OtherModel,
-            create_schema=CreateOtherModel,
-            update_schema=UpdateOtherModel,
+            create_schema=CreateOtherModelSchema,
+            update_schema=UpdateOtherModelSchema,
             crud=other_model_crud,
         )
         other_endpoint_creator.add_routes_to_router()

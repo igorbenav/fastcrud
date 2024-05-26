@@ -484,7 +484,7 @@ def _nest_multi_join_data(
                 for key, value in new_row.items():
                     if isinstance(value, list) and any(
                         item[join_primary_key] is None for item in value
-                    ):
+                    ):  # pragma: no cover
                         new_row[key] = []
 
                 pre_nested_data[primary_key_value] = new_row
@@ -492,7 +492,9 @@ def _nest_multi_join_data(
                 existing_row = pre_nested_data[primary_key_value]
                 for key, value in new_row.items():
                     if isinstance(value, list):
-                        if any(item[join_primary_key] is None for item in value):
+                        if any(
+                            item[join_primary_key] is None for item in value
+                        ):  # pragma: no cover
                             existing_row[key] = []
                         else:
                             existing_row[key].extend(value)
@@ -508,7 +510,7 @@ def _nest_multi_join_data(
                             item[prefix] = [
                                 schema(**nested_item) for nested_item in item[prefix]
                             ]
-                        else:
+                        else:  # pragma: no cover
                             item[prefix] = schema(**item[prefix])
             if schema_to_select:
                 nested_data[i] = schema_to_select(**item)

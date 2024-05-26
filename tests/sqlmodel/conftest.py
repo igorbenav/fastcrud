@@ -101,7 +101,7 @@ class Article(SQLModel, table=True):
     __tablename__ = "articles"
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
-    card_id: int = Field(foreign_key="cards.id")
+    card_id: Optional[int] = Field(foreign_key="cards.id")
     card: Optional[Card] = Relationship(back_populates="articles")
 
 

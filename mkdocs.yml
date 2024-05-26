@@ -73,6 +73,7 @@ markdown_extensions:
   - codehilite
   - toc:
       permalink: true
+  - pymdownx.details:
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span

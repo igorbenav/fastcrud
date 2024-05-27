@@ -237,6 +237,7 @@ get_joined(
     join_filters: Optional[dict] = None,
     joins_config: Optional[list[JoinConfig]] = None,
     nest_joins: bool = False,
+    relationship_type: Optional[str] = None,
     **kwargs: Any,
 ) -> Optional[dict[str, Any]]
 ```
@@ -275,6 +276,7 @@ get_multi_joined(
     return_as_model: bool = False,
     joins_config: Optional[list[JoinConfig]] = None,
     return_total_count: bool = True,
+    relationship_type: Optional[str] = None,
     **kwargs: Any,
 ) -> dict[str, Any]
 ```

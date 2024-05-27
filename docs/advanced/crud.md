@@ -225,6 +225,30 @@ In this example, users are joined with the `Tier` and `Department` models. The `
 
     If both single join parameters and `joins_config` are used simultaneously, an error will be raised.
 
+### Handling One-to-One and One-to-Many Joins in FastCRUD
+
+FastCRUD provides flexibility in handling one-to-one and one-to-many relationships through its `get_joined` and `get_multi_joined` methods, along with the ability to specify how joined data should be structured using both the `relationship_type` (default `one-to-one`) and the `nest_joins` (default `False`) parameters.
+
+#### One-to-One Joins
+**One-to-one** relationships can be efficiently managed using either `get_joined` or `get_multi_joined`. The `get_joined` method is typically used when you want to fetch a single record from the database along with its associated record from another table, such as a user and their corresponding profile details. If you're retrieving multiple records, `get_multi_joined` can also be used for one-to-one joins. The parameter that deals with it, `relationship_type`, defaults to `one-on-one`.
+
+#### One-to-Many Joins
+For **one-to-many** relationships, where a single record can be associated with multiple records in another table, `get_joined` can be used with `nest_joins` set to `True`. This setup allows the primary record to include a nested list of associated records, making it suitable for scenarios such as retrieving a user and all their blog posts. Alternatively, `get_multi_joined` is also applicable here for fetching multiple primary records, each with their nested lists of related records.
+
+!!! WARNING
+
+    When using `nested_joins=True`, the performance will always be a bit worse than when using `nested_joins=False`. For cases where more performance is necessary, consider using `nested_joins=False` and remodeling your database.
+
+#### One-to-One Relationships
+- **`get_joined`**: Fetch a single record and its directly associated record (e.g., a user and their profile).
+- **`get_multi_joined`** (with `nest_joins=False`): Retrieve multiple records, each linked to a single related record from another table (e.g., users and their profiles).
+
+#### One-to-Many Relationships
+- **`get_joined`** (with `nest_joins=True`): Retrieve a single record with all its related records nested within it (e.g., a user and all their blog posts).
+- **`get_multi_joined`** (with `nest_joins=True`): Fetch multiple primary records, each with their related records nested (e.g., multiple users and all their blog posts).
+
+For a more detailed explanation, you may check the [joins docs](joins.md#handling-one-to-one-and-one-to-many-joins-in-fastcrud).
+
 ### Using aliases
 
 In complex query scenarios, particularly when you need to join a table to itself or perform multiple joins on the same table for different purposes, aliasing becomes crucial. Aliasing allows you to refer to the same table in different contexts with unique identifiers, avoiding conflicts and ambiguity in your queries.

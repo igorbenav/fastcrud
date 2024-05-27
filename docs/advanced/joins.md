@@ -14,6 +14,12 @@ FastCRUD simplifies CRUD operations while offering capabilities for handling com
 - **`join_type`**: The type of join (e.g., "left", "inner").
 - **`alias`**: An optional SQLAlchemy `AliasedClass` for complex scenarios like self-referential joins or multiple joins on the same model.
 - **`filters`**: An optional dictionary to apply filters directly to the joined model.
+- **`relationship_type`**: Specifies the relationship type, such as `one-to-one` or `one-to-many`. Default is `one-to-one`.
+
+!!! TIP
+
+    For `many-to-many`, you don't need to pass a `relationship_type`.
+
 
 ## Applying Joins in FastCRUD Methods
 
@@ -149,6 +155,8 @@ This works for both `get_joined` and `get_multi_joined`.
 
 When dealing with more complex join conditions, such as multiple joins, self-referential joins, or needing to specify aliases and filters, `JoinConfig` instances become the norm. They offer granular control over each join's aspects, enabling precise and efficient data retrieval.
 
+Example:
+
 ```python
 # Fetch users with details from related departments and roles, using aliases for self-referential joins
 from fastcrud import aliased
@@ -176,6 +184,148 @@ users = await user_crud.get_multi_joined(
         )
     ]
 )
+```
+
+
+### Handling One-to-One and One-to-Many Joins in FastCRUD
+
+FastCRUD provides flexibility in handling one-to-one and one-to-many relationships through `get_joined` and `get_multi_joined` methods, along with the ability to specify how joined data should be structured using both the `relationship_type` (default `one-to-one`) and the `nest_joins` (default `False`) parameters.
+
+#### One-to-One Relationships
+- **`get_joined`**: Fetch a single record and its directly associated record (e.g., a user and their profile).
+- **`get_multi_joined`** (with `nest_joins=False`): Retrieve multiple records, each linked to a single related record from another table (e.g., users and their profiles).
+
+
+##### Example
+
+Let's define two tables:
+
+```python
+class User(Base):
+    __tablename__ = "user"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    tier_id = Column(Integer, ForeignKey("tier.id"))
+
+class Tier(Base):
+    __tablename__ = "tier"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+```
+
+Fetch a user and their tier:
+
+```python
+user_tier = await user_crud.get_joined(
+    db=db,
+    join_model=Tier,
+    join_on=User.tier_id == Tier.id,
+    join_type="left",
+    join_prefix="tier_",
+    id=1
+)
+```
+
+The result will be:
+
+```json
+{
+    "id": 1,
+    "name": "Example",
+    "tier_id": 1,
+    "tier_name": "Free"
+}
+```
+
+###### One-to-One Relationship with Nested Joins
+
+To get the joined data in a nested dictionary:
+
+```python
+user_tier = await user_crud.get_joined(
+    db=db,
+    join_model=Tier,
+    join_on=User.tier_id == Tier.id,
+    join_type="left",
+    join_prefix="tier_",
+    nest_joins=True,
+    id=1
+)
+```
+
+The result will be:
+
+```json
+{
+    "id": 1,
+    "name": "Example",
+    "tier": {
+        "id": 1,
+        "name": "Free"
+    }
+}
+```
+
+
+#### One-to-Many Relationships
+- **`get_joined`** (with `nest_joins=True`): Retrieve a single record with all its related records nested within it (e.g., a user and all their blog posts).
+- **`get_multi_joined`** (with `nest_joins=True`): Fetch multiple primary records, each with their related records nested (e.g., multiple users and all their blog posts).
+
+!!! WARNING
+
+    When using `nest_joins=True`, the performance will always be a bit worse than when using `nest_joins=False`. For cases where more performance is necessary, consider using `nest_joins=False` and remodeling your database.
+
+
+##### Example
+
+To demonstrate a one-to-many relationship, let's assume `User` and `Post` tables:
+
+```python
+class User(Base):
+    __tablename__ = "user"
+    id = Column(Integer, primary key=True)
+    name = Column(String)
+
+class Post(Base):
+    __tablename__ = "post"
+    id = Column(Integer, primary key=True)
+    user_id = Column(Integer, ForeignKey("user.id"))
+    content = Column(String)
+```
+
+Fetch a user and all their posts:
+
+```python
+user_posts = await user_crud.get_joined(
+    db=db,
+    join_model=Post,
+    join_on=User.id == Post.user_id,
+    join_type="left",
+    join_prefix="post_",
+    nest_joins=True,
+    id=1
+)
+```
+
+The result will be:
+
+```json
+{
+    "id": 1,
+    "name": "Example User",
+    "posts": [
+        {
+            "id": 101,
+            "user_id": 1,
+            "content": "First post content"
+        },
+        {
+            "id": 102,
+            "user_id": 1,
+            "content": "Second post content"
+        }
+    ]
+}
 ```
 
 #### Many-to-Many Relationships with `get_multi_joined`
@@ -267,6 +417,102 @@ projects_with_participants = await crud_project.get_multi_joined(
 )
 
 # Now, `projects_with_participants['data']` will contain projects along with their participant information.
+```
+
+##### Example
+
+Imagine a scenario where projects have multiple participants, and participants can be involved in multiple projects. This many-to-many relationship is facilitated through an association table.
+
+Define the models:
+
+```python
+class Project(Base):
+    __tablename__ = 'projects'
+    id = Column(Integer, primary key=True)
+    name = Column(String)
+    description = Column(String)
+    participants = relationship("Participant", secondary=projects_participants_association)
+
+class Participant(Base):
+    __tablename__ = 'participants'
+    id = Column(Integer, primary key=True)
+    name = Column(String)
+    role = Column(String)
+    projects = relationship("Project", secondary=projects_participants_association)
+
+class ProjectsParticipantsAssociation(Base):
+    __tablename__ = "projects_participants_association"
+    project_id = Column(Integer, ForeignKey("projects.id"), primary key=True)
+    participant_id = Column(Integer, ForeignKey("participants.id"), primary key=True)
+```
+
+Fetch projects along with their participants:
+
+```python
+from fastcrud import FastCRUD, JoinConfig
+
+crud_project = FastCRUD(Project)
+
+joins_config = [
+    JoinConfig(
+        model=ProjectsParticipantsAssociation,
+        join_on=Project.id == ProjectsParticipantsAssociation.project_id,
+        join_type="inner",
+        join_prefix="pp_"
+    ),
+    JoinConfig(
+        model=Participant,
+        join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
+        join_type="inner",
+        join_prefix="participant_"
+    )
+]
+
+projects_with_participants = await crud_project.get_multi_joined(
+    db_session, 
+    joins_config=joins_config
+)
+```
+
+The result will be:
+
+```json
+[
+    {
+        "id": 1,
+        "name": "Project A",
+        "description": "Description of Project A",
+        "participants": [
+            {
+                "id": 1,
+                "name": "Participant 1",
+                "role": "Developer"
+            },
+            {
+                "id": 2,
+                "name": "Participant 2",
+                "role": "Designer"
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "name": "Project B",
+        "description": "Description of Project B",
+        "participants": [
+            {
+                "id": 3,
+                "name": "Participant 3",
+                "role": "Manager"
+            },
+            {
+                "id": 4,
+                "name": "Participant 4",
+                "role": "Tester"
+            }
+        ]
+    }
+]
 ```
 
 #### Practical Tips for Advanced Joins

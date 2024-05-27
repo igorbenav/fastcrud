@@ -50,7 +50,7 @@ class CustomEndpointCreator(EndpointCreator):
 
 @pytest.mark.asyncio
 async def test_custom_endpoint_creator(
-    client: TestClient, async_session, test_model, create_schema, update_schema
+    client: TestClient, test_model, create_schema, update_schema
 ):
     custom_router = crud_router(
         session=get_session_local,

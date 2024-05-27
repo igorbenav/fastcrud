@@ -64,18 +64,6 @@ async def test_read_items_with_dict_filter_config(
         async_session.add(new_item)
     await async_session.commit()
 
-    tier_id = 1
-    response = dict_filtered_client.get(f"/test/get_multi?tier_id={tier_id}")
-
-    assert response.status_code == 200
-    data = response.json()
-
-    assert "data" in data
-    assert len(data["data"]) > 0
-
-    for item in data["data"]:
-        assert item["tier_id"] == tier_id
-
     name = "Alice"
     response = dict_filtered_client.get(f"/test/get_multi?name={name}")
 

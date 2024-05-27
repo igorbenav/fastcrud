@@ -199,15 +199,14 @@ async_engine = create_async_engine(
 )
 
 
-local_session = sessionmaker(
-    bind=async_engine, class_=AsyncSession, expire_on_commit=False
-)
-
-
 async def get_session_local():
+    local_session = sessionmaker(
+        bind=async_engine, class_=AsyncSession, expire_on_commit=False
+    )
+
     async with local_session() as session:
         yield session
-        await session.close()  # Ensure the session is properly closed
+        await session.close()
 
 
 @pytest_asyncio.fixture(scope="function")

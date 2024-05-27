@@ -207,7 +207,7 @@ local_session = sessionmaker(
 async def get_session_local():
     async with local_session() as session:
         yield session
-        await session.close()
+        await session.close()  # Ensure the session is properly closed
 
 
 @pytest_asyncio.fixture(scope="function")

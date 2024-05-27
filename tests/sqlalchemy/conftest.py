@@ -113,6 +113,23 @@ class ProjectsParticipantsAssociation(Base):
     participant_id = Column(Integer, ForeignKey("participants.id"), primary_key=True)
 
 
+class Card(Base):
+    __tablename__ = "cards"
+    id = Column(Integer, primary_key=True)
+    title = Column(String)
+
+
+class Article(Base):
+    __tablename__ = "articles"
+    id = Column(Integer, primary_key=True)
+    title = Column(String)
+    card_id = Column(Integer, ForeignKey("cards.id"))
+    card = relationship("Card", back_populates="articles")
+
+
+Card.articles = relationship("Article", order_by=Article.id, back_populates="card")
+
+
 class CreateSchemaTest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str
@@ -165,6 +182,18 @@ class BookingSchema(BaseModel):
     booking_date: datetime
 
 
+class ArticleSchema(BaseModel):
+    id: int
+    title: str
+    card_id: int
+
+
+class CardSchema(BaseModel):
+    id: int
+    title: str
+    articles: Optional[list[ArticleSchema]] = []
+
+
 async_engine = create_async_engine(
     "sqlite+aiosqlite:///:memory:", echo=True, future=True
 )
@@ -175,8 +204,10 @@ local_session = sessionmaker(
 )
 
 
-def get_session_local():
-    yield local_session()
+async def get_session_local():
+    async with local_session() as session:
+        yield session
+        await session.close()  # Ensure the session is properly closed
 
 
 @pytest_asyncio.fixture(scope="function")

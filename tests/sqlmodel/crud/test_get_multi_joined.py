@@ -15,6 +15,10 @@ from ...sqlmodel.conftest import (
     Project,
     Participant,
     ProjectsParticipantsAssociation,
+    Article,
+    Card,
+    ArticleSchema,
+    CardSchema,
 )
 
 
@@ -780,7 +784,6 @@ async def test_get_multi_joined_no_prefix_regular(
         limit=10,
     )
 
-    print(result)
     assert result and result["data"], "Expected data in the result."
     for item in result["data"]:
         assert "name" in item, "Expected user name in each item."
@@ -819,3 +822,255 @@ async def test_get_multi_joined_no_prefix_nested(
         assert (
             "name" in item[TierModel.__tablename__]
         ), f"Expected 'name' field inside nested '{TierModel.__tablename__}' dictionary."
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_card_with_articles(async_session):
+    cards = [
+        Card(title="Test Card"),
+        Card(title="Test Card 2"),
+        Card(title="Test Card 3"),
+    ]
+    async_session.add_all(cards)
+    await async_session.flush()
+
+    articles = [
+        Article(title="Article 1", card_id=cards[0].id),
+        Article(title="Article 2", card_id=cards[1].id),
+        Article(title="Article 3", card_id=cards[1].id),
+    ]
+    async_session.add_all(articles)
+    await async_session.commit()
+
+    card_crud = FastCRUD(Card)
+
+    result = await card_crud.get_multi_joined(
+        db=async_session,
+        nest_joins=True,
+        joins_config=[
+            JoinConfig(
+                model=Article,
+                join_on=Article.card_id == Card.id,
+                join_prefix="articles_",
+                join_type="left",
+                relationship_type="one-to-many",
+            )
+        ],
+    )
+
+    assert result is not None, "No data returned from the database."
+    assert "data" in result, "Result should contain 'data' key."
+    data = result["data"]
+    assert isinstance(data, list), "Result data should be a list."
+    assert len(data) == 3, "Expected three card records."
+
+    card1 = next((c for c in data if c["id"] == cards[0].id), None)
+    card2 = next((c for c in data if c["id"] == cards[1].id), None)
+    card3 = next((c for c in data if c["id"] == cards[2].id), None)
+
+    assert (
+        card1 is not None and "articles" in card1
+    ), "Card 1 should have nested articles."
+    assert len(card1["articles"]) == 1, "Card 1 should have one article."
+    assert (
+        card1["articles"][0]["title"] == "Article 1"
+    ), "Card 1's article title should be 'Article 1'."
+
+    assert (
+        card2 is not None and "articles" in card2
+    ), "Card 2 should have nested articles."
+    assert len(card2["articles"]) == 2, "Card 2 should have two articles."
+    assert (
+        card2["articles"][0]["title"] == "Article 2"
+    ), "Card 2's first article title should be 'Article 2'."
+    assert (
+        card2["articles"][1]["title"] == "Article 3"
+    ), "Card 2's second article title should be 'Article 3'."
+
+    assert (
+        card3 is not None and "articles" in card3
+    ), "Card 3 should have nested articles."
+    assert len(card3["articles"]) == 0, "Card 3 should have no articles."
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_card_with_multiple_articles(async_session):
+    cards = [
+        Card(title="Card A"),
+        Card(title="Card B"),
+        Card(title="Card C"),
+        Card(title="Card D"),
+    ]
+    async_session.add_all(cards)
+    await async_session.flush()
+
+    articles = [
+        Article(title="Article 1", card_id=cards[0].id),
+        Article(title="Article 2", card_id=cards[0].id),
+        Article(title="Article 3", card_id=cards[1].id),
+        Article(title="Article 4", card_id=cards[1].id),
+        Article(title="Article 5", card_id=cards[2].id),
+    ]
+    async_session.add_all(articles)
+    await async_session.commit()
+
+    card_crud = FastCRUD(Card)
+
+    result = await card_crud.get_multi_joined(
+        db=async_session,
+        nest_joins=True,
+        joins_config=[
+            JoinConfig(
+                model=Article,
+                join_on=Article.card_id == Card.id,
+                join_prefix="articles_",
+                join_type="left",
+                relationship_type="one-to-many",
+            )
+        ],
+    )
+
+    assert result is not None, "No data returned from the database."
+    assert "data" in result, "Result should contain 'data' key."
+    data = result["data"]
+    assert isinstance(data, list), "Result data should be a list."
+    assert len(data) == 4, "Expected four card records."
+
+    card_a = next((c for c in data if c["id"] == cards[0].id), None)
+    card_b = next((c for c in data if c["id"] == cards[1].id), None)
+    card_c = next((c for c in data if c["id"] == cards[2].id), None)
+    card_d = next((c for c in data if c["id"] == cards[3].id), None)
+
+    assert (
+        card_a is not None and "articles" in card_a
+    ), "Card A should have nested articles."
+    assert len(card_a["articles"]) == 2, "Card A should have two articles."
+    assert (
+        card_a["articles"][0]["title"] == "Article 1"
+    ), "Card A's first article title should be 'Article 1'."
+    assert (
+        card_a["articles"][1]["title"] == "Article 2"
+    ), "Card A's second article title should be 'Article 2'."
+
+    assert (
+        card_b is not None and "articles" in card_b
+    ), "Card B should have nested articles."
+    assert len(card_b["articles"]) == 2, "Card B should have two articles."
+    assert (
+        card_b["articles"][0]["title"] == "Article 3"
+    ), "Card B's first article title should be 'Article 3'."
+    assert (
+        card_b["articles"][1]["title"] == "Article 4"
+    ), "Card B's second article title should be 'Article 4'."
+
+    assert (
+        card_c is not None and "articles" in card_c
+    ), "Card C should have nested articles."
+    assert len(card_c["articles"]) == 1, "Card C should have one article."
+    assert (
+        card_c["articles"][0]["title"] == "Article 5"
+    ), "Card C's article title should be 'Article 5'."
+
+    assert (
+        card_d is not None and "articles" in card_d
+    ), "Card D should have nested articles."
+    assert len(card_d["articles"]) == 0, "Card D should have no articles."
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_card_with_multiple_articles_as_models(async_session):
+    cards = [
+        Card(title="Card A"),
+        Card(title="Card B"),
+        Card(title="Card C"),
+        Card(title="Card D"),
+    ]
+    async_session.add_all(cards)
+    await async_session.flush()
+
+    articles = [
+        Article(title="Article 1", card_id=cards[0].id),
+        Article(title="Article 2", card_id=cards[0].id),
+        Article(title="Article 3", card_id=cards[1].id),
+        Article(title="Article 4", card_id=cards[1].id),
+        Article(title="Article 5", card_id=cards[2].id),
+    ]
+    async_session.add_all(articles)
+    await async_session.commit()
+
+    card_crud = FastCRUD(Card)
+
+    result = await card_crud.get_multi_joined(
+        db=async_session,
+        nest_joins=True,
+        return_as_model=True,
+        schema_to_select=CardSchema,
+        nested_schema_to_select={"articles_": ArticleSchema},
+        joins_config=[
+            JoinConfig(
+                model=Article,
+                join_on=Article.card_id == Card.id,
+                join_prefix="articles_",
+                join_type="left",
+                relationship_type="one-to-many",
+            )
+        ],
+    )
+
+    assert result is not None, "No data returned from the database."
+    assert "data" in result, "Result should contain 'data' key."
+    data = result["data"]
+    assert isinstance(data, list), "Result data should be a list."
+    assert len(data) == 4, "Expected four card records."
+    assert all(
+        isinstance(card, CardSchema) for card in data
+    ), "All items should be instances of CardSchema."
+
+    card_a = next((c for c in data if c.id == cards[0].id), None)
+    card_b = next((c for c in data if c.id == cards[1].id), None)
+    card_c = next((c for c in data if c.id == cards[2].id), None)
+    card_d = next((c for c in data if c.id == cards[3].id), None)
+
+    assert card_a is not None and hasattr(
+        card_a, "articles"
+    ), "Card A should have nested articles."
+    assert len(card_a.articles) == 2, "Card A should have two articles."
+    assert (
+        card_a.articles[0].title == "Article 1"
+    ), "Card A's first article title should be 'Article 1'."
+    assert (
+        card_a.articles[1].title == "Article 2"
+    ), "Card A's second article title should be 'Article 2'."
+    assert all(
+        isinstance(article, ArticleSchema) for article in card_a.articles
+    ), "All articles in Card A should be instances of ArticleSchema."
+
+    assert card_b is not None and hasattr(
+        card_b, "articles"
+    ), "Card B should have nested articles."
+    assert len(card_b.articles) == 2, "Card B should have two articles."
+    assert (
+        card_b.articles[0].title == "Article 3"
+    ), "Card B's first article title should be 'Article 3'."
+    assert (
+        card_b.articles[1].title == "Article 4"
+    ), "Card B's second article title should be 'Article 4'."
+    assert all(
+        isinstance(article, ArticleSchema) for article in card_b.articles
+    ), "All articles in Card B should be instances of ArticleSchema."
+
+    assert card_c is not None and hasattr(
+        card_c, "articles"
+    ), "Card C should have nested articles."
+    assert len(card_c.articles) == 1, "Card C should have one article."
+    assert (
+        card_c.articles[0].title == "Article 5"
+    ), "Card C's article title should be 'Article 5'."
+    assert all(
+        isinstance(article, ArticleSchema) for article in card_c.articles
+    ), "All articles in Card C should be instances of ArticleSchema."
+
+    assert card_d is not None and hasattr(
+        card_d, "articles"
+    ), "Card D should have nested articles."
+    assert len(card_d.articles) == 0, "Card D should have no articles."

@@ -16,6 +16,7 @@ from .helper import (
     _extract_matching_columns_from_schema,
     _auto_detect_join_condition,
     _nest_join_data,
+    _nest_multi_join_data,
     JoinConfig,
 )
 
@@ -339,7 +340,7 @@ class FastCRUD(
                 stmt = stmt.outerjoin(model, join.join_on).add_columns(*join_select)
             elif join.join_type == "inner":
                 stmt = stmt.join(model, join.join_on).add_columns(*join_select)
-            else:
+            else:  # pragma: no cover
                 raise ValueError(f"Unsupported join type: {join.join_type}.")
             if joined_model_filters:
                 stmt = stmt.filter(*joined_model_filters)
@@ -834,6 +835,7 @@ class FastCRUD(
         join_filters: Optional[dict] = None,
         joins_config: Optional[list[JoinConfig]] = None,
         nest_joins: bool = False,
+        relationship_type: Optional[str] = None,
         **kwargs: Any,
     ) -> Optional[dict[str, Any]]:
         """
@@ -860,6 +862,7 @@ class FastCRUD(
             join_filters: Filters applied to the joined model, specified as a dictionary mapping column names to their expected values.
             joins_config: A list of JoinConfig instances, each specifying a model to join with, join condition, optional prefix for column names, schema for selecting specific columns, and the type of join. This parameter enables support for multiple joins.
             nest_joins: If True, nested data structures will be returned where joined model data are nested under the join_prefix as a dictionary.
+            relationship_type: Specifies the relationship type, such as 'one-to-one' or 'one-to-many'. Used to determine how to nest the joined data. If None, uses one-to-one.
             **kwargs: Filters to apply to the primary model query, supporting advanced comparison operators for refined searching.
 
         Returns:
@@ -1015,6 +1018,32 @@ class FastCRUD(
             )
             # Expect 'result' to have 'tier' and 'dept' as nested dictionaries
             ```
+
+            Example using one-to-one relationship:
+            ```python
+            result = await crud_user.get_joined(
+                db=session,
+                join_model=Profile,
+                join_on=User.profile_id == Profile.id,
+                schema_to_select=UserSchema,
+                join_schema_to_select=ProfileSchema,
+                relationship_type='one-to-one' # note that this is the default behavior
+            )
+            # Expect 'result' to have 'profile' as a nested dictionary
+            ```
+
+            Example using one-to-many relationship:
+            ```python
+            result = await crud_user.get_joined(
+                db=session,
+                join_model=Post,
+                join_on=User.id == Post.user_id,
+                schema_to_select=UserSchema,
+                join_schema_to_select=PostSchema,
+                relationship_type='one-to-many',
+                nest_joins=True
+            )
+            # Expect 'result' to have 'posts' as a nested list of dictionaries
         """
         if joins_config and (
             join_model or join_prefix or join_on or join_schema_to_select or alias
@@ -1042,6 +1071,7 @@ class FastCRUD(
                     join_type=join_type,
                     alias=alias,
                     filters=join_filters,
+                    relationship_type=relationship_type,
                 )
             )
 
@@ -1052,14 +1082,32 @@ class FastCRUD(
         if primary_filters:
             stmt = stmt.filter(*primary_filters)
 
-        db_row = await db.execute(stmt)
-        result: Optional[Row] = db_row.first()
-        if result is not None:
-            data: dict = dict(result._mapping)
-            if nest_joins:
-                data = _nest_join_data(data, join_definitions)
+        db_rows = await db.execute(stmt)
+        if any(join.relationship_type == "one-to-many" for join in join_definitions):
+            if nest_joins is False:  # pragma: no cover
+                raise ValueError(
+                    "Cannot use one-to-many relationship with nest_joins=False"
+                )
+            results = db_rows.fetchall()
+            data_list = [dict(row._mapping) for row in results]
+        else:
+            result = db_rows.first()
+            if result is not None:
+                data_list = [dict(result._mapping)]
+            else:
+                data_list = []
 
-            return data
+        if data_list:
+            if nest_joins:
+                nested_data: dict = {}
+                for data in data_list:
+                    nested_data = _nest_join_data(
+                        data,
+                        join_definitions,
+                        nested_data=nested_data,
+                    )
+                return nested_data
+            return data_list[0]
 
         return None
 
@@ -1082,6 +1130,7 @@ class FastCRUD(
         return_as_model: bool = False,
         joins_config: Optional[list[JoinConfig]] = None,
         return_total_count: bool = True,
+        relationship_type: Optional[str] = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
@@ -1113,6 +1162,7 @@ class FastCRUD(
             return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
             joins_config: List of JoinConfig instances for specifying multiple joins. Each instance defines a model to join with, join condition, optional prefix for column names, schema for selecting specific columns, and join type.
             return_total_count: If True, also returns the total count of rows with the selected filters. Useful for pagination.
+            relationship_type: Specifies the relationship type, such as 'one-to-one' or 'one-to-many'. Used to determine how to nest the joined data. If None, uses one-to-one.
             **kwargs: Filters to apply to the primary query, including advanced comparison operators for refined searching.
 
         Returns:
@@ -1314,9 +1364,45 @@ class FastCRUD(
                 sort_orders='asc'
             )
         ```
+
+        Example using one-to-one relationship:
+        ```python
+        users = await crud_user.get_multi_joined(
+            db=session,
+            join_model=Profile,
+            join_on=User.profile_id == Profile.id,
+            schema_to_select=UserSchema,
+            join_schema_to_select=ProfileSchema,
+            relationship_type='one-to-one', # note that this is the default behavior
+            offset=0,
+            limit=10
+        )
+        # Expect 'profile' to be nested as a dictionary under each user
+        ```
+
+        Example using one-to-many relationship:
+        ```python
+        users = await crud_user.get_multi_joined(
+            db=session,
+            join_model=Post,
+            join_on=User.id == Post.user_id,
+            schema_to_select=UserSchema,
+            join_schema_to_select=PostSchema,
+            relationship_type='one-to-many',
+            nest_joins=True,
+            offset=0,
+            limit=10
+        )
+        # Expect 'posts' to be nested as a list of dictionaries under each user
+        ```
         """
         if joins_config and (
-            join_model or join_prefix or join_on or join_schema_to_select or alias
+            join_model
+            or join_prefix
+            or join_on
+            or join_schema_to_select
+            or alias
+            or relationship_type
         ):
             raise ValueError(
                 "Cannot use both single join parameters and joins_config simultaneously."
@@ -1344,6 +1430,7 @@ class FastCRUD(
                     join_type=join_type,
                     alias=alias,
                     filters=join_filters,
+                    relationship_type=relationship_type,
                 )
             )
 
@@ -1365,11 +1452,15 @@ class FastCRUD(
 
         result = await db.execute(stmt)
         data: list[Union[dict, BaseModel]] = []
+
         for row in result.mappings().all():
             row_dict = dict(row)
 
             if nest_joins:
-                row_dict = _nest_join_data(row_dict, join_definitions)
+                row_dict = _nest_join_data(
+                    data=row_dict,
+                    join_definitions=join_definitions,
+                )
 
             if return_as_model:
                 if schema_to_select is None:
@@ -1386,7 +1477,29 @@ class FastCRUD(
             else:
                 data.append(row_dict)
 
-        response: dict[str, Any] = {"data": data}
+        if nest_joins and any(
+            join.relationship_type == "one-to-many" for join in join_definitions
+        ):
+            nested_data = _nest_multi_join_data(
+                base_primary_key=self._primary_keys[0].name,
+                data=data,
+                joins_config=join_definitions,
+                return_as_model=return_as_model,
+                schema_to_select=schema_to_select if return_as_model else None,
+                nested_schema_to_select={
+                    (
+                        join.join_prefix.rstrip("_")
+                        if join.join_prefix
+                        else join.model.__name__
+                    ): join.schema_to_select
+                    for join in join_definitions
+                    if join.schema_to_select
+                },
+            )
+        else:
+            nested_data = data
+
+        response: dict[str, Any] = {"data": nested_data}
 
         if return_total_count:
             total_count: int = await self.count(

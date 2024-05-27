@@ -90,6 +90,21 @@ class Participant(SQLModel, table=True):
     )
 
 
+class Card(SQLModel, table=True):
+    __tablename__ = "cards"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    articles: list["Article"] = Relationship(back_populates="card")
+
+
+class Article(SQLModel, table=True):
+    __tablename__ = "articles"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    card_id: Optional[int] = Field(foreign_key="cards.id")
+    card: Optional[Card] = Relationship(back_populates="articles")
+
+
 class CreateSchemaTest(SQLModel):
     model_config = ConfigDict(extra="forbid")
     name: str
@@ -156,6 +171,18 @@ class MultiPkSchema(SQLModel):
     test_id: int = None
 
 
+class ArticleSchema(SQLModel):
+    id: int
+    title: str
+    card_id: int
+
+
+class CardSchema(SQLModel):
+    id: int
+    title: str
+    articles: Optional[list[ArticleSchema]] = []
+
+
 async_engine = create_async_engine(
     "sqlite+aiosqlite:///:memory:", echo=True, future=True
 )
@@ -166,8 +193,10 @@ local_session = sessionmaker(
 )
 
 
-def get_session_local():
-    yield local_session()
+async def get_session_local():
+    async with local_session() as session:
+        yield session
+        await session.close()
 
 
 @pytest_asyncio.fixture(scope="function")

@@ -11,6 +11,8 @@ from ...sqlmodel.conftest import (
     BookingModel,
     BookingSchema,
     ReadSchemaTest,
+    Article,
+    Card,
 )
 
 
@@ -386,7 +388,7 @@ async def test_get_joined_with_unsupported_join_type_raises_value_error(
             join_type="unsupported_type",
         )
 
-    assert "Unsupported join type: unsupported_type." in str(excinfo.value)
+    assert "Unsupported join type" in str(excinfo.value)
 
 
 @pytest.mark.asyncio
@@ -525,3 +527,42 @@ async def test_get_joined_no_prefix_no_nesting(
     assert (
         "tier_name" not in result
     ), "Field 'tier_name' should not exist unless specifically prefixed or nested."
+
+
+@pytest.mark.asyncio
+async def test_get_joined_card_with_articles(async_session):
+    card = Card(title="Test Card")
+    async_session.add(card)
+    async_session.add_all(
+        [
+            Article(title="Article 1", card=card),
+            Article(title="Article 2", card=card),
+            Article(title="Article 3", card=card),
+        ]
+    )
+    await async_session.commit()
+
+    card_crud = FastCRUD(Card)
+
+    result = await card_crud.get_joined(
+        db=async_session,
+        nest_joins=True,
+        joins_config=[
+            JoinConfig(
+                model=Article,
+                join_on=Article.card_id == Card.id,
+                join_prefix="articles_",
+                join_type="left",
+                relationship_type="one-to-many",
+            )
+        ],
+    )
+
+    assert result is not None, "No data returned from the database."
+    assert "title" in result, "Card title should be present in the result."
+    assert "articles" in result, "Articles should be nested under 'articles'."
+    assert isinstance(result["articles"], list), "Articles should be a list."
+    assert len(result["articles"]) == 3, "There should be three articles."
+    assert all(
+        "title" in article for article in result["articles"]
+    ), "Each article should have a title."

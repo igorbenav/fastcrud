@@ -63,6 +63,10 @@ create(
 new_item = await item_crud.create(db, ItemCreateSchema(name="New Item"))
 ```
 
+!!! WARNING
+
+    Note that naive `datetime` such as `datetime.utcnow` is not supported by `FastCRUD` as it was [deprecated](https://github.com/python/cpython/pull/103858).
+
 ### 2. Get
 
 ```python

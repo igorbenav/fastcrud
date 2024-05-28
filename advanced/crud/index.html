@@ -900,6 +900,57 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#handling-one-to-one-and-one-to-many-joins-in-fastcrud" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handling One-to-One and One-to-Many Joins in FastCRUD
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Handling One-to-One and One-to-Many Joins in FastCRUD">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-to-one-joins" class="md-nav__link">
+    <span class="md-ellipsis">
+      One-to-One Joins
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-to-many-joins" class="md-nav__link">
+    <span class="md-ellipsis">
+      One-to-Many Joins
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-to-one-relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      One-to-One Relationships
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-to-many-relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      One-to-Many Relationships
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#using-aliases" class="md-nav__link">
     <span class="md-ellipsis">
       Using aliases
@@ -1510,6 +1561,57 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#handling-one-to-one-and-one-to-many-joins-in-fastcrud" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handling One-to-One and One-to-Many Joins in FastCRUD
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Handling One-to-One and One-to-Many Joins in FastCRUD">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-to-one-joins" class="md-nav__link">
+    <span class="md-ellipsis">
+      One-to-One Joins
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-to-many-joins" class="md-nav__link">
+    <span class="md-ellipsis">
+      One-to-Many Joins
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-to-one-relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      One-to-One Relationships
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-to-many-relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      One-to-Many Relationships
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#using-aliases" class="md-nav__link">
     <span class="md-ellipsis">
       Using aliases
@@ -1639,6 +1741,11 @@
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">archived</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">archived_at</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">DateTime</span><span class="p">)</span>
 </span></code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Note that naive <code>datetime</code> such as <code>datetime.utcnow</code> is not supported by <code>FastCRUD</code> as it was <a href="https://github.com/python/cpython/pull/103858">deprecated</a>.</p>
+<p>Use timezone aware <code>datetime</code>, such as <code>datetime.now(UTC)</code> instead.</p>
+</div>
 <p>You could just pass it to <code>FastCRUD</code>:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FastCRUD</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
@@ -1794,6 +1901,27 @@
 <p class="admonition-title">Warning</p>
 <p>If both single join parameters and <code>joins_config</code> are used simultaneously, an error will be raised.</p>
 </div>
+<h3 id="handling-one-to-one-and-one-to-many-joins-in-fastcrud">Handling One-to-One and One-to-Many Joins in FastCRUD<a class="headerlink" href="#handling-one-to-one-and-one-to-many-joins-in-fastcrud" title="Permanent link">&para;</a></h3>
+<p>FastCRUD provides flexibility in handling one-to-one and one-to-many relationships through its <code>get_joined</code> and <code>get_multi_joined</code> methods, along with the ability to specify how joined data should be structured using both the <code>relationship_type</code> (default <code>one-to-one</code>) and the <code>nest_joins</code> (default <code>False</code>) parameters.</p>
+<h4 id="one-to-one-joins">One-to-One Joins<a class="headerlink" href="#one-to-one-joins" title="Permanent link">&para;</a></h4>
+<p><strong>One-to-one</strong> relationships can be efficiently managed using either <code>get_joined</code> or <code>get_multi_joined</code>. The <code>get_joined</code> method is typically used when you want to fetch a single record from the database along with its associated record from another table, such as a user and their corresponding profile details. If you're retrieving multiple records, <code>get_multi_joined</code> can also be used for one-to-one joins. The parameter that deals with it, <code>relationship_type</code>, defaults to <code>one-on-one</code>.</p>
+<h4 id="one-to-many-joins">One-to-Many Joins<a class="headerlink" href="#one-to-many-joins" title="Permanent link">&para;</a></h4>
+<p>For <strong>one-to-many</strong> relationships, where a single record can be associated with multiple records in another table, <code>get_joined</code> can be used with <code>nest_joins</code> set to <code>True</code>. This setup allows the primary record to include a nested list of associated records, making it suitable for scenarios such as retrieving a user and all their blog posts. Alternatively, <code>get_multi_joined</code> is also applicable here for fetching multiple primary records, each with their nested lists of related records.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>When using <code>nested_joins=True</code>, the performance will always be a bit worse than when using <code>nested_joins=False</code>. For cases where more performance is necessary, consider using <code>nested_joins=False</code> and remodeling your database.</p>
+</div>
+<h4 id="one-to-one-relationships">One-to-One Relationships<a class="headerlink" href="#one-to-one-relationships" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>get_joined</code></strong>: Fetch a single record and its directly associated record (e.g., a user and their profile).</li>
+<li><strong><code>get_multi_joined</code></strong> (with <code>nest_joins=False</code>): Retrieve multiple records, each linked to a single related record from another table (e.g., users and their profiles).</li>
+</ul>
+<h4 id="one-to-many-relationships">One-to-Many Relationships<a class="headerlink" href="#one-to-many-relationships" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>get_joined</code></strong> (with <code>nest_joins=True</code>): Retrieve a single record with all its related records nested within it (e.g., a user and all their blog posts).</li>
+<li><strong><code>get_multi_joined</code></strong> (with <code>nest_joins=True</code>): Fetch multiple primary records, each with their related records nested (e.g., multiple users and all their blog posts).</li>
+</ul>
+<p>For a more detailed explanation, you may check the <a href="../joins/#handling-one-to-one-and-one-to-many-joins-in-fastcrud">joins docs</a>.</p>
 <h3 id="using-aliases">Using aliases<a class="headerlink" href="#using-aliases" title="Permanent link">&para;</a></h3>
 <p>In complex query scenarios, particularly when you need to join a table to itself or perform multiple joins on the same table for different purposes, aliasing becomes crucial. Aliasing allows you to refer to the same table in different contexts with unique identifiers, avoiding conflicts and ambiguity in your queries.</p>
 <p>For both <code>get_joined</code> and <code>get_multi_joined</code> methods, when you need to join the same model multiple times, you can utilize the <code>alias</code> parameter within your <code>JoinConfig</code> to differentiate between the joins. This parameter expects an instance of <code>AliasedClass</code>, which can be created using the <code>aliased</code> function from SQLAlchemy (also in fastcrud for convenience).</p>

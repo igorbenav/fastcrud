@@ -980,6 +980,66 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#using-filters-in-fastcrud" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Filters in FastCRUD
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using Filters in FastCRUD">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#defining-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Defining Filters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#applying-filters-to-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Applying Filters to Endpoints
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-filters-in-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Filters in Requests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-filter-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Filter Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handling-invalid-filter-columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handling Invalid Filter Columns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#conclusion" class="md-nav__link">
     <span class="md-ellipsis">
       Conclusion
@@ -1626,6 +1686,66 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#using-filters-in-fastcrud" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Filters in FastCRUD
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using Filters in FastCRUD">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#defining-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Defining Filters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#applying-filters-to-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Applying Filters to Endpoints
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-filters-in-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Filters in Requests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-filter-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Filter Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handling-invalid-filter-columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handling Invalid Filter Columns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#conclusion" class="md-nav__link">
     <span class="md-ellipsis">
       Conclusion
@@ -2033,6 +2153,76 @@
 </span></code></pre></div>
 <p>This setup ensures that the soft delete functionality within your application utilizes the <code>archived</code> and <code>archived_at</code> columns for marking records as deleted, rather than the default <code>is_deleted</code> and <code>deleted_at</code> fields.</p>
 <p>By specifying custom column names for soft deletion, you can adapt FastCRUD to fit the design of your database models, providing a flexible solution for handling deleted records in a way that best suits your application's needs.</p>
+<h2 id="using-filters-in-fastcrud">Using Filters in FastCRUD<a class="headerlink" href="#using-filters-in-fastcrud" title="Permanent link">&para;</a></h2>
+<p>FastCRUD provides filtering capabilities, allowing you to filter query results based on various conditions. Filters can be applied to <code>read_multi</code> and <code>read_paginated</code> endpoints. This section explains how to configure and use filters in FastCRUD.</p>
+<h3 id="defining-filters">Defining Filters<a class="headerlink" href="#defining-filters" title="Permanent link">&para;</a></h3>
+<p>Filters are either defined using the <code>FilterConfig</code> class or just passed as a dictionary. This class allows you to specify default filter values and validate filter types. Here's an example of how to define filters for a model:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FilterConfig</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1"># Define filter configuration for a model</span>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">filter_config</span> <span class="o">=</span> <span class="n">FilterConfig</span><span class="p">(</span>
+</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">tier_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Default filter value for tier_id</span>
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">name</span><span class="o">=</span><span class="kc">None</span>  <span class="c1"># Default filter value for name</span>
+</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="p">)</span>
+</span></code></pre></div>
+<p>And the same thing using a <code>dict</code>:
+<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">filter_config</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="s2">&quot;tier_id&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># Default filter value for tier_id</span>
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># Default filter value for name</span>
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="p">}</span>
+</span></code></pre></div></p>
+<p>By using <code>FilterConfig</code> you get better error messages.</p>
+<h3 id="applying-filters-to-endpoints">Applying Filters to Endpoints<a class="headerlink" href="#applying-filters-to-endpoints" title="Permanent link">&para;</a></h3>
+<p>You can apply filters to your endpoints by passing the <code>filter_config</code> to the <code>crud_router</code> or <code>EndpointCreator</code>. Here's an example:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">crud_router</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">from</span> <span class="nn">yourapp.models</span> <span class="kn">import</span> <span class="n">YourModel</span>
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="kn">from</span> <span class="nn">yourapp.schemas</span> <span class="kn">import</span> <span class="n">CreateYourModelSchema</span><span class="p">,</span> <span class="n">UpdateYourModelSchema</span>
+</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="kn">from</span> <span class="nn">yourapp.database</span> <span class="kn">import</span> <span class="n">async_session</span>
+</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
+</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="c1"># Apply filters using crud_router</span>
+</span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span>
+</span><span id="__span-17-8"><a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>    <span class="n">crud_router</span><span class="p">(</span>
+</span><span id="__span-17-9"><a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>        <span class="n">session</span><span class="o">=</span><span class="n">async_session</span><span class="p">,</span>
+</span><span id="__span-17-10"><a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>        <span class="n">model</span><span class="o">=</span><span class="n">YourModel</span><span class="p">,</span>
+</span><span id="__span-17-11"><a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>        <span class="n">create_schema</span><span class="o">=</span><span class="n">CreateYourModelSchema</span><span class="p">,</span>
+</span><span id="__span-17-12"><a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>        <span class="n">update_schema</span><span class="o">=</span><span class="n">UpdateYourModelSchema</span><span class="p">,</span>
+</span><span id="__span-17-13"><a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>        <span class="n">filter_config</span><span class="o">=</span><span class="n">filter_config</span><span class="p">,</span>  <span class="c1"># Apply the filter configuration</span>
+</span><span id="__span-17-14"><a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>        <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/yourmodel&quot;</span><span class="p">,</span>
+</span><span id="__span-17-15"><a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>        <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;YourModel&quot;</span><span class="p">]</span>
+</span><span id="__span-17-16"><a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>    <span class="p">)</span>
+</span><span id="__span-17-17"><a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="using-filters-in-requests">Using Filters in Requests<a class="headerlink" href="#using-filters-in-requests" title="Permanent link">&para;</a></h3>
+<p>Once filters are configured, you can use them in your API requests. Filters are passed as query parameters. Here's an example of how to use filters in a request to a paginated endpoint:</p>
+<div class="language-http highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="err">GET /yourmodel/get_paginated?page=1&amp;itemsPerPage=3&amp;tier_id=1&amp;name=Alice</span>
+</span></code></pre></div>
+<h3 id="custom-filter-validation">Custom Filter Validation<a class="headerlink" href="#custom-filter-validation" title="Permanent link">&para;</a></h3>
+<p>The <code>FilterConfig</code> class includes a validator to check filter types. If an invalid filter type is provided, a <code>ValueError</code> is raised. You can customize the validation logic by extending the <code>FilterConfig</code> class:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FilterConfig</span>
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">ValidationError</span>
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="k">class</span> <span class="nc">CustomFilterConfig</span><span class="p">(</span><span class="n">FilterConfig</span><span class="p">):</span>
+</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;filters&quot;</span><span class="p">)</span>
+</span><span id="__span-19-6"><a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="k">def</span> <span class="nf">check_filter_types</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">filters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+</span><span id="__span-19-7"><a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">filters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="__span-19-8"><a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)):</span>
+</span><span id="__span-19-9"><a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid default value for &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-19-10"><a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>        <span class="k">return</span> <span class="n">filters</span>
+</span><span id="__span-19-11"><a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>
+</span><span id="__span-19-12"><a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="k">try</span><span class="p">:</span>
+</span><span id="__span-19-13"><a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>    <span class="c1"># Example of invalid filter configuration</span>
+</span><span id="__span-19-14"><a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>    <span class="n">invalid_filter_config</span> <span class="o">=</span> <span class="n">CustomFilterConfig</span><span class="p">(</span><span class="n">invalid_field</span><span class="o">=</span><span class="p">[])</span>
+</span><span id="__span-19-15"><a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a><span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span id="__span-19-16"><a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="handling-invalid-filter-columns">Handling Invalid Filter Columns<a class="headerlink" href="#handling-invalid-filter-columns" title="Permanent link">&para;</a></h3>
+<p>FastCRUD ensures that filters are applied only to valid columns in your model. If an invalid filter column is specified, a <code>ValueError</code> is raised:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="k">try</span><span class="p">:</span>
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    <span class="c1"># Example of invalid filter column</span>
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>    <span class="n">invalid_filter_config</span> <span class="o">=</span> <span class="n">FilterConfig</span><span class="p">(</span><span class="n">non_existent_column</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>  <span class="c1"># Output: Invalid filter column &#39;non_existent_column&#39;: not found in model</span>
+</span></code></pre></div>
 <h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
 <p>The <code>EndpointCreator</code> class in FastCRUD offers flexibility and control over CRUD operations and custom endpoint creation. By extending this class or using the <code>included_methods</code> and <code>deleted_methods</code> parameters, you can tailor your API's functionality to your specific requirements, ensuring a more customizable and streamlined experience.</p>
 

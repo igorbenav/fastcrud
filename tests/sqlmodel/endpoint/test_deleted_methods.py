@@ -2,15 +2,13 @@ import pytest
 from fastapi.testclient import TestClient
 from fastcrud import FastCRUD, crud_router
 
-from ..conftest import get_session_local
-
 
 @pytest.mark.asyncio
 async def test_deleted_methods(
     client: TestClient, async_session, test_model, create_schema, update_schema
 ):
     custom_router = crud_router(
-        session=get_session_local,
+        session=lambda: async_session,
         model=test_model,
         crud=FastCRUD(test_model),
         create_schema=create_schema,

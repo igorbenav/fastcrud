@@ -199,17 +199,6 @@ async_engine = create_async_engine(
 )
 
 
-local_session = sessionmaker(
-    bind=async_engine, class_=AsyncSession, expire_on_commit=False
-)
-
-
-async def get_session_local():
-    async with local_session() as session:
-        yield session
-        await session.close()  # Ensure the session is properly closed
-
-
 @pytest_asyncio.fixture(scope="function")
 async def async_session() -> AsyncSession:
     session = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
@@ -353,12 +342,13 @@ def client(
     tier_delete_schema,
     multi_pk_test_schema,
     multi_pk_test_create_schema,
+    async_session,
 ):
     app = FastAPI()
 
     app.include_router(
         crud_router(
-            session=get_session_local,
+            session=lambda: async_session,
             model=test_model,
             crud=FastCRUD(test_model),
             create_schema=create_schema,
@@ -371,7 +361,7 @@ def client(
 
     app.include_router(
         crud_router(
-            session=get_session_local,
+            session=lambda: async_session,
             model=tier_model,
             crud=FastCRUD(tier_model),
             create_schema=tier_schema,
@@ -384,7 +374,7 @@ def client(
 
     app.include_router(
         crud_router(
-            session=get_session_local,
+            session=lambda: async_session,
             model=multi_pk_model,
             crud=FastCRUD(multi_pk_model),
             create_schema=multi_pk_test_create_schema,
@@ -401,16 +391,13 @@ def client(
 
 @pytest.fixture
 def filtered_client(
-    test_model,
-    create_schema,
-    update_schema,
-    delete_schema,
+    test_model, create_schema, update_schema, delete_schema, async_session
 ):
     app = FastAPI()
 
     app.include_router(
         crud_router(
-            session=get_session_local,
+            session=lambda: async_session,
             model=test_model,
             crud=FastCRUD(test_model),
             create_schema=create_schema,
@@ -427,16 +414,13 @@ def filtered_client(
 
 @pytest.fixture
 def dict_filtered_client(
-    test_model,
-    create_schema,
-    update_schema,
-    delete_schema,
+    test_model, create_schema, update_schema, delete_schema, async_session
 ):
     app = FastAPI()
 
     app.include_router(
         crud_router(
-            session=get_session_local,
+            session=lambda: async_session,
             model=test_model,
             crud=FastCRUD(test_model),
             create_schema=create_schema,
@@ -453,10 +437,7 @@ def dict_filtered_client(
 
 @pytest.fixture
 def invalid_filtered_client(
-    test_model,
-    create_schema,
-    update_schema,
-    delete_schema,
+    test_model, create_schema, update_schema, delete_schema, async_session
 ):
     filter_config = {"invalid_column": None}
 
@@ -464,7 +445,7 @@ def invalid_filtered_client(
         ValueError, match="Invalid filter column 'invalid_column': not found in model"
     ):
         EndpointCreator(
-            session=get_session_local,
+            session=lambda: async_session,
             model=test_model,
             create_schema=create_schema,
             update_schema=update_schema,
@@ -476,10 +457,10 @@ def invalid_filtered_client(
 
 
 @pytest.fixture
-def endpoint_creator(test_model) -> EndpointCreator:
+def endpoint_creator(test_model, async_session) -> EndpointCreator:
     """Fixture to create an instance of EndpointCreator."""
     return EndpointCreator(
-        session=get_session_local,
+        session=lambda: async_session,
         model=ModelTest,
         crud=FastCRUD(test_model),
         create_schema=CreateSchemaTest,

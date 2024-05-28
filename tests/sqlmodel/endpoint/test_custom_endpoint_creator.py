@@ -6,8 +6,6 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastcrud import FastCRUD, crud_router, EndpointCreator
 
-from ..conftest import get_session_local
-
 
 class CustomEndpointCreator(EndpointCreator):
     def _custom_route(self):
@@ -53,7 +51,7 @@ async def test_custom_endpoint_creator(
     client: TestClient, async_session, test_model, create_schema, update_schema
 ):
     custom_router = crud_router(
-        session=get_session_local,
+        session=lambda: async_session,
         model=test_model,
         crud=FastCRUD(test_model),
         create_schema=create_schema,

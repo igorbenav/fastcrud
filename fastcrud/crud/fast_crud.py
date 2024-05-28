@@ -215,7 +215,7 @@ class FastCRUD(
 
     def _get_sqlalchemy_filter(
         self, operator: str, value: Any,
-    ) -> Callable[[str], Callable] | None:
+    ) ->Optional[Callable[[str], Callable]]:
         if operator in {'in', 'not_in'}:
             if not isinstance(value, (tuple, list, set)):
                 raise ValueError(

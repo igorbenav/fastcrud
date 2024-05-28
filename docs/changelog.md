@@ -5,6 +5,262 @@
 The Changelog documents all notable changes made to FastCRUD. This includes new features, bug fixes, and improvements. It's organized by version and date, providing a clear history of the library's development.
 
 ___
+## [0.13.0] - May 28, 2024
+
+#### Added
+- Filters in Automatic Endpoints 🎉
+- One-to-many support in joins
+- Upsert method in FastCRUD class by @dubusster 
+
+#### Detailed Changes
+##### Using Filters in FastCRUD
+
+FastCRUD provides filtering capabilities, allowing you to filter query results based on various conditions. Filters can be applied to `read_multi` and `read_paginated` endpoints. This section explains how to configure and use filters in FastCRUD.
+
+
+##### Defining Filters
+
+Filters are either defined using the `FilterConfig` class or just passed as a dictionary. This class allows you to specify default filter values and validate filter types. Here's an example of how to define filters for a model:
+
+```python
+from fastcrud import FilterConfig
+
+# Define filter configuration for a model
+filter_config = FilterConfig(
+    tier_id=None,  # Default filter value for tier_id
+    name=None  # Default filter value for name
+)
+```
+
+And the same thing using a `dict`:
+```python
+filter_config = {
+    "tier_id": None,  # Default filter value for tier_id
+    "name": None,  # Default filter value for name
+}
+```
+
+By using `FilterConfig` you get better error messages.
+
+###### Applying Filters to Endpoints
+
+You can apply filters to your endpoints by passing the `filter_config` to the `crud_router` or `EndpointCreator`. Here's an example:
+
+```python
+from fastcrud import crud_router
+from yourapp.models import YourModel
+from yourapp.schemas import CreateYourModelSchema, UpdateYourModelSchema
+from yourapp.database import async_session
+
+# Apply filters using crud_router
+app.include_router(
+    crud_router(
+        session=async_session,
+        model=YourModel,
+        create_schema=CreateYourModelSchema,
+        update_schema=UpdateYourModelSchema,
+        filter_config=filter_config,  # Apply the filter configuration
+        path="/yourmodel",
+        tags=["YourModel"]
+    )
+)
+```
+
+###### Using Filters in Requests
+
+Once filters are configured, you can use them in your API requests. Filters are passed as query parameters. Here's an example of how to use filters in a request to a paginated endpoint:
+
+```http
+GET /yourmodel/get_paginated?page=1&itemsPerPage=3&tier_id=1&name=Alice
+```
+
+###### Custom Filter Validation
+
+The `FilterConfig` class includes a validator to check filter types. If an invalid filter type is provided, a `ValueError` is raised. You can customize the validation logic by extending the `FilterConfig` class:
+
+```python
+from fastcrud import FilterConfig
+from pydantic import ValidationError
+
+class CustomFilterConfig(FilterConfig):
+    @field_validator("filters")
+    def check_filter_types(cls, filters: dict[str, Any]) -> dict[str, Any]:
+        for key, value in filters.items():
+            if not isinstance(value, (type(None), str, int, float, bool)):
+                raise ValueError(f"Invalid default value for '{key}': {value}")
+        return filters
+
+try:
+    # Example of invalid filter configuration
+    invalid_filter_config = CustomFilterConfig(invalid_field=[])
+except ValidationError as e:
+    print(e)
+```
+
+###### Handling Invalid Filter Columns
+
+FastCRUD ensures that filters are applied only to valid columns in your model. If an invalid filter column is specified, a `ValueError` is raised:
+
+```python
+try:
+    # Example of invalid filter column
+    invalid_filter_config = FilterConfig(non_existent_column=None)
+except ValueError as e:
+    print(e)  # Output: Invalid filter column 'non_existent_column': not found in model
+```
+
+___
+##### Handling One-to-One and One-to-Many Joins in FastCRUD
+
+FastCRUD provides flexibility in handling one-to-one and one-to-many relationships through `get_joined` and `get_multi_joined` methods, along with the ability to specify how joined data should be structured using both the `relationship_type` (default `one-to-one`) and the `nest_joins` (default `False`) parameters.
+
+###### One-to-One Relationships
+- **`get_joined`**: Fetch a single record and its directly associated record (e.g., a user and their profile).
+- **`get_multi_joined`** (with `nest_joins=False`): Retrieve multiple records, each linked to a single related record from another table (e.g., users and their profiles).
+
+
+**Example**
+
+Let's define two tables:
+
+```python
+class User(Base):
+    __tablename__ = "user"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    tier_id = Column(Integer, ForeignKey("tier.id"))
+
+class Tier(Base):
+    __tablename__ = "tier"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+```
+
+Fetch a user and their tier:
+
+```python
+user_tier = await user_crud.get_joined(
+    db=db,
+    join_model=Tier,
+    join_on=User.tier_id == Tier.id,
+    join_type="left",
+    join_prefix="tier_",
+    id=1
+)
+```
+
+The result will be:
+
+```json
+{
+    "id": 1,
+    "name": "Example",
+    "tier_id": 1,
+    "tier_name": "Free"
+}
+```
+
+**One-to-One Relationship with Nested Joins**
+
+To get the joined data in a nested dictionary:
+
+```python
+user_tier = await user_crud.get_joined(
+    db=db,
+    join_model=Tier,
+    join_on=User.tier_id == Tier.id,
+    join_type="left",
+    join_prefix="tier_",
+    nest_joins=True,
+    id=1
+)
+```
+
+The result will be:
+
+```json
+{
+    "id": 1,
+    "name": "Example",
+    "tier": {
+        "id": 1,
+        "name": "Free"
+    }
+}
+```
+
+
+###### One-to-Many Relationships
+- **`get_joined`** (with `nest_joins=True`): Retrieve a single record with all its related records nested within it (e.g., a user and all their blog posts).
+- **`get_multi_joined`** (with `nest_joins=True`): Fetch multiple primary records, each with their related records nested (e.g., multiple users and all their blog posts).
+
+> [!WARNING]
+> When using `nest_joins=True`, the performance will always be a bit worse than when using `nest_joins=False`. For cases where more performance is necessary, consider using `nest_joins=False` and remodeling your database.
+
+
+**Example**
+
+To demonstrate a one-to-many relationship, let's assume `User` and `Post` tables:
+
+```python
+class User(Base):
+    __tablename__ = "user"
+    id = Column(Integer, primary key=True)
+    name = Column(String)
+
+class Post(Base):
+    __tablename__ = "post"
+    id = Column(Integer, primary key=True)
+    user_id = Column(Integer, ForeignKey("user.id"))
+    content = Column(String)
+```
+
+Fetch a user and all their posts:
+
+```python
+user_posts = await user_crud.get_joined(
+    db=db,
+    join_model=Post,
+    join_on=User.id == Post.user_id,
+    join_type="left",
+    join_prefix="post_",
+    nest_joins=True,
+    id=1
+)
+```
+
+The result will be:
+
+```json
+{
+    "id": 1,
+    "name": "Example User",
+    "posts": [
+        {
+            "id": 101,
+            "user_id": 1,
+            "content": "First post content"
+        },
+        {
+            "id": 102,
+            "user_id": 1,
+            "content": "Second post content"
+        }
+    ]
+}
+```
+
+
+## What's Changed
+- feat: ✨ add upsert method in FastCRUD class by [@dubusster](https://github.com/dubusster)
+- Filters in Automatic Endpoints
+- One-to-many support in joins
+- tests fixed by @igorbenav
+- Using the same session for all tests
+- warning added to docs
+
+
+**Full Changelog**: https://github.com/igorbenav/fastcrud/compare/v0.12.1...v0.13.0
 
 ## [0.12.1] - May 10, 2024
 

@@ -391,11 +391,7 @@ def client(
 
 @pytest.fixture
 def filtered_client(
-    test_model,
-    create_schema,
-    update_schema,
-    delete_schema,
-    async_session
+    test_model, create_schema, update_schema, delete_schema, async_session
 ):
     app = FastAPI()
 
@@ -418,11 +414,7 @@ def filtered_client(
 
 @pytest.fixture
 def dict_filtered_client(
-    test_model,
-    create_schema,
-    update_schema,
-    delete_schema,
-    async_session
+    test_model, create_schema, update_schema, delete_schema, async_session
 ):
     app = FastAPI()
 
@@ -445,11 +437,7 @@ def dict_filtered_client(
 
 @pytest.fixture
 def invalid_filtered_client(
-    test_model,
-    create_schema,
-    update_schema,
-    delete_schema,
-    async_session
+    test_model, create_schema, update_schema, delete_schema, async_session
 ):
     filter_config = {"invalid_column": None}
 

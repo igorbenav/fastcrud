@@ -22,6 +22,12 @@ class User(Base):
     archived_at = Column(DateTime)
 ```
 
+!!! WARNING
+
+    Note that naive `datetime` such as `datetime.utcnow` is not supported by `FastCRUD` as it was [deprecated](https://github.com/python/cpython/pull/103858).
+    
+    Use timezone aware `datetime`, such as `datetime.now(UTC)` instead.
+
 You could just pass it to `FastCRUD`:
 
 ```python

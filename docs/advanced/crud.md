@@ -131,7 +131,7 @@ items = await item_crud.get_multi(
 
 ### OR parameter filters
 
-More complex OR filters are supported. They must be passed as dictionary, where each key is a library-supported operator to be used in OR expression and values get's passed as the parameter.
+More complex OR filters are supported. They must be passed as dictionary, where each key is a library-supported operator to be used in OR expression and values is what get's passed as the parameter.
 
 ```python
 # Fetch items priced under $5 or above $20

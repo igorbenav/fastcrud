@@ -179,14 +179,11 @@ class FastCRUD(
         ```
     """
     _SUPPORTED_FILTERS = {
-        'gt': lambda column: column.__gt__,
+        "gt": lambda column: column.__gt__,
         "lt": lambda column: column.__lt__,
         "gte": lambda column: column.__ge__,
         "lte": lambda column: column.__le__,
         "ne": lambda column: column.__ne__,
-        "between": lambda column: column.between,
-        "in": lambda column: column.in_,
-        "not_in": lambda column: column.not_in,
         "is": lambda column: column.is_,
         "is_not": lambda column: column.is_not,
         "like": lambda column: column.like,
@@ -197,6 +194,9 @@ class FastCRUD(
         "endswith": lambda column: column.endswith,
         "contains": lambda column: column.contains,
         "match": lambda column: column.match,
+        "between": lambda column: column.between,
+        "in": lambda column: column.in_,
+        "not_in": lambda column: column.not_in,
     }
 
     def __init__(
@@ -216,10 +216,10 @@ class FastCRUD(
     def _get_sqlalchemy_filter(
         self, operator: str, value: Any,
     ) ->Optional[Callable[[str], Callable]]:
-        if operator in {'in', 'not_in'}:
+        if operator in {'in', 'not_in', 'between'}:
             if not isinstance(value, (tuple, list, set)):
                 raise ValueError(
-                    "in filter must be tuple, list or set"
+                    f"<{operator}> filter must be tuple, list or set"
                 )
         return self._SUPPORTED_FILTERS.get(operator)
 

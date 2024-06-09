@@ -237,15 +237,18 @@ class FastCRUD(
                     raise ValueError(f"Invalid filter column: {field_name}")
                 if op == 'or':
                     or_filters = [
-                        self._get_sqlalchemy_filter(or_key, or_value)(column)(or_value)
+                        sqlalchemy_filter(column)(or_value)
                         for or_key, or_value in value.items()
-                        if self._get_sqlalchemy_filter(or_key, value)
+                        if (sqlalchemy_filter := self._get_sqlalchemy_filter(
+                            or_key, value)) is not None
                     ]
                     filters.append(or_(*or_filters))
                 else:
-                    filters.append(
-                        self._get_sqlalchemy_filter(op, value)(column)(value)
-                    )
+                    sqlalchemy_filter = self._get_sqlalchemy_filter(op, value)
+                    if sqlalchemy_filter:
+                        filters.append(
+                                sqlalchemy_filter(column)(value)
+                        )
             else:
                 column = getattr(model, key, None)
                 if column is not None:

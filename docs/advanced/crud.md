@@ -91,29 +91,62 @@ await item_crud.delete(
 
 FastCRUD supports advanced filtering options, allowing you to query records using operators such as greater than (`__gt`), less than (`__lt`), and their inclusive counterparts (`__gte`, `__lte`). These filters can be used in any method that retrieves or operates on records, including `get`, `get_multi`, `exists`, `count`, `update`, and `delete`.
 
-### Using Advanced Filters
+### Single parameter filters
 
-The following examples demonstrate how to use advanced filters for querying and manipulating data:
-
-#### Fetching Records with Advanced Filters
+Most filter operators require a single string or integer value.
 
 ```python
-# Fetch items priced between $5 and $20
+# Fetch items priced between above $5
 items = await item_crud.get_multi(
     db=db,
     price__gte=5,
-    price__lte=20
 )
 ```
 
-Currently supported filter operators are:
+Currently supported single parameter filters are:
 - __gt - greater than
 - __lt - less than
 - __gte - greater than or equal to
 - __lte - less than or equal to
 - __ne - not equal
-- __in - included in (tuple, list or set)
-- __not_in - not included in (tuple, list or set)
+- __is - used to test True, False and None identity
+- __is_not - negation of "is"
+- __like - SQL "like" search for specific text pattern
+- __notlike - negation of "like"
+- __ilike - case insensitive "like"
+- __notilike - case insensitive "notlike"
+- __startswith - text starts with given string
+- __endswith - text ends with given string
+- __contains - text contains given string
+- __match - database-specific match expression
+
+### Complex parameter filters
+
+Some operators require multiple values. They must be passed as a python tuple, list or set.
+
+```python
+# Fetch items priced between $5 and $20
+items = await item_crud.get_multi(
+    db=db,
+    price__between=(5, 20),
+)
+```
+- __between - between 2 numeric values
+- __in - included in
+- __not_in - not included in
+
+### OR parameter filters
+
+More complex OR filters are supported. They must be passed as dictionary, where each key is a library-supported operator to be used in OR expression and values is what get's passed as the parameter.
+
+```python
+# Fetch items priced under $5 or above $20
+items = await item_crud.get_multi(
+    db=db,
+    price__or={'lt': 5, 'gt': 20},
+)
+```
+
 
 #### Counting Records
 

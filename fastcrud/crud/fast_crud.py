@@ -1,15 +1,15 @@
-from typing import Any, Dict, Generic, TypeVar, Union, Optional
+from typing import Any, Dict, Generic, TypeVar, Union, Optional, Callable
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import select, update, delete, func, inspect, asc, desc
+from sqlalchemy import select, update, delete, func, inspect, asc, desc, or_
 from sqlalchemy.exc import ArgumentError, MultipleResultsFound, NoResultFound
 from sqlalchemy.sql import Join
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine.row import Row
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm.util import AliasedClass
-from sqlalchemy.sql.elements import BinaryExpression
+from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 from sqlalchemy.sql.selectable import Select
 
 from .helper import (
@@ -179,6 +179,26 @@ class FastCRUD(
         # Now 'archived' and 'archived_at' will be used for soft delete operations.
         ```
     """
+    _SUPPORTED_FILTERS = {
+        "gt": lambda column: column.__gt__,
+        "lt": lambda column: column.__lt__,
+        "gte": lambda column: column.__ge__,
+        "lte": lambda column: column.__le__,
+        "ne": lambda column: column.__ne__,
+        "is": lambda column: column.is_,
+        "is_not": lambda column: column.is_not,
+        "like": lambda column: column.like,
+        "notlike": lambda column: column.notlike,
+        "ilike": lambda column: column.ilike,
+        "notilike": lambda column: column.notilike,
+        "startswith": lambda column: column.startswith,
+        "endswith": lambda column: column.endswith,
+        "contains": lambda column: column.contains,
+        "match": lambda column: column.match,
+        "between": lambda column: column.between,
+        "in": lambda column: column.in_,
+        "not_in": lambda column: column.not_in,
+    }
 
     def __init__(
         self,
@@ -194,36 +214,42 @@ class FastCRUD(
         self.updated_at_column = updated_at_column
         self._primary_keys = _get_primary_keys(self.model)
 
+    def _get_sqlalchemy_filter(
+        self, operator: str, value: Any,
+    ) ->Optional[Callable[[str], Callable]]:
+        if operator in {'in', 'not_in', 'between'}:
+            if not isinstance(value, (tuple, list, set)):
+                raise ValueError(
+                    f"<{operator}> filter must be tuple, list or set"
+                )
+        return self._SUPPORTED_FILTERS.get(operator)
+
     def _parse_filters(
         self, model: Optional[Union[type[ModelType], AliasedClass]] = None, **kwargs
-    ) -> list[BinaryExpression]:
+    ) -> list[ColumnElement]:
         model = model or self.model
         filters = []
+
         for key, value in kwargs.items():
             if "__" in key:
                 field_name, op = key.rsplit("__", 1)
                 column = getattr(model, field_name, None)
                 if column is None:
                     raise ValueError(f"Invalid filter column: {field_name}")
-
-                if op == "gt":
-                    filters.append(column > value)
-                elif op == "lt":
-                    filters.append(column < value)
-                elif op == "gte":
-                    filters.append(column >= value)
-                elif op == "lte":
-                    filters.append(column <= value)
-                elif op == "ne":
-                    filters.append(column != value)
-                elif op == "in":
-                    if not isinstance(value, (tuple, list, set)):
-                        raise ValueError("in filter must be tuple, list or set")
-                    filters.append(column.in_(value))
-                elif op == "not_in":
-                    if not isinstance(value, (tuple, list, set)):
-                        raise ValueError("in filter must be tuple, list or set")
-                    filters.append(column.not_in(value))
+                if op == 'or':
+                    or_filters = [
+                        sqlalchemy_filter(column)(or_value)
+                        for or_key, or_value in value.items()
+                        if (sqlalchemy_filter := self._get_sqlalchemy_filter(
+                            or_key, value)) is not None
+                    ]
+                    filters.append(or_(*or_filters))
+                else:
+                    sqlalchemy_filter = self._get_sqlalchemy_filter(op, value)
+                    if sqlalchemy_filter:
+                        filters.append(
+                                sqlalchemy_filter(column)(value)
+                        )
             else:
                 column = getattr(model, key, None)
                 if column is not None:
@@ -378,14 +404,8 @@ class FastCRUD(
         """
         Constructs a SQL Alchemy `Select` statement with optional column selection, filtering, and sorting.
         This method allows for advanced filtering through comparison operators, enabling queries to be refined beyond simple equality checks.
-        Supported operators include:
-            '__gt' (greater than),
-            '__lt' (less than),
-            '__gte' (greater than or equal to),
-            '__lte' (less than or equal to),
-            '__ne' (not equal),
-            '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+        For filtering details see:
+        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
 
         Args:
             schema_to_select: Pydantic schema to determine which columns to include in the selection. If not provided, selects all columns of the model.
@@ -444,14 +464,8 @@ class FastCRUD(
         """
         Fetches a single record based on specified filters.
         This method allows for advanced filtering through comparison operators, enabling queries to be refined beyond simple equality checks.
-        Supported operators include:
-            '__gt' (greater than),
-            '__lt' (less than),
-            '__gte' (greater than or equal to),
-            '__lte' (less than or equal to),
-            '__ne' (not equal),
-            '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+        For filtering details see:
+        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
 
         Args:
             db: The database session to use for the operation.
@@ -551,14 +565,8 @@ class FastCRUD(
     async def exists(self, db: AsyncSession, **kwargs: Any) -> bool:
         """
         Checks if any records exist that match the given filter conditions.
-        This method supports advanced filtering with comparison operators:
-            '__gt' (greater than),
-            '__lt' (less than),
-            '__gte' (greater than or equal to),
-            '__lte' (less than or equal to),
-            '__ne' (not equal),
-            '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+        For filtering details see:
+        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
 
         Args:
             db: The database session to use for the operation.
@@ -601,12 +609,9 @@ class FastCRUD(
         **kwargs: Any,
     ) -> int:
         """
-        Counts records that match specified filters, supporting advanced filtering through comparison operators:
-            '__gt' (greater than), '__lt' (less than),
-            '__gte' (greater than or equal to),
-            '__lte' (less than or equal to), '__ne' (not equal),
-            '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+        Counts records that match specified filters. For filtering details see:
+        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
+
         Can also count records based on a configuration of joins, useful for complex queries involving relationships.
 
         Args:
@@ -726,14 +731,9 @@ class FastCRUD(
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
-        Fetches multiple records based on filters, supporting sorting, pagination, and advanced filtering with comparison operators:
-            '__gt' (greater than),
-            '__lt' (less than),
-            '__gte' (greater than or equal to),
-            '__lte' (less than or equal to),
-            '__ne' (not equal),
-            '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+        Fetches multiple records based on filters, supporting sorting, pagination.
+        For filtering details see:
+        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
 
         Args:
             db: The database session to use for the operation.
@@ -841,14 +841,8 @@ class FastCRUD(
         """
         Fetches a single record with one or multiple joins on other models. If 'join_on' is not provided, the method attempts
         to automatically detect the join condition using foreign key relationships. For multiple joins, use 'joins_config' to
-        specify each join configuration. Advanced filters supported:
-            '__gt' (greater than),
-            '__lt' (less than),
-            '__gte' (greater than or equal to),
-            '__lte' (less than or equal to),
-            '__ne' (not equal),
-            '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+        specify each join configuration. For filtering details see:
+        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
 
         Args:
             db: The SQLAlchemy async session.
@@ -1134,15 +1128,9 @@ class FastCRUD(
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
-        Fetch multiple records with a join on another model, allowing for pagination, optional sorting, and model conversion,
-        supporting advanced filtering with comparison operators:
-            '__gt' (greater than),
-            '__lt' (less than),
-            '__gte' (greater than or equal to),
-            '__lte' (less than or equal to),
-            '__ne' (not equal),
-            '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+        Fetch multiple records with a join on another model, allowing for pagination, optional sorting, and model conversion.
+        For filtering details see:
+        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
 
         Args:
             db: The SQLAlchemy async session.
@@ -1521,14 +1509,8 @@ class FastCRUD(
     ) -> dict[str, Any]:
         """
         Implements cursor-based pagination for fetching records. This method is designed for efficient data retrieval in large datasets and is ideal for features like infinite scrolling.
-        It supports advanced filtering with comparison operators:
-            '__gt' (greater than),
-            '__lt' (less than),
-            '__gte' (greater than or equal to),
-            '__lte' (less than or equal to),
-            '__ne' (not equal),
-            '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+        For filtering details see:
+        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
 
         Args:
             db: The SQLAlchemy async session.
@@ -1610,14 +1592,8 @@ class FastCRUD(
     ) -> None:
         """
         Updates an existing record or multiple records in the database based on specified filters. This method allows for precise targeting of records to update.
-        It supports advanced filtering through comparison operators:
-            '__gt' (greater than),
-            '__lt' (less than),
-            '__gte' (greater than or equal to),
-            '__lte' (less than or equal to),
-            '__ne' (not equal),
-            '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+        For filtering details see:
+        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
 
         Args:
             db: The database session to use for the operation.
@@ -1684,14 +1660,9 @@ class FastCRUD(
         **kwargs: Any,
     ) -> None:
         """
-        Deletes a record or multiple records from the database based on specified filters, with support for advanced filtering through comparison operators:
-            '__gt' (greater than),
-            '__lt' (less than),
-            '__gte' (greater than or equal to),
-            '__lte' (less than or equal to),
-            '__ne' (not equal),
-            '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+        Deletes a record or multiple records from the database based on specified filters.
+        For filtering details see:
+        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
 
         Args:
             db: The database session to use for the operation.
@@ -1742,14 +1713,8 @@ class FastCRUD(
     ) -> None:
         """
         Soft deletes a record or optionally multiple records if it has an "is_deleted" attribute, otherwise performs a hard delete, based on specified filters.
-        Supports advanced filtering through comparison operators:
-            '__gt' (greater than),
-            '__lt' (less than),
-            '__gte' (greater than or equal to),
-            '__lte' (less than or equal to),
-            '__ne' (not equal),
-            '__in' (included in [tuple, list or set]),
-            '__not_in' (not included in [tuple, list or set]).
+        For filtering details see:
+        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
 
         Args:
             db: The database session to use for the operation.

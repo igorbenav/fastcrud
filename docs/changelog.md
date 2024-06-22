@@ -5,6 +5,83 @@
 The Changelog documents all notable changes made to FastCRUD. This includes new features, bug fixes, and improvements. It's organized by version and date, providing a clear history of the library's development.
 
 ___
+## [0.13.1] - Jun 22, 2024
+
+#### Added
+- More Advanced Filters by @JakNowy 🎉
+
+#### Fixed
+- Bug where objects with null primary key are returned with all fields set to None in nested joins #102 
+
+#### Detailed Changes
+___
+
+### Advanced Filters
+
+FastCRUD supports advanced filtering options, allowing you to query records using operators such as greater than (`__gt`), less than (`__lt`), and their inclusive counterparts (`__gte`, `__lte`). These filters can be used in any method that retrieves or operates on records, including `get`, `get_multi`, `exists`, `count`, `update`, and `delete`.
+
+#### Single parameter filters
+
+Most filter operators require a single string or integer value.
+
+```python
+# Fetch items priced above $5
+items = await item_crud.get_multi(
+    db=db,
+    price__gte=5,
+)
+```
+
+Currently supported single parameter filters are:
+- __gt - greater than
+- __lt - less than
+- __gte - greater than or equal to
+- __lte - less than or equal to
+- __ne - not equal
+- __is - used to test True, False, and None identity
+- __is_not - negation of "is"
+- __like - SQL "like" search for specific text pattern
+- __notlike - negation of "like"
+- __ilike - case insensitive "like"
+- __notilike - case insensitive "notlike"
+- __startswith - text starts with given string
+- __endswith - text ends with given string
+- __contains - text contains given string
+- __match - database-specific match expression
+
+#### Complex parameter filters
+
+Some operators require multiple values. They must be passed as a python tuple, list, or set.
+
+```python
+# Fetch items priced between $5 and $20
+items = await item_crud.get_multi(
+    db=db,
+    price__between=(5, 20),
+)
+```
+- __between - between 2 numeric values
+- __in - included in
+- __not_in - not included in
+
+#### OR parameter filters
+
+More complex OR filters are supported. They must be passed as a dictionary, where each key is a library-supported operator to be used in OR expression and values are what get's passed as the parameter.
+
+```python
+# Fetch items priced under $5 or above $20
+items = await item_crud.get_multi(
+    db=db,
+    price__or={'lt': 5, 'gt': 20},
+)
+```
+
+#### What's Changed
+- Missing sqlalchemy operators by [@JakNowy](https://github.com/JakNowy) in https://github.com/igorbenav/fastcrud/pull/85
+- Null primary key bug fixed in https://github.com/igorbenav/fastcrud/pull/107
+
+**Full Changelog**: https://github.com/igorbenav/fastcrud/compare/v0.13.0...v0.13.1
+
 ## [0.13.0] - May 28, 2024
 
 #### Added

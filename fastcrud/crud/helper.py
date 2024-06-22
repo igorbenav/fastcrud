@@ -18,7 +18,7 @@ class JoinConfig(BaseModel):
     join_type: str = "left"
     alias: Optional[AliasedClass] = None
     filters: Optional[dict] = None
-    relationship_type: Optional[str] = None
+    relationship_type: Optional[str] = "one-to-one"
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -170,7 +170,7 @@ def _handle_one_to_one(nested_data, nested_key, nested_field, value):
             }
         }
     """
-    if nested_key not in nested_data:
+    if nested_key not in nested_data or not isinstance(nested_data[nested_key], dict):
         nested_data[nested_key] = {}
     nested_data[nested_key][nested_field] = value
     return nested_data
@@ -383,6 +383,13 @@ def _nest_join_data(
                 ):
                     nested_data[nested_key] = []
 
+        if nested_key in nested_data and isinstance(nested_data[nested_key], dict):
+            if (
+                join_primary_key in nested_data[nested_key]
+                and nested_data[nested_key][join_primary_key] is None
+            ):
+                nested_data[nested_key] = None
+
     assert nested_data is not None, "Couldn't nest the data."
     return nested_data
 
@@ -486,6 +493,10 @@ def _nest_multi_join_data(
                         item[join_primary_key] is None for item in value
                     ):  # pragma: no cover
                         new_row[key] = []
+                    elif (
+                        isinstance(value, dict) and value[join_primary_key] is None
+                    ):  # pragma: no cover
+                        new_row[key] = None
 
                 pre_nested_data[primary_key_value] = new_row
             else:
@@ -516,3 +527,33 @@ def _nest_multi_join_data(
                 nested_data[i] = schema_to_select(**item)
 
     return nested_data
+
+
+def _handle_null_primary_key_multi_join(
+    data: list[Union[dict[str, Any], BaseModel]], join_definitions: list[JoinConfig]
+) -> list[Union[dict[str, Any], BaseModel]]:
+    for item in data:
+        item_dict = item if isinstance(item, dict) else item.model_dump()
+
+        for join in join_definitions:
+            join_prefix = join.join_prefix or ""
+            nested_key = (
+                join_prefix.rstrip("_") if join_prefix else join.model.__tablename__
+            )
+
+            if nested_key in item_dict and isinstance(item_dict[nested_key], dict):
+                join_primary_key = _get_primary_key(join.model)
+
+                primary_key = join_primary_key
+                if join_primary_key:
+                    if (
+                        primary_key in item_dict[nested_key]
+                        and item_dict[nested_key][primary_key] is None
+                    ):  # pragma: no cover
+                        item_dict[nested_key] = None
+
+        if isinstance(item, BaseModel):
+            for key, value in item_dict.items():
+                setattr(item, key, value)
+
+    return data

@@ -25,9 +25,7 @@ async def test_parse_filters_multiple_conditions(test_model):
 async def test_parse_filters_or_condition(test_model):
     fast_crud = FastCRUD(test_model)
 
-    filters = fast_crud._parse_filters(
-        name__or={'gt': 1, 'lt': 5}
-    )
+    filters = fast_crud._parse_filters(name__or={"gt": 1, "lt": 5})
     assert len(filters) == 1
     assert str(filters[0]) == "test.name > :name_1 OR test.name < :name_2"
 
@@ -38,6 +36,16 @@ async def test_parse_filters_contained_in(test_model):
     filters = fast_crud._parse_filters(category_id__in=[1, 2])
     assert len(filters) == 1
     assert str(filters[0]) == "test.category_id IN (__[POSTCOMPILE_category_id_1])"
+
+
+@pytest.mark.asyncio
+async def test_parse_filters_not_contained_in(test_model):
+    fast_crud = FastCRUD(test_model)
+    filters = fast_crud._parse_filters(category_id__not_in=[1, 2])
+    assert len(filters) == 1
+    assert (
+        str(filters[0]) == "(test.category_id NOT IN (__[POSTCOMPILE_category_id_1]))"
+    )
 
 
 @pytest.mark.asyncio

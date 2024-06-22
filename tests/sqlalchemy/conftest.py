@@ -130,6 +130,48 @@ class Article(Base):
 Card.articles = relationship("Article", order_by=Article.id, back_populates="card")
 
 
+class Client(Base):
+    __tablename__ = "clients"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    contact = Column(String, nullable=False)
+    phone = Column(String, nullable=False)
+    email = Column(String, nullable=False)
+
+
+class Department(Base):
+    __tablename__ = "departments"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    username = Column(String, nullable=False, unique=True)
+    email = Column(String, nullable=False, unique=True)
+    phone = Column(String, nullable=True)
+    profile_image_url = Column(String, nullable=True)
+    department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
+    company_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
+    department = relationship("Department", backref="users")
+    company = relationship("Client", backref="users")
+
+
+class Task(Base):
+    __tablename__ = "tasks"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
+    department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
+    assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    client = relationship("Client", backref="tasks")
+    department = relationship("Department", backref="tasks")
+    assignee = relationship("User", backref="tasks")
+
+
 class CreateSchemaTest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str
@@ -192,6 +234,42 @@ class CardSchema(BaseModel):
     id: int
     title: str
     articles: Optional[list[ArticleSchema]] = []
+
+
+class DepartmentRead(BaseModel):
+    id: int
+    name: str
+
+
+class UserReadSub(BaseModel):
+    id: int
+    name: str
+    username: str
+    email: str
+    phone: Optional[str]
+    profile_image_url: str
+    department_id: Optional[int]
+    company_id: Optional[int]
+
+
+class ClientRead(BaseModel):
+    id: int
+    name: str
+    contact: str
+    phone: str
+    email: str
+
+
+class TaskReadSub(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+
+
+class TaskRead(TaskReadSub):
+    department: Optional[DepartmentRead]
+    assignee: Optional[UserReadSub]
+    client: Optional[ClientRead]
 
 
 async_engine = create_async_engine(

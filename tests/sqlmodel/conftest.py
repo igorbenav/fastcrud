@@ -105,6 +105,53 @@ class Article(SQLModel, table=True):
     card: Optional[Card] = Relationship(back_populates="articles")
 
 
+class Client(SQLModel, table=True):
+    __tablename__ = "clients"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(nullable=False)
+    contact: str = Field(nullable=False)
+    phone: str = Field(nullable=False)
+    email: str = Field(nullable=False)
+    tasks: list["Task"] = Relationship(back_populates="client")
+    users: list["User"] = Relationship(back_populates="company")
+
+
+class Department(SQLModel, table=True):
+    __tablename__ = "departments"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(nullable=False)
+    tasks: list["Task"] = Relationship(back_populates="department")
+    users: list["User"] = Relationship(back_populates="department")
+
+
+class User(SQLModel, table=True):
+    __tablename__ = "users"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(nullable=False)
+    username: str = Field(nullable=False, unique=True)
+    email: str = Field(nullable=False, unique=True)
+    phone: Optional[str] = Field(default=None)
+    profile_image_url: Optional[str] = Field(default=None)
+    department_id: Optional[int] = Field(default=None, foreign_key="departments.id")
+    company_id: Optional[int] = Field(default=None, foreign_key="clients.id")
+    department: Optional[Department] = Relationship(back_populates="users")
+    company: Optional[Client] = Relationship(back_populates="users")
+    tasks: list["Task"] = Relationship(back_populates="assignee")
+
+
+class Task(SQLModel, table=True):
+    __tablename__ = "tasks"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(nullable=False)
+    description: Optional[str] = Field(default=None)
+    client_id: Optional[int] = Field(default=None, foreign_key="clients.id")
+    department_id: Optional[int] = Field(default=None, foreign_key="departments.id")
+    assignee_id: Optional[int] = Field(default=None, foreign_key="users.id")
+    client: Optional[Client] = Relationship(back_populates="tasks")
+    department: Optional[Department] = Relationship(back_populates="tasks")
+    assignee: Optional[User] = Relationship(back_populates="tasks")
+
+
 class CreateSchemaTest(SQLModel):
     model_config = ConfigDict(extra="forbid")
     name: str
@@ -168,7 +215,7 @@ class MultiPkCreate(SQLModel):
 
 class MultiPkSchema(SQLModel):
     name: str
-    test_id: int = None
+    test_id: Optional[int] = None
 
 
 class ArticleSchema(SQLModel):
@@ -181,6 +228,42 @@ class CardSchema(SQLModel):
     id: int
     title: str
     articles: Optional[list[ArticleSchema]] = []
+
+
+class DepartmentRead(SQLModel):
+    id: int
+    name: str
+
+
+class UserReadSub(SQLModel):
+    id: int
+    name: str
+    username: str
+    email: str
+    phone: Optional[str]
+    profile_image_url: str
+    department_id: Optional[int]
+    company_id: Optional[int]
+
+
+class ClientRead(SQLModel):
+    id: int
+    name: str
+    contact: str
+    phone: str
+    email: str
+
+
+class TaskReadSub(SQLModel):
+    id: int
+    name: str
+    description: Optional[str]
+
+
+class TaskRead(TaskReadSub):
+    department: Optional[DepartmentRead]
+    assignee: Optional[UserReadSub]
+    client: Optional[ClientRead]
 
 
 async_engine = create_async_engine(

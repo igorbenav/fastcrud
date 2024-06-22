@@ -19,6 +19,14 @@ from ...sqlmodel.conftest import (
     Card,
     ArticleSchema,
     CardSchema,
+    Client,
+    Department,
+    User,
+    Task,
+    ClientRead,
+    DepartmentRead,
+    UserReadSub,
+    TaskRead,
 )
 
 
@@ -748,18 +756,20 @@ async def test_get_multi_joined_with_nesting(async_session, test_data, test_data
             assert (
                 "category" in item
             ), "Nested category data should be present under key 'category'"
-            assert isinstance(
+            assert item["tier"] is None or isinstance(
                 item["tier"], dict
             ), "Nested tier data should be a dictionary"
-            assert isinstance(
+            assert item["category"] is None or isinstance(
                 item["category"], dict
             ), "Nested category data should be a dictionary"
-            assert (
-                "tier_" not in item["tier"]
-            ), "No prefix should be present in the nested tier keys"
-            assert (
-                "category_" not in item["category"]
-            ), "No prefix should be present in the nested category keys"
+            if item["tier"] is not None:
+                assert (
+                    "tier_" not in item["tier"]
+                ), "No prefix should be present in the nested tier keys"
+            if item["category"] is not None:  # pragma: no cover
+                assert (
+                    "category_" not in item["category"]
+                ), "No prefix should be present in the nested category keys"
 
 
 @pytest.mark.asyncio
@@ -1074,3 +1084,118 @@ async def test_get_multi_joined_card_with_multiple_articles_as_models(async_sess
         card_d, "articles"
     ), "Card D should have nested articles."
     assert len(card_d.articles) == 0, "Card D should have no articles."
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_nested_data_none_dict(async_session):
+    clients = [
+        Client(
+            name="Client A",
+            contact="Contact A",
+            phone="111-111-1111",
+            email="a@client.com",
+        ),
+        Client(
+            name="Client B",
+            contact="Contact B",
+            phone="222-222-2222",
+            email="b@client.com",
+        ),
+    ]
+    async_session.add_all(clients)
+    await async_session.flush()
+
+    departments = [
+        Department(name="Department A"),
+        Department(name="Department B"),
+    ]
+    async_session.add_all(departments)
+    await async_session.flush()
+
+    users = [
+        User(
+            name="User A",
+            username="usera",
+            email="usera@example.com",
+            phone="123-123-1234",
+        ),
+        User(
+            name="User B",
+            username="userb",
+            email="userb@example.com",
+            phone="234-234-2345",
+        ),
+    ]
+    async_session.add_all(users)
+    await async_session.flush()
+
+    tasks = [
+        Task(
+            name="Task 1",
+            description="Task 1 Description",
+            client_id=clients[0].id,
+            department_id=departments[0].id,
+            assignee_id=users[0].id,
+        ),
+        Task(
+            name="Task 2",
+            description="Task 2 Description",
+            client_id=clients[1].id,
+            department_id=departments[1].id,
+            assignee_id=users[1].id,
+        ),
+        Task(
+            name="Task 3",
+            description="Task 3 Description",
+            client_id=None,
+            department_id=None,
+            assignee_id=None,
+        ),
+    ]
+    async_session.add_all(tasks)
+    await async_session.commit()
+
+    task_crud = FastCRUD(Task)
+
+    result = await task_crud.get_multi_joined(
+        db=async_session,
+        nest_joins=True,
+        schema_to_select=TaskRead,
+        joins_config=[
+            JoinConfig(
+                model=Client,
+                join_on=Task.client_id == Client.id,
+                join_prefix="client",
+                schema_to_select=ClientRead,
+                join_type="left",
+            ),
+            JoinConfig(
+                model=Department,
+                join_on=Task.department_id == Department.id,
+                join_prefix="department",
+                schema_to_select=DepartmentRead,
+                join_type="left",
+            ),
+            JoinConfig(
+                model=User,
+                join_on=Task.assignee_id == User.id,
+                join_prefix="assignee",
+                schema_to_select=UserReadSub,
+                join_type="left",
+            ),
+        ],
+    )
+
+    assert result is not None, "No data returned from the database."
+    data = result["data"]
+    assert len(data) == 3, "Expected three tasks."
+
+    task1 = data[0]
+    assert task1["client"] is not None, "Task 1 should have a client."
+    assert task1["department"] is not None, "Task 1 should have a department."
+    assert task1["assignee"] is not None, "Task 1 should have an assignee."
+
+    task3 = data[2]
+    assert task3["client"] is None, "Task 3 should have no client."
+    assert task3["department"] is None, "Task 3 should have no department."
+    assert task3["assignee"] is None, "Task 3 should have no assignee."

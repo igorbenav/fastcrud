@@ -13,6 +13,14 @@ from ...sqlalchemy.conftest import (
     ReadSchemaTest,
     Article,
     Card,
+    Client,
+    Department,
+    User,
+    Task,
+    ClientRead,
+    DepartmentRead,
+    UserReadSub,
+    TaskRead,
 )
 
 
@@ -565,3 +573,143 @@ async def test_get_joined_card_with_articles(async_session):
     assert all(
         "title" in article for article in result["articles"]
     ), "Each article should have a title."
+
+
+@pytest.mark.asyncio
+async def test_get_joined_nested_data_none_dict(async_session):
+    clients = [
+        Client(
+            name="Client A",
+            contact="Contact A",
+            phone="111-111-1111",
+            email="a@client.com",
+        ),
+        Client(
+            name="Client B",
+            contact="Contact B",
+            phone="222-222-2222",
+            email="b@client.com",
+        ),
+    ]
+    async_session.add_all(clients)
+    await async_session.flush()
+
+    departments = [
+        Department(name="Department A"),
+        Department(name="Department B"),
+    ]
+    async_session.add_all(departments)
+    await async_session.flush()
+
+    users = [
+        User(
+            name="User A",
+            username="usera",
+            email="usera@example.com",
+            phone="123-123-1234",
+        ),
+        User(
+            name="User B",
+            username="userb",
+            email="userb@example.com",
+            phone="234-234-2345",
+        ),
+    ]
+    async_session.add_all(users)
+    await async_session.flush()
+
+    tasks = [
+        Task(
+            name="Task 1",
+            description="Task 1 Description",
+            client_id=clients[0].id,
+            department_id=departments[0].id,
+            assignee_id=users[0].id,
+        ),
+        Task(
+            name="Task 2",
+            description="Task 2 Description",
+            client_id=clients[1].id,
+            department_id=departments[1].id,
+            assignee_id=users[1].id,
+        ),
+        Task(
+            name="Task 3",
+            description="Task 3 Description",
+            client_id=None,
+            department_id=None,
+            assignee_id=None,
+        ),
+    ]
+    async_session.add_all(tasks)
+    await async_session.commit()
+
+    task_crud = FastCRUD(Task)
+
+    joins_config = [
+        JoinConfig(
+            model=Client,
+            join_on=Task.client_id == Client.id,
+            join_prefix="client_",
+            schema_to_select=ClientRead,
+            join_type="left",
+        ),
+        JoinConfig(
+            model=Department,
+            join_on=Task.department_id == Department.id,
+            join_prefix="department_",
+            schema_to_select=DepartmentRead,
+            join_type="left",
+        ),
+        JoinConfig(
+            model=User,
+            join_on=Task.assignee_id == User.id,
+            join_prefix="assignee_",
+            schema_to_select=UserReadSub,
+            join_type="left",
+        ),
+    ]
+
+    task1_result = await task_crud.get_joined(
+        db=async_session,
+        id=tasks[0].id,
+        schema_to_select=TaskRead,
+        joins_config=joins_config,
+        nest_joins=True,
+    )
+
+    assert task1_result is not None, "No data returned from the database."
+    assert (
+        "client" in task1_result
+    ), "Nested client data should be present under key 'client'"
+    assert (
+        "department" in task1_result
+    ), "Nested department data should be present under key 'department'"
+    assert (
+        "assignee" in task1_result
+    ), "Nested assignee data should be present under key 'assignee'"
+    assert task1_result["client"] is not None, "Task 1 should have a client."
+    assert task1_result["department"] is not None, "Task 1 should have a department."
+    assert task1_result["assignee"] is not None, "Task 1 should have an assignee."
+
+    task3_result = await task_crud.get_joined(
+        db=async_session,
+        id=tasks[2].id,
+        schema_to_select=TaskRead,
+        joins_config=joins_config,
+        nest_joins=True,
+    )
+
+    assert task3_result is not None, "No data returned from the database."
+    assert (
+        "client" in task3_result
+    ), "Nested client data should be present under key 'client'"
+    assert (
+        "department" in task3_result
+    ), "Nested department data should be present under key 'department'"
+    assert (
+        "assignee" in task3_result
+    ), "Nested assignee data should be present under key 'assignee'"
+    assert task3_result["client"] is None, "Task 3 should have no client."
+    assert task3_result["department"] is None, "Task 3 should have no department."
+    assert task3_result["assignee"] is None, "Task 3 should have no assignee."

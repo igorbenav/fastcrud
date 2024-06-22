@@ -17,6 +17,7 @@ from .helper import (
     _auto_detect_join_condition,
     _nest_join_data,
     _nest_multi_join_data,
+    _handle_null_primary_key_multi_join,
     JoinConfig,
 )
 
@@ -179,6 +180,7 @@ class FastCRUD(
         # Now 'archived' and 'archived_at' will be used for soft delete operations.
         ```
     """
+
     _SUPPORTED_FILTERS = {
         "gt": lambda column: column.__gt__,
         "lt": lambda column: column.__lt__,
@@ -215,13 +217,13 @@ class FastCRUD(
         self._primary_keys = _get_primary_keys(self.model)
 
     def _get_sqlalchemy_filter(
-        self, operator: str, value: Any,
-    ) ->Optional[Callable[[str], Callable]]:
-        if operator in {'in', 'not_in', 'between'}:
+        self,
+        operator: str,
+        value: Any,
+    ) -> Optional[Callable[[str], Callable]]:
+        if operator in {"in", "not_in", "between"}:
             if not isinstance(value, (tuple, list, set)):
-                raise ValueError(
-                    f"<{operator}> filter must be tuple, list or set"
-                )
+                raise ValueError(f"<{operator}> filter must be tuple, list or set")
         return self._SUPPORTED_FILTERS.get(operator)
 
     def _parse_filters(
@@ -236,20 +238,22 @@ class FastCRUD(
                 column = getattr(model, field_name, None)
                 if column is None:
                     raise ValueError(f"Invalid filter column: {field_name}")
-                if op == 'or':
+                if op == "or":
                     or_filters = [
                         sqlalchemy_filter(column)(or_value)
                         for or_key, or_value in value.items()
-                        if (sqlalchemy_filter := self._get_sqlalchemy_filter(
-                            or_key, value)) is not None
+                        if (
+                            sqlalchemy_filter := self._get_sqlalchemy_filter(
+                                or_key, value
+                            )
+                        )
+                        is not None
                     ]
                     filters.append(or_(*or_filters))
                 else:
                     sqlalchemy_filter = self._get_sqlalchemy_filter(op, value)
                     if sqlalchemy_filter:
-                        filters.append(
-                                sqlalchemy_filter(column)(value)
-                        )
+                        filters.append(sqlalchemy_filter(column)(value))
             else:
                 column = getattr(model, key, None)
                 if column is not None:
@@ -1401,6 +1405,9 @@ class FastCRUD(
         if (limit is not None and limit < 0) or offset < 0:
             raise ValueError("Limit and offset must be non-negative.")
 
+        if relationship_type is None:
+            relationship_type = "one-to-one"
+
         primary_select = _extract_matching_columns_from_schema(
             model=self.model, schema=schema_to_select
         )
@@ -1485,7 +1492,7 @@ class FastCRUD(
                 },
             )
         else:
-            nested_data = data
+            nested_data = _handle_null_primary_key_multi_join(data, join_definitions)
 
         response: dict[str, Any] = {"data": nested_data}
 

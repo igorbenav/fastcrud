@@ -215,7 +215,7 @@ class MultiPkCreate(SQLModel):
 
 class MultiPkSchema(SQLModel):
     name: str
-    test_id: int = None
+    test_id: Optional[int] = None
 
 
 class ArticleSchema(SQLModel):
@@ -240,10 +240,10 @@ class UserReadSub(SQLModel):
     name: str
     username: str
     email: str
-    phone: str | None
+    phone: Optional[str]
     profile_image_url: str
-    department_id: int | None
-    company_id: int | None
+    department_id: Optional[int]
+    company_id: Optional[int]
 
 
 class ClientRead(SQLModel):
@@ -257,13 +257,13 @@ class ClientRead(SQLModel):
 class TaskReadSub(SQLModel):
     id: int
     name: str
-    description: str | None
+    description: Optional[str]
 
 
 class TaskRead(TaskReadSub):
-    department: DepartmentRead | None
-    assignee: UserReadSub | None
-    client: ClientRead | None
+    department: Optional[DepartmentRead]
+    assignee: Optional[UserReadSub]
+    client: Optional[ClientRead]
 
 
 async_engine = create_async_engine(

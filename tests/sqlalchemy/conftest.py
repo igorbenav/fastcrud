@@ -246,10 +246,10 @@ class UserReadSub(BaseModel):
     name: str
     username: str
     email: str
-    phone: str | None
+    phone: Optional[str]
     profile_image_url: str
-    department_id: int | None
-    company_id: int | None
+    department_id: Optional[int]
+    company_id: Optional[int]
 
 
 class ClientRead(BaseModel):
@@ -263,13 +263,13 @@ class ClientRead(BaseModel):
 class TaskReadSub(BaseModel):
     id: int
     name: str
-    description: str | None
+    description: Optional[str]
 
 
 class TaskRead(TaskReadSub):
-    department: DepartmentRead | None
-    assignee: UserReadSub | None
-    client: ClientRead | None
+    department: Optional[DepartmentRead]
+    assignee: Optional[UserReadSub]
+    client: Optional[ClientRead]
 
 
 async_engine = create_async_engine(

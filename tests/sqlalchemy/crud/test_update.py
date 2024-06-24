@@ -215,3 +215,73 @@ async def test_update_auto_updates_updated_at(async_session, test_data):
     assert (
         updated.updated_at > initial_time
     ), "updated_at should be later than the initial timestamp."
+
+
+@pytest.mark.parametrize(
+    ["update_kwargs", "expected_result"],
+    [
+        pytest.param(
+            {},
+            {
+                "id": 1,
+                "name": "Updated Name",
+                "tier_id": 1,
+                "category_id": 1,
+                "is_deleted": False,
+                "deleted_at": None,
+            },
+            id="dict",
+        ),
+        pytest.param(
+            {"schema_to_select": UpdateSchemaTest, "return_as_model": True},
+            UpdateSchemaTest(id=1, name="Updated Name"),
+            id="model",
+        ),
+        pytest.param(
+            {"allow_multiple": True},
+            {
+                "data": [
+                    {
+                        "id": 1,
+                        "name": "Updated Name",
+                        "tier_id": 1,
+                        "category_id": 1,
+                        "is_deleted": False,
+                        "deleted_at": None,
+                    }
+                ]
+            },
+            id="multiple_dict",
+        ),
+        pytest.param(
+            {
+                "allow_multiple": True,
+                "schema_to_select": UpdateSchemaTest,
+                "return_as_model": True,
+            },
+            {"data": [UpdateSchemaTest(id=1, name="Updated Name")]},
+            id="multiple_model",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_update_with_returning(
+    async_session, test_data, update_kwargs, expected_result
+):
+    for item in test_data:
+        async_session.add(ModelTest(**item))
+    await async_session.commit()
+
+    crud = FastCRUD(ModelTest)
+    target_id = test_data[0]["id"]
+    updated_data = {"name": "Updated Name"}
+
+    updated_record = await crud.update(
+        db=async_session,
+        object=updated_data,
+        id=target_id,
+        returning=True,
+        **update_kwargs,
+    )
+
+    assert updated_record == expected_result

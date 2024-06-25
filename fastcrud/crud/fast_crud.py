@@ -2,7 +2,7 @@ from typing import Any, Dict, Generic, TypeVar, Union, Optional, Callable
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import Result, select, update, delete, func, inspect, asc, desc, or_
+from sqlalchemy import Result, select, update, delete, func, inspect, asc, desc, or_, column
 from sqlalchemy.exc import ArgumentError, MultipleResultsFound, NoResultFound
 from sqlalchemy.sql import Join
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -1595,7 +1595,7 @@ class FastCRUD(
         object: Union[UpdateSchemaType, dict[str, Any]],
         allow_multiple: bool = False,
         commit: bool = True,
-        returning: bool = False,
+        return_columns: Optional[list[str]] = None,
         schema_to_select: Optional[type[BaseModel]] = None,
         return_as_model: bool = False,
         one_or_none: bool = False,
@@ -1611,7 +1611,7 @@ class FastCRUD(
             object: A Pydantic schema or dictionary containing the update data.
             allow_multiple: If True, allows updating multiple records that match the filters. If False, raises an error if more than one record matches the filters.
             commit: If True, commits the transaction immediately. Default is True.
-            returning: If True, returns the updated record(s) as a dictionary or Pydantic model instance. Default is False.
+            return_columns: A list of column names to return after the update. If return_as_model is True, all columns are returned.
             schema_to_select: Pydantic schema for selecting specific columns from the updated record(s). Required if `return_as_model` is True.
             return_as_model: If True, returns the updated record(s) as Pydantic model instances based on `schema_to_select`. Default is False.
             one_or_none: If True, returns a single record if only one record matches the filters. Default is False.
@@ -1643,12 +1643,12 @@ class FastCRUD(
 
             Update a user's email and return the updated record as a Pydantic model instance:
             ```python
-            update(db, {'email': 'new_email@example.com'}, id=1, returning=True, schema_to_select=UserSchema, return_as_model=True)
+            update(db, {'email': 'new_email@example.com'}, id=1, schema_to_select=UserSchema, return_as_model=True)
             ```
 
             Update a user's email and return the updated record as a dictionary:
             ```python
-            update(db, {'email': 'new_email@example.com'}, id=1, returning=True)
+            update(db, {'email': 'new_email@example.com'}, id=1, return_columns=['id', 'email'])
             ```
         """
         if not allow_multiple and (total_count := await self.count(db, **kwargs)) > 1:
@@ -1674,8 +1674,12 @@ class FastCRUD(
         filters = self._parse_filters(**kwargs)
         stmt = update(self.model).filter(*filters).values(update_data)
 
-        if returning:
-            stmt = stmt.returning(self.model.__table__.columns)  # type: ignore[call-overload]
+        if return_as_model:
+            # All columns are returned to ensure the model can be constructed
+            return_columns = self.model_col_names
+
+        if return_columns:
+            stmt = stmt.returning(*[column(name) for name in return_columns])
             db_row = await db.execute(stmt)
             if allow_multiple:
                 return self._as_multi_response(

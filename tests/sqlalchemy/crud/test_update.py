@@ -221,14 +221,10 @@ async def test_update_auto_updates_updated_at(async_session, test_data):
     ["update_kwargs", "expected_result"],
     [
         pytest.param(
-            {},
+            {"return_columns": ["id", "name"]},
             {
                 "id": 1,
                 "name": "Updated Name",
-                "tier_id": 1,
-                "category_id": 1,
-                "is_deleted": False,
-                "deleted_at": None,
             },
             id="dict",
         ),
@@ -238,16 +234,12 @@ async def test_update_auto_updates_updated_at(async_session, test_data):
             id="model",
         ),
         pytest.param(
-            {"allow_multiple": True},
+            {"allow_multiple": True, "return_columns": ["id", "name"]},
             {
                 "data": [
                     {
                         "id": 1,
                         "name": "Updated Name",
-                        "tier_id": 1,
-                        "category_id": 1,
-                        "is_deleted": False,
-                        "deleted_at": None,
                     }
                 ]
             },
@@ -280,7 +272,6 @@ async def test_update_with_returning(
         db=async_session,
         object=updated_data,
         id=target_id,
-        returning=True,
         **update_kwargs,
     )
 

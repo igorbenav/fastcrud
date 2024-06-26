@@ -1,3 +1,4 @@
+import warnings
 from typing import Type, TypeVar, Optional, Callable, Sequence, Union
 from enum import Enum
 
@@ -254,6 +255,15 @@ class EndpointCreator:
             "read_paginated": "get_paginated",
         }
         self.endpoint_names = {**self.default_endpoint_names, **(endpoint_names or {})}
+        if self.endpoint_names == self.default_endpoint_names:
+            warnings.warn(
+                "Old default_endpoint_names are deprecated. "
+                "Default values are going to be replaced by empty strings, "
+                "resulting in plain endpoint names. "
+                "For details see:"
+                " https://github.com/igorbenav/fastcrud/issues/67",
+                DeprecationWarning
+            )
         if filter_config:
             if isinstance(filter_config, dict):
                 filter_config = FilterConfig(**filter_config)
@@ -321,6 +331,12 @@ class EndpointCreator:
     def _read_paginated(self):
         """Creates an endpoint for reading multiple items from the database with pagination."""
         dynamic_filters = _create_dynamic_filters(self.filter_config, self.column_types)
+        warnings.warn(
+            "_read_paginated endpoint is going to dropped and unified"
+            "with _read_items one, so that items there can be optionally "
+            "paginated.",
+            DeprecationWarning
+        )
 
         async def endpoint(
             db: AsyncSession = Depends(self.session),

@@ -257,7 +257,7 @@ class EndpointCreator:
         self.endpoint_names = {**self.default_endpoint_names, **(endpoint_names or {})}
         if self.endpoint_names == self.default_endpoint_names:
             warnings.warn(
-                "Old default_endpoint_names are deprecated. "
+                "Old default_endpoint_names are getting deprecated. "
                 "Default values are going to be replaced by empty strings, "
                 "resulting in plain endpoint names. "
                 "For details see:"
@@ -320,11 +320,26 @@ class EndpointCreator:
 
         async def endpoint(
             db: AsyncSession = Depends(self.session),
-            offset: int = Query(0),
-            limit: int = Query(100),
+            page: int | None = Query(
+                None, alias="page", description="Page number"
+            ),
+            items_per_page: int | None = Query(
+                None, alias="itemsPerPage", description="Number of items per page"
+            ),
             filters: dict = Depends(dynamic_filters),
         ):
-            return await self.crud.get_multi(db, offset=offset, limit=limit, **filters)
+            if not (page and items_per_page):
+                return await self.crud.get_multi(db, offset=0, limit=100,
+                                                 **filters)
+
+            offset = compute_offset(page=page, items_per_page=items_per_page)
+            crud_data = await self.crud.get_multi(
+                db, offset=offset, limit=items_per_page, **filters
+            )
+
+            return paginated_response(
+                crud_data=crud_data, page=page, items_per_page=items_per_page
+            )  # pragma: no cover
 
         return endpoint
 
@@ -332,9 +347,10 @@ class EndpointCreator:
         """Creates an endpoint for reading multiple items from the database with pagination."""
         dynamic_filters = _create_dynamic_filters(self.filter_config, self.column_types)
         warnings.warn(
-            "_read_paginated endpoint is going to dropped and unified"
-            "with _read_items one, so that items there can be optionally "
-            "paginated.",
+            "_read_paginated endpoint is getting deprecated and mixed "
+            "into _read_items. You can keep using _read_items without changes "
+            "or add optional page and items_per_page query params to achieve "
+            "pagination as before.",
             DeprecationWarning
         )
 
@@ -348,6 +364,10 @@ class EndpointCreator:
             ),
             filters: dict = Depends(dynamic_filters),
         ):
+            if not (page and items_per_page):
+                return await self.crud.get_multi(db, offset=0, limit=100,
+                                                 **filters)
+
             offset = compute_offset(page=page, items_per_page=items_per_page)
             crud_data = await self.crud.get_multi(
                 db, offset=offset, limit=items_per_page, **filters

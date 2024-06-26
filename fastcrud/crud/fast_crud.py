@@ -1618,7 +1618,7 @@ class FastCRUD(
             **kwargs: Filters to identify the record(s) to update, supporting advanced comparison operators for refined querying.
 
         Returns:
-            The updated record(s) as a dictionary or Pydantic model instance or None, depending on the value of `return_as_model` and `returning`.
+            The updated record(s) as a dictionary or Pydantic model instance or None, depending on the value of `return_as_model` and `return_columns`.
 
         Raises:
             MultipleResultsFound: If `allow_multiple` is False and more than one record matches the filters.

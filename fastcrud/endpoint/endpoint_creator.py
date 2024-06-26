@@ -388,17 +388,15 @@ class EndpointCreator:
         endpoint_name = self.endpoint_names.get(
             operation, self.default_endpoint_names.get(operation, operation)
         )
-
-        _primary_keys_path_suffix = "/".join(
-            f"{{{n}}}" for n in self.primary_key_names
-        )
+        path = f"{self.path}/{endpoint_name}" if endpoint_name else self.path
 
         if operation in {'read', 'update', 'delete', 'db_delete'}:
-            return f"{self.path}/{endpoint_name}/{_primary_keys_path_suffix}" \
-                if endpoint_name \
-                else f"{self.path}/{_primary_keys_path_suffix}"
-        else:
-            return f"{self.path}/{endpoint_name}" if endpoint_name else self.path
+            _primary_keys_path_suffix = "/".join(
+                f"{{{n}}}" for n in self.primary_key_names
+            )
+            path = f'{path}/{_primary_keys_path_suffix}'
+
+        return path
 
     def add_routes_to_router(
         self,

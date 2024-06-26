@@ -135,7 +135,7 @@ items = await item_crud.get_multi(
 - __in - included in
 - __not_in - not included in
 
-### OR parameter filters
+### OR clauses
 
 More complex OR filters are supported. They must be passed as dictionary, where each key is a library-supported operator to be used in OR expression and values is what get's passed as the parameter.
 
@@ -146,6 +146,16 @@ items = await item_crud.get_multi(
     price__or={'lt': 5, 'gt': 20},
 )
 ```
+
+### AND clauses
+And clauses can be achieved by chaining multiple filters together.
+
+# Fetch items priced under $20 and over 2 years of warranty.
+items = await item_crud.get_multi(
+    db=db,
+    price__lt=20,
+    warranty_years__gt=2,
+)
 
 
 #### Counting Records

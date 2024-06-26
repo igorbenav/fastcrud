@@ -320,10 +320,10 @@ class EndpointCreator:
 
         async def endpoint(
             db: AsyncSession = Depends(self.session),
-            page: int | None = Query(
+            page: Optional[int] = Query(
                 None, alias="page", description="Page number"
             ),
-            items_per_page: int | None = Query(
+            items_per_page: Optional[int] = Query(
                 None, alias="itemsPerPage", description="Number of items per page"
             ),
             filters: dict = Depends(dynamic_filters),

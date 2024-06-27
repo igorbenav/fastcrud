@@ -348,9 +348,10 @@ class EndpointCreator:
         dynamic_filters = _create_dynamic_filters(self.filter_config, self.column_types)
         warnings.warn(
             "_read_paginated endpoint is getting deprecated and mixed "
-            "into _read_items. You can keep using _read_items without changes "
-            "or add optional page and items_per_page query params to achieve "
-            "pagination as before.",
+            "into _read_items in the next major release. "
+            "Please use _read_items with optional page and items_per_page "
+            "query params instead, to achieve pagination as before."
+            "Simple _read_items behaviour persists with no breaking changes.",
             DeprecationWarning
         )
 

@@ -4,6 +4,7 @@ from enum import Enum
 from fastapi import APIRouter
 from sqlalchemy.orm import DeclarativeBase
 from pydantic import BaseModel
+from sqlmodel import SQLModel
 
 from .endpoint_creator import EndpointCreator
 from ..crud.fast_crud import FastCRUD
@@ -16,7 +17,7 @@ DeleteSchemaType = TypeVar("DeleteSchemaType", bound=BaseModel)
 
 def crud_router(
     session: Callable,
-    model: type[DeclarativeBase],
+    model: type[Union[DeclarativeBase, SQLModel]],
     create_schema: Type[CreateSchemaType],
     update_schema: Type[UpdateSchemaType],
     crud: Optional[FastCRUD] = None,

@@ -234,7 +234,7 @@ items = await item_crud.get_multi(db, offset=0, limit=10, sort_columns=['name'],
 ```python
 get_joined(
     db: AsyncSession,
-    join_model: Optional[type[DeclarativeBase]] = None,
+    join_model: Optional[type[Union[DeclarativeBase, SQLModel]]] = None,
     join_prefix: Optional[str] = None,
     join_on: Optional[Union[Join, BinaryExpression]] = None,
     schema_to_select: Optional[type[BaseModel]] = None,

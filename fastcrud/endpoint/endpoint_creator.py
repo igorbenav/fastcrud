@@ -5,6 +5,7 @@ from fastapi import Depends, Body, Query, APIRouter
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
+from sqlmodel import SQLModel
 
 from ..crud.fast_crud import FastCRUD
 from ..exceptions.http_exceptions import DuplicateValueException, NotFoundException
@@ -207,7 +208,7 @@ class EndpointCreator:
     def __init__(
         self,
         session: Callable,
-        model: type[DeclarativeBase],
+        model: type[Union[DeclarativeBase, SQLModel]],
         create_schema: Type[CreateSchemaType],
         update_schema: Type[UpdateSchemaType],
         crud: Optional[FastCRUD] = None,

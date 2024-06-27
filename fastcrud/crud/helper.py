@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union, Sequence
+from typing import Any, Optional, Union, Sequence, cast
 
 from sqlalchemy import inspect
 from sqlalchemy.orm import DeclarativeBase
@@ -6,6 +6,7 @@ from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql import ColumnElement
 from pydantic import BaseModel, ConfigDict
 from pydantic.functional_validators import field_validator
+from sqlmodel import SQLModel
 
 from ..endpoint.helper import _get_primary_key
 
@@ -38,7 +39,7 @@ class JoinConfig(BaseModel):
 
 
 def _extract_matching_columns_from_schema(
-    model: Union[type[DeclarativeBase], AliasedClass],
+    model: Union[type[Union[DeclarativeBase, SQLModel]], AliasedClass],
     schema: Optional[type[BaseModel]],
     prefix: Optional[str] = None,
     alias: Optional[AliasedClass] = None,
@@ -63,6 +64,9 @@ def _extract_matching_columns_from_schema(
         in the schema or all columns from the model if no schema is specified. These columns are correctly referenced
         through the provided alias if one is given.
     """
+    if not hasattr(model, "__table__"):
+        raise AttributeError(f"{model.__name__} does not have a '__table__' attribute.")
+
     model_or_alias = alias if alias else model
     columns = []
     temp_prefix = (
@@ -96,7 +100,8 @@ def _extract_matching_columns_from_schema(
 
 
 def _auto_detect_join_condition(
-    base_model: type[DeclarativeBase], join_model: type[DeclarativeBase]
+    base_model: type[Union[DeclarativeBase, SQLModel]],
+    join_model: type[Union[DeclarativeBase, SQLModel]],
 ) -> Optional[ColumnElement]:
     """
     Automatically detects the join condition for SQLAlchemy models based on foreign key relationships.
@@ -110,18 +115,27 @@ def _auto_detect_join_condition(
 
     Raises:
         ValueError: If the join condition cannot be automatically determined.
-
-    Example:
-        # Assuming User has a foreign key reference to Tier:
-        join_condition = auto_detect_join_condition(User, Tier)
+        AttributeError: If either base_model or join_model does not have a '__table__' attribute.
     """
+    if not hasattr(base_model, "__table__"):
+        raise AttributeError(
+            f"{base_model.__name__} does not have a '__table__' attribute."
+        )
+    if not hasattr(join_model, "__table__"):
+        raise AttributeError(
+            f"{join_model.__name__} does not have a '__table__' attribute."
+        )
+
     inspector = inspect(base_model)
     if inspector is not None:
         fk_columns = [col for col in inspector.c if col.foreign_keys]
         join_on = next(
             (
-                base_model.__table__.c[col.name]
-                == join_model.__table__.c[list(col.foreign_keys)[0].column.name]
+                cast(
+                    ColumnElement,
+                    base_model.__table__.c[col.name]
+                    == join_model.__table__.c[list(col.foreign_keys)[0].column.name],
+                )
                 for col in fk_columns
                 if list(col.foreign_keys)[0].column.table == join_model.__table__
             ),

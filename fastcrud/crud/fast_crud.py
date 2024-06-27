@@ -11,6 +11,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 from sqlalchemy.sql.selectable import Select
+from sqlmodel import SQLModel
 
 from .helper import (
     _extract_matching_columns_from_schema,
@@ -830,7 +831,7 @@ class FastCRUD(
         self,
         db: AsyncSession,
         schema_to_select: Optional[type[BaseModel]] = None,
-        join_model: Optional[type[DeclarativeBase]] = None,
+        join_model: Optional[type[Union[DeclarativeBase, SQLModel]]] = None,
         join_on: Optional[Union[Join, BinaryExpression]] = None,
         join_prefix: Optional[str] = None,
         join_schema_to_select: Optional[type[BaseModel]] = None,

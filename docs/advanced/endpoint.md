@@ -73,6 +73,17 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
   "items_per_page": 3
 }
 ```
+!!! WARNING
+
+        _read_paginated endpoint is getting deprecated and mixed into _read_items in the next major release.
+        Please use _read_items with optional page and items_per_pagequery params instead, to achieve pagination as before.
+        Simple _read_items behaviour persists with no breaking changes.
+
+        Read items paginated:
+        curl -X 'GET'   'http://localhost:8000/users/get_multi?page=2&itemsPerPage=10'   -H 'accept: application/json'
+
+        Read items unpaginated:
+        url -X 'GET'   'http://localhost:8000/users/get_multi?offset=0&limit=100'   -H 'accept: application/json'
 
 ### Update
 
@@ -225,6 +236,12 @@ app.include_router(endpoint_creator.router)
 !!! TIP
 
     You only need to pass the names of the endpoints you want to change in the endpoint_names dict.
+
+!!! WARNING
+
+    default_endpoint_names for EndpointCreator are going to be changed to empty strings in the next major release.
+    See:  https://github.com/igorbenav/fastcrud/issues/67
+
 
 ## Extending EndpointCreator
 

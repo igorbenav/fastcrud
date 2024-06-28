@@ -1,3 +1,4 @@
+import warnings
 from typing import Type, TypeVar, Optional, Callable, Sequence, Union
 from enum import Enum
 
@@ -254,6 +255,15 @@ class EndpointCreator:
             "read_paginated": "get_paginated",
         }
         self.endpoint_names = {**self.default_endpoint_names, **(endpoint_names or {})}
+        if self.endpoint_names == self.default_endpoint_names:
+            warnings.warn(
+                "Old default_endpoint_names are getting deprecated. "
+                "Default values are going to be replaced by empty strings, "
+                "resulting in plain endpoint names. "
+                "For details see:"
+                " https://github.com/igorbenav/fastcrud/issues/67",
+                DeprecationWarning
+            )
         if filter_config:
             if isinstance(filter_config, dict):
                 filter_config = FilterConfig(**filter_config)
@@ -310,17 +320,40 @@ class EndpointCreator:
 
         async def endpoint(
             db: AsyncSession = Depends(self.session),
-            offset: int = Query(0),
-            limit: int = Query(100),
+            page: Optional[int] = Query(
+                None, alias="page", description="Page number"
+            ),
+            items_per_page: Optional[int] = Query(
+                None, alias="itemsPerPage", description="Number of items per page"
+            ),
             filters: dict = Depends(dynamic_filters),
         ):
-            return await self.crud.get_multi(db, offset=offset, limit=limit, **filters)
+            if not (page and items_per_page):
+                return await self.crud.get_multi(db, offset=0, limit=100,
+                                                 **filters)
+
+            offset = compute_offset(page=page, items_per_page=items_per_page)
+            crud_data = await self.crud.get_multi(
+                db, offset=offset, limit=items_per_page, **filters
+            )
+
+            return paginated_response(
+                crud_data=crud_data, page=page, items_per_page=items_per_page
+            )  # pragma: no cover
 
         return endpoint
 
     def _read_paginated(self):
         """Creates an endpoint for reading multiple items from the database with pagination."""
         dynamic_filters = _create_dynamic_filters(self.filter_config, self.column_types)
+        warnings.warn(
+            "_read_paginated endpoint is getting deprecated and mixed "
+            "into _read_items in the next major release. "
+            "Please use _read_items with optional page and items_per_page "
+            "query params instead, to achieve pagination as before."
+            "Simple _read_items behaviour persists with no breaking changes.",
+            DeprecationWarning
+        )
 
         async def endpoint(
             db: AsyncSession = Depends(self.session),
@@ -332,6 +365,10 @@ class EndpointCreator:
             ),
             filters: dict = Depends(dynamic_filters),
         ):
+            if not (page and items_per_page):
+                return await self.crud.get_multi(db, offset=0, limit=100,
+                                                 **filters)
+
             offset = compute_offset(page=page, items_per_page=items_per_page)
             crud_data = await self.crud.get_multi(
                 db, offset=offset, limit=items_per_page, **filters
@@ -384,11 +421,19 @@ class EndpointCreator:
 
         return endpoint
 
-    def _get_endpoint_name(self, operation: str) -> str:
-        """Get the endpoint name for a given CRUD operation, using defaults if not overridden by the user."""
-        return self.endpoint_names.get(
+    def _get_endpoint_path(self, operation: str):
+        endpoint_name = self.endpoint_names.get(
             operation, self.default_endpoint_names.get(operation, operation)
         )
+        path = f"{self.path}/{endpoint_name}" if endpoint_name else self.path
+
+        if operation in {'read', 'update', 'delete', 'db_delete'}:
+            _primary_keys_path_suffix = "/".join(
+                f"{{{n}}}" for n in self.primary_key_names
+            )
+            path = f'{path}/{_primary_keys_path_suffix}'
+
+        return path
 
     def add_routes_to_router(
         self,
@@ -493,12 +538,9 @@ class EndpointCreator:
         if self.delete_schema:
             delete_description = "Soft delete a"
 
-        _primary_keys_path_suffix = "/".join(f"{{{n}}}" for n in self.primary_key_names)
-
         if ("create" in included_methods) and ("create" not in deleted_methods):
-            endpoint_name = self._get_endpoint_name("create")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}",
+                self._get_endpoint_path(operation='create'),
                 self._create_item(),
                 methods=["POST"],
                 include_in_schema=self.include_in_schema,
@@ -508,10 +550,8 @@ class EndpointCreator:
             )
 
         if ("read" in included_methods) and ("read" not in deleted_methods):
-            endpoint_name = self._get_endpoint_name("read")
-
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{_primary_keys_path_suffix}",
+                self._get_endpoint_path(operation='read'),
                 self._read_item(),
                 methods=["GET"],
                 include_in_schema=self.include_in_schema,
@@ -521,9 +561,8 @@ class EndpointCreator:
             )
 
         if ("read_multi" in included_methods) and ("read_multi" not in deleted_methods):
-            endpoint_name = self._get_endpoint_name("read_multi")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}",
+                self._get_endpoint_path(operation='read_multi'),
                 self._read_items(),
                 methods=["GET"],
                 include_in_schema=self.include_in_schema,
@@ -535,9 +574,8 @@ class EndpointCreator:
         if ("read_paginated" in included_methods) and (
             "read_paginated" not in deleted_methods
         ):
-            endpoint_name = self._get_endpoint_name("read_paginated")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}",
+                self._get_endpoint_path(operation='read_paginated'),
                 self._read_paginated(),
                 methods=["GET"],
                 include_in_schema=self.include_in_schema,
@@ -547,9 +585,8 @@ class EndpointCreator:
             )
 
         if ("update" in included_methods) and ("update" not in deleted_methods):
-            endpoint_name = self._get_endpoint_name("update")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{_primary_keys_path_suffix}",
+                self._get_endpoint_path(operation='update'),
                 self._update_item(),
                 methods=["PATCH"],
                 include_in_schema=self.include_in_schema,
@@ -559,9 +596,9 @@ class EndpointCreator:
             )
 
         if ("delete" in included_methods) and ("delete" not in deleted_methods):
-            endpoint_name = self._get_endpoint_name("delete")
+            path = self._get_endpoint_path(operation='delete')
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{_primary_keys_path_suffix}",
+                path,
                 self._delete_item(),
                 methods=["DELETE"],
                 include_in_schema=self.include_in_schema,
@@ -575,9 +612,8 @@ class EndpointCreator:
             and ("db_delete" not in deleted_methods)
             and self.delete_schema
         ):
-            endpoint_name = self._get_endpoint_name("db_delete")
             self.router.add_api_route(
-                f"{self.path}/{endpoint_name}/{_primary_keys_path_suffix}",
+                self._get_endpoint_path(operation='db_delete'),
                 self._db_delete(),
                 methods=["DELETE"],
                 include_in_schema=self.include_in_schema,

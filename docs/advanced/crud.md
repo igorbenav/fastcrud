@@ -188,6 +188,46 @@ await crud_items.delete(
 # this will not actually delete until you run a db.commit()
 ```
 
+## Returning clause in `update`
+
+In `update` method, you can pass `return_columns` parameter containing a list of columns you want to return after the update.
+
+```python
+from fastcrud import FastCRUD
+
+from .models.item import Item
+from .database import session as db
+
+crud_items = FastCRUD(Item)
+item = await crud_items.update(
+    db=db,
+    object={"price": 9.99},
+    price__lt=10
+    return_columns=["price"]
+)
+# this will return the updated price
+```
+
+You can also pass `schema_to_select` parameter and `return_as_model` to return the updated data in the form of a Pydantic schema.
+
+```python
+from fastcrud import FastCRUD
+
+from .models.item import Item
+from .schemas.item import ItemSchema
+from .database import session as db
+
+crud_items = FastCRUD(Item)
+item = await crud_items.update(
+    db=db,
+    object={"price": 9.99},
+    price__lt=10
+    schema_to_select=ItemSchema,
+    return_as_model=True
+)
+# this will return the updated data in the form of ItemSchema
+```
+
 ## Unpaginated `get_multi` and `get_multi_joined`
 
 If you pass `None` to `limit` in `get_multi` and `get_multi_joined`, you get the whole unpaginated set of data that matches the filters. Use this with caution.

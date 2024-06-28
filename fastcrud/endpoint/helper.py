@@ -7,8 +7,9 @@ from pydantic.functional_validators import field_validator
 from fastapi import Depends, Query, params
 
 from sqlalchemy import Column, inspect as sa_inspect
-from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql.elements import KeyedColumnElement
+
+from fastcrud.types import ModelType
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -71,16 +72,20 @@ class FilterConfig(BaseModel):
 
 
 def _get_primary_key(
-    model: type[DeclarativeBase],
+    model: ModelType,
 ) -> Union[str, None]:  # pragma: no cover
     key: Optional[str] = _get_primary_keys(model)[0].name
     return key
 
 
-def _get_primary_keys(model: type[DeclarativeBase]) -> Sequence[Column]:
+def _get_primary_keys(
+    model: ModelType,
+) -> Sequence[Column]:
     """Get the primary key of a SQLAlchemy model."""
-    inspector = sa_inspect(model).mapper
-    primary_key_columns: Sequence[Column] = inspector.primary_key
+    inspector_result = sa_inspect(model)
+    if inspector_result is None:
+        raise ValueError("Model inspection failed, resulting in None.")
+    primary_key_columns: Sequence[Column] = inspector_result.mapper.primary_key
 
     return primary_key_columns
 
@@ -99,19 +104,25 @@ def _get_python_type(column: Column) -> Optional[type]:
             )
 
 
-def _get_column_types(model: type[DeclarativeBase]) -> dict[str, Union[type, None]]:
+def _get_column_types(
+    model: ModelType,
+) -> dict[str, Union[type, None]]:
     """Get a dictionary of column names and their corresponding Python types from a SQLAlchemy model."""
-    inspector = sa_inspect(model).mapper
+    inspector_result = sa_inspect(model)
+    if inspector_result is None or inspector_result.mapper is None:
+        raise ValueError("Model inspection failed, resulting in None.")
     column_types = {}
-    for column in inspector.columns:
+    for column in inspector_result.mapper.columns:
         column_types[column.name] = _get_python_type(column)
     return column_types
 
 
 def _extract_unique_columns(
-    model: type[DeclarativeBase],
+    model: ModelType,
 ) -> Sequence[KeyedColumnElement]:
     """Extracts columns from a SQLAlchemy model that are marked as unique."""
+    if not hasattr(model, "__table__"):
+        raise AttributeError(f"{model.__name__} does not have a '__table__' attribute.")
     unique_columns = [column for column in model.__table__.columns if column.unique]
     return unique_columns
 

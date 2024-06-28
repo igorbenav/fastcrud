@@ -91,7 +91,9 @@ async def test_read_paginated_with_filters(
 
 # ------ the following tests will completely replace the current ones in the next version of fastcrud ------
 @pytest.mark.asyncio
-async def test_read_items_with_pagination(client: TestClient, async_session, test_model, test_data):
+async def test_read_items_with_pagination(
+    client: TestClient, async_session, test_model, test_data
+):
     for data in test_data:
         new_item = test_model(**data)
         async_session.add(new_item)
@@ -100,9 +102,7 @@ async def test_read_items_with_pagination(client: TestClient, async_session, tes
     page = 1
     items_per_page = 5
 
-    response = client.get(
-        f"/test/get_multi?page={page}&itemsPerPage={items_per_page}"
-    )
+    response = client.get(f"/test/get_multi?page={page}&itemsPerPage={items_per_page}")
 
     assert response.status_code == 200
 
@@ -125,7 +125,9 @@ async def test_read_items_with_pagination(client: TestClient, async_session, tes
 
 
 @pytest.mark.asyncio
-async def test_read_items_with_pagination_and_filters(filtered_client: TestClient, async_session, test_model, test_data):
+async def test_read_items_with_pagination_and_filters(
+    filtered_client: TestClient, async_session, test_model, test_data
+):
     for data in test_data:
         new_item = test_model(**data)
         async_session.add(new_item)

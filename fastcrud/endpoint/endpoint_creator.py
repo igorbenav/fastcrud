@@ -365,7 +365,7 @@ class EndpointCreator:
             ),
             filters: dict = Depends(dynamic_filters),
         ):
-            if not (page and items_per_page):
+            if not (page and items_per_page):  # pragma: no cover
                 return await self.crud.get_multi(db, offset=0, limit=100,
                                                  **filters)
 

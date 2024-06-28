@@ -1,23 +1,22 @@
-from typing import Type, TypeVar, Optional, Union, Sequence, Callable
+from typing import Type, Optional, Union, Sequence, Callable
 from enum import Enum
 
 from fastapi import APIRouter
-from sqlalchemy.orm import DeclarativeBase
-from pydantic import BaseModel
-from sqlmodel import SQLModel
 
+from fastcrud.crud.fast_crud import FastCRUD
+from fastcrud.types import (
+    CreateSchemaType,
+    DeleteSchemaType,
+    ModelType,
+    UpdateSchemaType,
+)
 from .endpoint_creator import EndpointCreator
-from ..crud.fast_crud import FastCRUD
 from .helper import FilterConfig
-
-CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
-UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
-DeleteSchemaType = TypeVar("DeleteSchemaType", bound=BaseModel)
 
 
 def crud_router(
     session: Callable,
-    model: type[Union[DeclarativeBase, SQLModel]],
+    model: ModelType,
     create_schema: Type[CreateSchemaType],
     update_schema: Type[UpdateSchemaType],
     crud: Optional[FastCRUD] = None,
@@ -288,6 +287,7 @@ def crud_router(
         # Example GET request: /mymodel/get_multi?id=1&name=example
         ```
     """
+
     crud = crud or FastCRUD(
         model=model,
         is_deleted_column=is_deleted_column,

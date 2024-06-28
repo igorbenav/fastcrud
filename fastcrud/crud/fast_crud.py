@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generic, TypeVar, Union, Optional, Callable
+from typing import Any, Dict, Generic, Union, Optional, Callable
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, ValidationError
@@ -7,11 +7,17 @@ from sqlalchemy.exc import ArgumentError, MultipleResultsFound, NoResultFound
 from sqlalchemy.sql import Join
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine.row import Row
-from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 from sqlalchemy.sql.selectable import Select
-from sqlmodel import SQLModel
+
+from fastcrud.types import (
+    CreateSchemaType,
+    DeleteSchemaType,
+    ModelType,
+    UpdateSchemaInternalType,
+    UpdateSchemaType,
+)
 
 from .helper import (
     _extract_matching_columns_from_schema,
@@ -23,12 +29,6 @@ from .helper import (
 )
 
 from ..endpoint.helper import _get_primary_keys
-
-ModelType = TypeVar("ModelType", bound=DeclarativeBase)
-CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
-UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
-UpdateSchemaInternalType = TypeVar("UpdateSchemaInternalType", bound=BaseModel)
-DeleteSchemaType = TypeVar("DeleteSchemaType", bound=BaseModel)
 
 
 class FastCRUD(
@@ -831,7 +831,7 @@ class FastCRUD(
         self,
         db: AsyncSession,
         schema_to_select: Optional[type[BaseModel]] = None,
-        join_model: Optional[type[Union[DeclarativeBase, SQLModel]]] = None,
+        join_model: Optional[ModelType] = None,
         join_on: Optional[Union[Join, BinaryExpression]] = None,
         join_prefix: Optional[str] = None,
         join_schema_to_select: Optional[type[BaseModel]] = None,

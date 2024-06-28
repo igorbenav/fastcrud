@@ -1,12 +1,12 @@
 from typing import Any, Optional, Union, Sequence, cast
 
 from sqlalchemy import inspect
-from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql import ColumnElement
 from pydantic import BaseModel, ConfigDict
 from pydantic.functional_validators import field_validator
-from sqlmodel import SQLModel
+
+from fastcrud.types import ModelType
 
 from ..endpoint.helper import _get_primary_key
 
@@ -39,7 +39,7 @@ class JoinConfig(BaseModel):
 
 
 def _extract_matching_columns_from_schema(
-    model: Union[type[Union[DeclarativeBase, SQLModel]], AliasedClass],
+    model: Union[ModelType, AliasedClass],
     schema: Optional[type[BaseModel]],
     prefix: Optional[str] = None,
     alias: Optional[AliasedClass] = None,
@@ -100,8 +100,8 @@ def _extract_matching_columns_from_schema(
 
 
 def _auto_detect_join_condition(
-    base_model: type[Union[DeclarativeBase, SQLModel]],
-    join_model: type[Union[DeclarativeBase, SQLModel]],
+    base_model: ModelType,
+    join_model: ModelType,
 ) -> Optional[ColumnElement]:
     """
     Automatically detects the join condition for SQLAlchemy models based on foreign key relationships.

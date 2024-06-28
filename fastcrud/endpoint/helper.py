@@ -5,11 +5,11 @@ import warnings
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import field_validator
 from fastapi import Depends, Query, params
-from sqlmodel import SQLModel
 
 from sqlalchemy import Column, inspect as sa_inspect
-from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql.elements import KeyedColumnElement
+
+from fastcrud.types import ModelType
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -72,14 +72,14 @@ class FilterConfig(BaseModel):
 
 
 def _get_primary_key(
-    model: type[Union[DeclarativeBase, SQLModel]],
+    model: ModelType,
 ) -> Union[str, None]:  # pragma: no cover
     key: Optional[str] = _get_primary_keys(model)[0].name
     return key
 
 
 def _get_primary_keys(
-    model: type[Union[DeclarativeBase, SQLModel]],
+    model: ModelType,
 ) -> Sequence[Column]:
     """Get the primary key of a SQLAlchemy model."""
     inspector_result = sa_inspect(model)
@@ -105,7 +105,7 @@ def _get_python_type(column: Column) -> Optional[type]:
 
 
 def _get_column_types(
-    model: type[Union[DeclarativeBase, SQLModel]],
+    model: ModelType,
 ) -> dict[str, Union[type, None]]:
     """Get a dictionary of column names and their corresponding Python types from a SQLAlchemy model."""
     inspector_result = sa_inspect(model)
@@ -118,7 +118,7 @@ def _get_column_types(
 
 
 def _extract_unique_columns(
-    model: type[Union[DeclarativeBase, SQLModel]],
+    model: ModelType,
 ) -> Sequence[KeyedColumnElement]:
     """Extracts columns from a SQLAlchemy model that are marked as unique."""
     if not hasattr(model, "__table__"):

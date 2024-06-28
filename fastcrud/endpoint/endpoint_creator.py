@@ -1,13 +1,17 @@
-from typing import Type, TypeVar, Optional, Callable, Sequence, Union
+from typing import Type, Optional, Callable, Sequence, Union
 from enum import Enum
 
 from fastapi import Depends, Body, Query, APIRouter
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import DeclarativeBase
-from sqlmodel import SQLModel
 
-from ..crud.fast_crud import FastCRUD
+from fastcrud.crud.fast_crud import FastCRUD
+from fastcrud.types import (
+    CreateSchemaType,
+    DeleteSchemaType,
+    ModelType,
+    UpdateSchemaType,
+)
 from ..exceptions.http_exceptions import DuplicateValueException, NotFoundException
 from ..paginated.helper import compute_offset
 from ..paginated.response import paginated_response
@@ -22,11 +26,6 @@ from .helper import (
     _create_dynamic_filters,
     _get_column_types,
 )
-
-CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
-UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
-UpdateSchemaInternalType = TypeVar("UpdateSchemaInternalType", bound=BaseModel)
-DeleteSchemaType = TypeVar("DeleteSchemaType", bound=BaseModel)
 
 
 class EndpointCreator:
@@ -208,7 +207,7 @@ class EndpointCreator:
     def __init__(
         self,
         session: Callable,
-        model: type[Union[DeclarativeBase, SQLModel]],
+        model: ModelType,
         create_schema: Type[CreateSchemaType],
         update_schema: Type[UpdateSchemaType],
         crud: Optional[FastCRUD] = None,

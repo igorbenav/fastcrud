@@ -253,6 +253,29 @@ items = await crud_items.get_multi(db=db, limit=None)
 
 To facilitate complex data relationships, `get_joined` and `get_multi_joined` can be configured to handle joins with multiple models. This is achieved using the `joins_config` parameter, where you can specify a list of `JoinConfig` instances, each representing a distinct join configuration.
 
+## Upserting multiple records using `upsert_multi`
+
+FastCRUD provides an `upsert_multi` method to efficiently upsert multiple records in a single operation. This method is particularly useful when you need to insert new records or update existing ones based on a unique constraint.
+
+```python
+from fastcrud import FastCRUD
+
+from .models.item import Item
+from .schemas.item import ItemCreateSchema
+from .database import session as db
+
+crud_items = FastCRUD(Item)
+items = await crud_items.upsert_multi(
+    db=db,
+    instances=[
+        ItemCreateSchema(price=9.99),
+    ],
+    schema_to_select=ItemSchema,
+    return_as_model=True,
+)
+# this will return the upserted data in the form of ItemSchema
+```
+
 #### Example: Joining `User`, `Tier`, and `Department` Models
 
 Consider a scenario where you want to retrieve users along with their associated tier and department information. Here's how you can achieve this using `get_multi_joined`.

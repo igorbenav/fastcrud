@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from typing import Optional
 from datetime import datetime
 
@@ -11,6 +12,7 @@ from pydantic import BaseModel, ConfigDict
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.sql import func
+from testcontainers.postgres import PostgresContainer
 
 from fastcrud.crud.fast_crud import FastCRUD
 from fastcrud.endpoint.crud_router import crud_router
@@ -273,13 +275,10 @@ class TaskRead(TaskReadSub):
     client: Optional[ClientRead]
 
 
-async_engine = create_async_engine(
-    "sqlite+aiosqlite:///:memory:", echo=True, future=True
-)
+@asynccontextmanager
+async def _async_session(url: str) -> AsyncGenerator[AsyncSession]:
+    async_engine = create_async_engine(url, echo=True, future=True)
 
-
-@pytest_asyncio.fixture(scope="function")
-async def async_session() -> AsyncGenerator[AsyncSession]:
     session = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
 
     async with session() as s:
@@ -292,6 +291,23 @@ async def async_session() -> AsyncGenerator[AsyncSession]:
         await conn.run_sync(Base.metadata.drop_all)
 
     await async_engine.dispose()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def async_session(request: pytest.FixtureRequest) -> AsyncGenerator[AsyncSession]:
+    dialect_marker = request.node.get_closest_marker("dialect")
+    dialect = dialect_marker.args[0] if dialect_marker else "sqlite"
+    if dialect == "postgresql":
+        with PostgresContainer(driver="psycopg") as pg:
+            async with _async_session(
+                url=pg.get_connection_url(host=pg.get_container_host_ip())
+            ) as session:
+                yield session
+    elif dialect == "sqlite":
+        async with _async_session(url="sqlite+aiosqlite:///:memory:") as session:
+            yield session
+    else:
+        raise ValueError(f"Unsupported dialect: {dialect}")
 
 
 @pytest.fixture(scope="function")

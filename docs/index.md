@@ -134,7 +134,7 @@ FastCRUD offers two primary ways to use its functionalities:
 
 Below are examples demonstrating both approaches:
 
-### Using crud_router for Automatic Endpoint Creation
+### Using `crud_router` for Automatic Endpoint Creation
 
 Here's a quick example to get you started:
 

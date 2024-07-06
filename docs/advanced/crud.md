@@ -1,4 +1,3 @@
-
 # Advanced Use of FastCRUD
 
 FastCRUD offers a flexible and powerful approach to handling CRUD operations in FastAPI applications, leveraging the SQLAlchemy ORM. Beyond basic CRUD functionality, FastCRUD provides advanced features like `allow_multiple` for updates and deletes, and support for advanced filters (e.g., less than, greater than). These features enable more complex and fine-grained data manipulation and querying capabilities.
@@ -46,7 +45,7 @@ from .schemas.user import UserCreate, UserUpdate, UserUpdateInternal, UserDelete
 CRUDUser = FastCRUD[User, UserCreate, UserUpdate, UserUpdateInternal, UserDelete]
 ```
 
-Then you can initialize CRUDUser like you would any FastCRUD instance, but with the relevant types:
+Then you can initialize `CRUDUser` like you would any `FastCRUD` instance, but with the relevant types:
 
 ```python
 from .models.user import User
@@ -70,7 +69,7 @@ await item_crud.update(
     db=db,
     object={"price": 9.99},
     allow_multiple=True,
-    price__lt=10
+    price__lt=10,
 )
 ```
 
@@ -83,7 +82,7 @@ Similarly, you can delete multiple records by using the `allow_multiple=True` pa
 await item_crud.delete(
     db=db,
     allow_multiple=True,
-    last_sold__lt=datetime.datetime.now() - datetime.timedelta(days=365)
+    last_sold__lt=datetime.datetime.now() - datetime.timedelta(days=365),
 )
 ```
 
@@ -104,21 +103,22 @@ items = await item_crud.get_multi(
 ```
 
 Currently supported single parameter filters are:
-- __gt - greater than
-- __lt - less than
-- __gte - greater than or equal to
-- __lte - less than or equal to
-- __ne - not equal
-- __is - used to test True, False and None identity
-- __is_not - negation of "is"
-- __like - SQL "like" search for specific text pattern
-- __notlike - negation of "like"
-- __ilike - case insensitive "like"
-- __notilike - case insensitive "notlike"
-- __startswith - text starts with given string
-- __endswith - text ends with given string
-- __contains - text contains given string
-- __match - database-specific match expression
+
+- `__gt` - greater than
+- `__lt` - less than
+- `__gte` - greater than or equal to
+- `__lte` - less than or equal to
+- `__ne` - not equal
+- `__is` - used to test True, False and None identity
+- `__is_not` - negation of "is"
+- `__like` - SQL "like" search for specific text pattern
+- `__notlike` - negation of "like"
+- `__ilike` - case insensitive "like"
+- `__notilike` - case insensitive "notlike"
+- `__startswith` - text starts with given string
+- `__endswith` - text ends with given string
+- `__contains` - text contains given string
+- `__match` - database-specific match expression
 
 ### Complex parameter filters
 
@@ -131,9 +131,10 @@ items = await item_crud.get_multi(
     price__between=(5, 20),
 )
 ```
-- __between - between 2 numeric values
-- __in - included in
-- __not_in - not included in
+
+- `__between` - between 2 numeric values
+- `__in` - included in
+- `__not_in` - not included in
 
 ### OR clauses
 
@@ -148,15 +149,16 @@ items = await item_crud.get_multi(
 ```
 
 ### AND clauses
-And clauses can be achieved by chaining multiple filters together.
+AND clauses can be achieved by chaining multiple filters together.
 
+```python
 # Fetch items priced under $20 and over 2 years of warranty.
 items = await item_crud.get_multi(
     db=db,
     price__lt=20,
     warranty_years__gt=2,
 )
-
+```
 
 #### Counting Records
 
@@ -164,7 +166,7 @@ items = await item_crud.get_multi(
 # Count items added in the last month
 item_count = await item_crud.count(
     db=db,
-    added_at__gte=datetime.datetime.now() - datetime.timedelta(days=30)
+    added_at__gte=datetime.datetime.now() - datetime.timedelta(days=30),
 )
 ```
 
@@ -183,7 +185,7 @@ crud_items = FastCRUD(Item)
 await crud_items.delete(
     db=db, 
     commit=False, 
-    id=1
+    id=1,
 )
 # this will not actually delete until you run a db.commit()
 ```
@@ -203,7 +205,7 @@ item = await crud_items.update(
     db=db,
     object={"price": 9.99},
     price__lt=10
-    return_columns=["price"]
+    return_columns=["price"],
 )
 # this will return the updated price
 ```
@@ -223,7 +225,7 @@ item = await crud_items.update(
     object={"price": 9.99},
     price__lt=10
     schema_to_select=ItemSchema,
-    return_as_model=True
+    return_as_model=True,
 )
 # this will return the updated data in the form of ItemSchema
 ```
@@ -244,13 +246,14 @@ items = await crud_items.get_multi(db=db, limit=None)
 ```
 
 !!! CAUTION
-    Be cautious when returning all the data in your database, and you should almost never allow your API user to do this.
+
+    Be cautious when returning all the data in your database, and you should almost never allow your user API to do this.
 
 ## Using `get_joined` and `get_multi_joined` for multiple models
 
 To facilitate complex data relationships, `get_joined` and `get_multi_joined` can be configured to handle joins with multiple models. This is achieved using the `joins_config` parameter, where you can specify a list of `JoinConfig` instances, each representing a distinct join configuration.
 
-#### Example: Joining User, Tier, and Department Models
+#### Example: Joining `User`, `Tier`, and `Department` Models
 
 Consider a scenario where you want to retrieve users along with their associated tier and department information. Here's how you can achieve this using `get_multi_joined`.
 
@@ -274,23 +277,23 @@ joins_config = [
         join_prefix="dept_",
         schema_to_select=DepartmentSchema,
         join_type="inner",
-    )
+    ),
 ]
 
 users = await user_crud.get_multi_joined(
     db=session,
     schema_to_select=UserSchema,
-    joins_config=joins_config,
     offset=0,
     limit=10,
     sort_columns='username',
-    sort_orders='asc'
+    sort_orders='asc',
+    joins_config=joins_config,
 )
 ```
 
-Then just pass this list to joins_config:
+Then just pass this list to `joins_config`:
 
-```python hl_lines="10" title="Passing to get_multi_joined"
+```python hl_lines="14" title="Passing to get_multi_joined"
 from fastcrud import JoinConfig
 
 joins_config = [
@@ -300,11 +303,11 @@ joins_config = [
 users = await user_crud.get_multi_joined(
     db=session,
     schema_to_select=UserSchema,
-    joins_config=joins_config,
     offset=0,
     limit=10,
     sort_columns='username',
-    sort_orders='asc'
+    sort_orders='asc',
+    joins_config=joins_config,
 )
 ```
 
@@ -319,9 +322,11 @@ In this example, users are joined with the `Tier` and `Department` models. The `
 FastCRUD provides flexibility in handling one-to-one and one-to-many relationships through its `get_joined` and `get_multi_joined` methods, along with the ability to specify how joined data should be structured using both the `relationship_type` (default `one-to-one`) and the `nest_joins` (default `False`) parameters.
 
 #### One-to-One Joins
+
 **One-to-one** relationships can be efficiently managed using either `get_joined` or `get_multi_joined`. The `get_joined` method is typically used when you want to fetch a single record from the database along with its associated record from another table, such as a user and their corresponding profile details. If you're retrieving multiple records, `get_multi_joined` can also be used for one-to-one joins. The parameter that deals with it, `relationship_type`, defaults to `one-on-one`.
 
 #### One-to-Many Joins
+
 For **one-to-many** relationships, where a single record can be associated with multiple records in another table, `get_joined` can be used with `nest_joins` set to `True`. This setup allows the primary record to include a nested list of associated records, making it suitable for scenarios such as retrieving a user and all their blog posts. Alternatively, `get_multi_joined` is also applicable here for fetching multiple primary records, each with their nested lists of related records.
 
 !!! WARNING
@@ -329,10 +334,12 @@ For **one-to-many** relationships, where a single record can be associated with 
     When using `nested_joins=True`, the performance will always be a bit worse than when using `nested_joins=False`. For cases where more performance is necessary, consider using `nested_joins=False` and remodeling your database.
 
 #### One-to-One Relationships
+
 - **`get_joined`**: Fetch a single record and its directly associated record (e.g., a user and their profile).
 - **`get_multi_joined`** (with `nest_joins=False`): Retrieve multiple records, each linked to a single related record from another table (e.g., users and their profiles).
 
 #### One-to-Many Relationships
+
 - **`get_joined`** (with `nest_joins=True`): Retrieve a single record with all its related records nested within it (e.g., a user and all their blog posts).
 - **`get_multi_joined`** (with `nest_joins=True`): Fetch multiple primary records, each with their related records nested (e.g., multiple users and all their blog posts).
 
@@ -342,7 +349,7 @@ For a more detailed explanation, you may check the [joins docs](joins.md#handlin
 
 In complex query scenarios, particularly when you need to join a table to itself or perform multiple joins on the same table for different purposes, aliasing becomes crucial. Aliasing allows you to refer to the same table in different contexts with unique identifiers, avoiding conflicts and ambiguity in your queries.
 
-For both `get_joined` and `get_multi_joined` methods, when you need to join the same model multiple times, you can utilize the `alias` parameter within your `JoinConfig` to differentiate between the joins. This parameter expects an instance of `AliasedClass`, which can be created using the `aliased` function from SQLAlchemy (also in fastcrud for convenience).
+For both `get_joined` and `get_multi_joined` methods, when you need to join the same model multiple times, you can utilize the `alias` parameter within your `JoinConfig` to differentiate between the joins. This parameter expects an instance of `AliasedClass`, which can be created using the `aliased` function from SQLAlchemy (also in FastCRUD for convenience).
 
 #### Example: Joining the Same Model Multiple Times
 
@@ -365,7 +372,7 @@ joins_config = [
         join_prefix="owner_",
         schema_to_select=UserSchema,
         join_type="inner",
-        alias=owner_alias  # Pass the aliased class instance
+        alias=owner_alias,  # Pass the aliased class instance
     ),
     JoinConfig(
         model=UserModel,
@@ -373,8 +380,8 @@ joins_config = [
         join_prefix="assigned_",
         schema_to_select=UserSchema,
         join_type="inner",
-        alias=assigned_user_alias  # Pass the aliased class instance
-    )
+        alias=assigned_user_alias,  # Pass the aliased class instance
+    ),
 ]
 
 # Initialize your FastCRUD instance for TaskModel
@@ -384,15 +391,15 @@ task_crud = FastCRUD(TaskModel)
 tasks = await task_crud.get_multi_joined(
     db=session,
     schema_to_select=TaskSchema,
-    joins_config=joins_config,
     offset=0,
-    limit=10
+    limit=10,
+    joins_config=joins_config,
 )
 ```
 
-Then just pass this joins_config to `get_multi_joined`:
+Then just pass this `joins_config` to `get_multi_joined`:
 
-```python hl_lines="17" title="Passing joins_config to get_multi_joined"
+```python hl_lines="19" title="Passing joins_config to get_multi_joined"
 from fastcrud import FastCRUD, JoinConfig, aliased
 
 ...
@@ -409,9 +416,9 @@ task_crud = FastCRUD(TaskModel)
 tasks = await task_crud.get_multi_joined(
     db=session,
     schema_to_select=TaskSchema,
-    joins_config=joins_config,
     offset=0,
-    limit=10
+    limit=10,
+    joins_config=joins_config,
 )
 ```
 
@@ -441,15 +448,15 @@ joins_config = [
     JoinConfig(
         model=ProjectsParticipantsAssociation,
         join_on=Project.id == ProjectsParticipantsAssociation.project_id,
+        join_prefix="pp_",
         join_type="inner",
-        join_prefix="pp_"
     ),
     JoinConfig(
         model=Participant,
         join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
+        join_prefix="participant_",
         join_type="inner",
-        join_prefix="participant_"
-    )
+    ),
 ]
 
 crud_project = FastCRUD(Project)
@@ -457,12 +464,11 @@ crud_project = FastCRUD(Project)
 projects_with_participants = await project_crud.get_multi_joined(
     db=db,
     schema_to_select=ProjectSchema,
-    joins_config=joins_config
+    joins_config=joins_config,
 )
 ```
 
 For a more detailed explanation, read [this part of the docs](joins.md#many-to-many-relationships-with-get_multi_joined).
-
 
 ## Enhanced Query Capabilities with Method Chaining
 
@@ -492,12 +498,16 @@ This method constructs a SQL Alchemy `Select` statement, offering optional colum
 #### Usage Example:
 
 ```python
-stmt = await my_model_crud.select(schema_to_select=MySchema, sort_columns='name', name__like='%example%')
+stmt = await my_model_crud.select(
+    schema_to_select=MySchema,
+    sort_columns='name',
+    name__like='%example%',
+)
 stmt = stmt.where(additional_conditions).limit(10)
 results = await db.execute(stmt)
 ```
 
-This example demonstrates selecting a subset of columns, applying a filter, and chaining additional conditions like `where` and `limit`. Note that `select` returns a `Selectable` object, allowing for further modifications before execution.
+This example demonstrates selecting a subset of columns, applying a filter, and chaining additional conditions like `where` and `limit`. Note that `select` returns a `Select` object, allowing for further modifications before execution.
 
 ## Conclusion
 

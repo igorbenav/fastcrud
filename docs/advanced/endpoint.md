@@ -33,8 +33,8 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Method**: `GET`
 - **Description**: Retrieves multiple items with optional pagination.
 - **Query Parameters**:
-  - `offset` (optional): The offset from where to start fetching items.
-  - `limit` (optional): The maximum number of items to return.
+    - `offset` (optional): The offset from where to start fetching items.
+    - `limit` (optional): The maximum number of items to return.
 - **Example Request**: `GET /yourmodel/get_multi?offset=3&limit=4`.
 - **Example Return**:
 ```javascript
@@ -56,8 +56,8 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Method**: `GET`
 - **Description**: Retrieves multiple items with pagination.
 - **Query Parameters**:
-  - `page`: The page number, starting from 1.
-  - `itemsPerPage`: The number of items per page.
+    - `page`: The page number, starting from 1.
+    - `itemsPerPage`: The number of items per page.
 - **Example Request**: `GET /yourmodel/get_paginated?page=1&itemsPerPage=3`.
 - **Example Return**:
 ```javascript
@@ -73,17 +73,26 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
   "items_per_page": 3
 }
 ```
+
 !!! WARNING
 
-        _read_paginated endpoint is getting deprecated and mixed into _read_items in the next major release.
-        Please use _read_items with optional page and items_per_pagequery params instead, to achieve pagination as before.
-        Simple _read_items behaviour persists with no breaking changes.
+    `_read_paginated` endpoint is getting deprecated and mixed into `_read_items` in the next major release.
+    Please use `_read_items` with optional `page` and `items_per_page` query params instead, to achieve pagination as before.
+    Simple `_read_items` behaviour persists with no breaking changes.
 
-        Read items paginated:
-        curl -X 'GET'   'http://localhost:8000/users/get_multi?page=2&itemsPerPage=10'   -H 'accept: application/json'
+    Read items paginated:
+    ```sh
+    $ curl -X 'GET' \
+      'http://localhost:8000/users/get_multi?page=2&itemsPerPage=10' \
+      -H 'accept: application/json'
+    ```
 
-        Read items unpaginated:
-        url -X 'GET'   'http://localhost:8000/users/get_multi?offset=0&limit=100'   -H 'accept: application/json'
+    Read items unpaginated:
+    ```sh
+    $ curl -X 'GET' \
+      'http://localhost:8000/users/get_multi?offset=0&limit=100' \
+      -H 'accept: application/json'
+    ```
 
 ### Update
 
@@ -126,12 +135,12 @@ Using `included_methods` you may define exactly the methods you want to be inclu
 my_router = crud_router(
     session=get_session,
     model=MyModel,
-    crud=FastCRUD(MyModel),
     create_schema=CreateMyModel,
     update_schema=UpdateMyModel,
+    crud=FastCRUD(MyModel),
     path="/mymodel",
     tags=["MyModel"],
-    included_methods=["create", "read", "update"]  # Only these methods will be included
+    included_methods=["create", "read", "update"],  # Only these methods will be included
 )
 
 app.include_router(my_router)
@@ -146,12 +155,12 @@ Using `deleted_methods` you define the methods that will not be included.
 my_router = crud_router(
     session=get_session,
     model=MyModel,
-    crud=FastCRUD(MyModel),
     create_schema=CreateMyModel,
     update_schema=UpdateMyModel,
+    crud=FastCRUD(MyModel),
     path="/mymodel",
     tags=["MyModel"],
-    deleted_methods=["update", "delete"]  # All but these methods will be included
+    deleted_methods=["update", "delete"],  # All but these methods will be included
 )
 
 app.include_router(my_router)
@@ -159,7 +168,7 @@ app.include_router(my_router)
 
 !!! WARNING
 
-        If `included_methods` and `deleted_methods` are both provided, a ValueError will be raised.
+    If `included_methods` and `deleted_methods` are both provided, a `ValueError` will be raised.
 
 ## Customizing Endpoint Names
 
@@ -185,7 +194,7 @@ custom_endpoint_names = {
     "update": "modify",
     "delete": "remove",
     "read_multi": "list",
-    "read_paginated": "paginate"
+    "read_paginated": "paginate",
 }
 
 # Setup CRUD router with custom endpoint names
@@ -196,7 +205,7 @@ app.include_router(crud_router(
     update_schema=UpdateYourModelSchema,
     path="/yourmodel",
     tags=["YourModel"],
-    endpoint_names=custom_endpoint_names
+    endpoint_names=custom_endpoint_names,
 ))
 ```
 
@@ -215,7 +224,7 @@ custom_endpoint_names = {
     "delete": "erase",
     "db_delete": "hard_erase",
     "read_multi": "get_all",
-    "read_paginated": "get_page"
+    "read_paginated": "get_page",
 }
 
 # Initialize and use the custom EndpointCreator
@@ -226,7 +235,7 @@ endpoint_creator = EndpointCreator(
     update_schema=UpdateYourModelSchema,
     path="/yourmodel",
     tags=["YourModel"],
-    endpoint_names=custom_endpoint_names
+    endpoint_names=custom_endpoint_names,
 )
 
 endpoint_creator.add_routes_to_router()
@@ -235,19 +244,19 @@ app.include_router(endpoint_creator.router)
 
 !!! TIP
 
-    You only need to pass the names of the endpoints you want to change in the endpoint_names dict.
+    You only need to pass the names of the endpoints you want to change in the `endpoint_names` `dict`.
 
 !!! WARNING
 
-    default_endpoint_names for EndpointCreator are going to be changed to empty strings in the next major release.
-    See:  https://github.com/igorbenav/fastcrud/issues/67
+    `default_endpoint_names` for `EndpointCreator` are going to be changed to empty strings in the next major release.
+    See [this issue](https://github.com/igorbenav/fastcrud/issues/67) for more details.
 
 
-## Extending EndpointCreator
+## Extending `EndpointCreator`
 
 You can create a subclass of `EndpointCreator` and override or add new methods to define custom routes. Here's an example:
 
-### Creating a Custom EndpointCreator
+### Creating a Custom `EndpointCreator`
 
 ```python hl_lines="3 4"
 from fastcrud import EndpointCreator
@@ -339,7 +348,7 @@ class MyCustomEndpointCreator(EndpointCreator):
 
 ### Using the Custom EndpointCreator
 
-```python hl_lines="6 12 18"
+```python hl_lines="6 15 18"
 # Assuming MyCustomEndpointCreator was created
 
 ...
@@ -348,13 +357,13 @@ class MyCustomEndpointCreator(EndpointCreator):
 my_router = crud_router(
     session=get_session,
     model=MyModel,
-    crud=FastCRUD(MyModel),
     create_schema=CreateMyModel,
     update_schema=UpdateMyModel,
-    endpoint_creator=MyCustomEndpointCreator,
+    crud=FastCRUD(MyModel),
     path="/mymodel",
     tags=["MyModel"],
-    included_methods=["create", "read", "update"]  # Including selective methods
+    included_methods=["create", "read", "update"],  # Including selective methods
+    endpoint_creator=MyCustomEndpointCreator,
 )
 
 app.include_router(my_router)
@@ -391,7 +400,7 @@ When initializing `crud_router` or creating a custom `EndpointCreator`, you can 
 
 Here's an example of using `crud_router` with custom soft delete columns:
 
-```python hl_lines="11-14 20"
+```python hl_lines="11-15 23"
 from fastapi import FastAPI
 from fastcrud import FastCRUD, crud_router
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -402,25 +411,26 @@ app = FastAPI()
 # and MyModel is your SQLAlchemy model
 
 # Initialize FastCRUD with custom soft delete columns
-my_model_crud = FastCRUD(MyModel,
-                         is_deleted_column='archived',  # Custom 'is_deleted' column name
-                         deleted_at_column='archived_at'  # Custom 'deleted_at' column name
-                        )
+my_model_crud = FastCRUD(
+    MyModel,
+    is_deleted_column='archived',  # Custom 'is_deleted' column name
+    deleted_at_column='archived_at',  # Custom 'deleted_at' column name
+)
 
 # Setup CRUD router with the FastCRUD instance
 app.include_router(crud_router(
     session=async_session,
     model=MyModel,
-    crud=my_model_crud,
     create_schema=CreateMyModelSchema,
     update_schema=UpdateMyModelSchema,
+    crud=my_model_crud,
     delete_schema=DeleteMyModelSchema,
     path="/mymodel",
-    tags=["MyModel"]
+    tags=["MyModel"],
 ))
 ```
 
-You may also directly pass the names of the columns to crud_router or EndpointCreator:
+You may also directly pass the names of the columns to `crud_router` or `EndpointCreator`:
 
 ```python hl_lines="9 10"
 app.include_router(endpoint_creator(
@@ -432,13 +442,17 @@ app.include_router(endpoint_creator(
     path="/mymodel",
     tags=["MyModel"],
     is_deleted_column='archived',
-    deleted_at_column='archived_at'
+    deleted_at_column='archived_at',
 ))
 ```
 
+This setup ensures that the soft delete functionality within your application utilizes the `archived` and `archived_at` columns for marking records as deleted, rather than the default `is_deleted` and `deleted_at` fields.
+
+By specifying custom column names for soft deletion, you can adapt FastCRUD to fit the design of your database models, providing a flexible solution for handling deleted records in a way that best suits your application's needs.
+
 You can also customize your `updated_at` column:
 
-```python hl_lines="9"
+```python hl_lines="11"
 app.include_router(endpoint_creator(
     session=async_session,
     model=MyModel,
@@ -447,13 +461,11 @@ app.include_router(endpoint_creator(
     delete_schema=DeleteMyModelSchema,
     path="/mymodel",
     tags=["MyModel"],
-    updated_at_column='date_updated'
+    is_deleted_column='archived',
+    deleted_at_column='archived_at',
+    updated_at_column='date_updated',
 ))
 ```
-
-This setup ensures that the soft delete functionality within your application utilizes the `archived` and `archived_at` columns for marking records as deleted, rather than the default `is_deleted` and `deleted_at` fields.
-
-By specifying custom column names for soft deletion, you can adapt FastCRUD to fit the design of your database models, providing a flexible solution for handling deleted records in a way that best suits your application's needs.
 
 ## Using Filters in FastCRUD
 
@@ -469,7 +481,7 @@ from fastcrud import FilterConfig
 # Define filter configuration for a model
 filter_config = FilterConfig(
     tier_id=None,  # Default filter value for tier_id
-    name=None  # Default filter value for name
+    name=None,  # Default filter value for name
 )
 ```
 
@@ -489,9 +501,10 @@ You can apply filters to your endpoints by passing the `filter_config` to the `c
 
 ```python
 from fastcrud import crud_router
-from yourapp.models import YourModel
-from yourapp.schemas import CreateYourModelSchema, UpdateYourModelSchema
-from yourapp.database import async_session
+
+from .database import async_session
+from .yourmodel.model import YourModel
+from .yourmodel.schemas import CreateYourModelSchema, UpdateYourModelSchema
 
 # Apply filters using crud_router
 app.include_router(
@@ -500,10 +513,10 @@ app.include_router(
         model=YourModel,
         create_schema=CreateYourModelSchema,
         update_schema=UpdateYourModelSchema,
-        filter_config=filter_config,  # Apply the filter configuration
         path="/yourmodel",
-        tags=["YourModel"]
-    )
+        tags=["YourModel"],
+        filter_config=filter_config,  # Apply the filter configuration
+    ),
 )
 ```
 
@@ -549,7 +562,6 @@ try:
 except ValueError as e:
     print(e)  # Output: Invalid filter column 'non_existent_column': not found in model
 ```
-
 
 ## Conclusion
 

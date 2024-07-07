@@ -53,11 +53,11 @@ def _extract_matching_columns_from_schema(
 
     Args:
         model: The SQLAlchemy ORM model containing columns to be matched with the schema fields.
-        schema: Optional; a Pydantic schema containing field names to be matched with the model's columns. If None, all columns from the model are used.
-        prefix: Optional; a prefix to be added to all column names. If None, no prefix is added.
-        alias: Optional; an alias for the model, used for referencing the columns through this alias in the query. If None, the original model is used.
-        use_temporary_prefix: Whether to use or not an aditional prefix for joins. Default False.
-        temp_prefix: The temporary prefix to be used. Default "joined__".
+        schema: Optional; a Pydantic schema containing field names to be matched with the model's columns. If `None`, all columns from the model are used.
+        prefix: Optional; a prefix to be added to all column names. If `None`, no prefix is added.
+        alias: Optional; an alias for the model, used for referencing the columns through this alias in the query. If `None`, the original model is used.
+        use_temporary_prefix: Whether to use or not an aditional prefix for joins. Default `False`.
+        temp_prefix: The temporary prefix to be used. Default `"joined__"`.
 
     Returns:
         A list of ORM column objects (potentially labeled with a prefix) that correspond to the field names defined
@@ -111,11 +111,11 @@ def _auto_detect_join_condition(
         join_model: The SQLAlchemy model to join with the base model.
 
     Returns:
-        A SQLAlchemy ColumnElement representing the join condition, if successfully detected.
+        A SQLAlchemy `ColumnElement` representing the join condition, if successfully detected.
 
     Raises:
         ValueError: If the join condition cannot be automatically determined.
-        AttributeError: If either base_model or join_model does not have a '__table__' attribute.
+        AttributeError: If either base_model or join_model does not have a `__table__` attribute.
     """
     if not hasattr(base_model, "__table__"):
         raise AttributeError(
@@ -278,9 +278,9 @@ def _nest_join_data(
 
     Args:
         data: The flat dictionary containing data with potentially prefixed keys from joined tables.
-        join_definitions: A list of JoinConfig instances defining the join configurations, including prefixes.
-        temp_prefix: The temporary prefix applied to joined columns to differentiate them. Defaults to "joined__".
-        nested_data: The nested dictionary to which the data will be added. If None, a new dictionary is created. Defaults to None.
+        join_definitions: A list of `JoinConfig` instances defining the join configurations, including prefixes.
+        temp_prefix: The temporary prefix applied to joined columns to differentiate them. Defaults to `"joined__"`.
+        nested_data: The nested dictionary to which the data will be added. If None, a new dictionary is created. Defaults to `None`.
 
     Returns:
         dict[str, Any]: A dictionary with nested structures for joined table data.
@@ -299,8 +299,8 @@ def _nest_join_data(
             JoinConfig(
                 model=Article,
                 join_prefix='articles_',
-                relationship_type='one-to-many'
-            )
+                relationship_type='one-to-many',
+            ),
         ]
 
         Output:
@@ -328,8 +328,8 @@ def _nest_join_data(
             JoinConfig(
                 model=Author,
                 join_prefix='author_',
-                relationship_type='one-to-one'
-            )
+                relationship_type='one-to-one',
+            ),
         ]
 
         Output:
@@ -418,7 +418,7 @@ def _nest_multi_join_data(
 ) -> Sequence[Union[dict, BaseModel]]:
     """
     Nests joined data based on join definitions provided for multiple records. This function processes the input list of
-    dictionaries, identifying keys that correspond to joined tables using the provided joins_config, and nests them
+    dictionaries, identifying keys that correspond to joined tables using the provided `joins_config`, and nests them
     under their respective table keys.
 
     Args:
@@ -427,7 +427,7 @@ def _nest_multi_join_data(
         joins_config: The list of join configurations containing the joined model classes and related settings.
         schema_to_select: Pydantic schema for selecting specific columns from the primary model. Used for converting
                           dictionaries back to Pydantic models.
-        return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
+        return_as_model: If `True`, converts the fetched data to Pydantic models based on `schema_to_select`. Defaults to `False`.
         nested_schema_to_select: A dictionary mapping join prefixes to their corresponding Pydantic schemas.
 
     Returns:

@@ -36,25 +36,25 @@ class EndpointCreator:
     This class simplifies the process of adding create, read, update, and delete (CRUD) endpoints
     to a FastAPI router. It is initialized with a SQLAlchemy session, model, CRUD operations,
     and Pydantic schemas, and allows for custom dependency injection for each endpoint.
-    The method assumes 'id' is the primary key for path parameters.
+    The method assumes `id` is the primary key for path parameters.
 
     Attributes:
         session: The SQLAlchemy async session.
         model: The SQLAlchemy model.
-        crud: An optional FastCRUD instance. If not provided, uses FastCRUD(model).
         create_schema: Pydantic schema for creating an item.
         update_schema: Pydantic schema for updating an item.
-        delete_schema: Optional Pydantic schema for deleting an item.
+        crud: An optional FastCRUD instance. If not provided, uses `FastCRUD(model)`.
         include_in_schema: Whether to include the created endpoints in the OpenAPI schema.
+        delete_schema: Optional Pydantic schema for deleting an item.
         path: Base path for the CRUD endpoints.
         tags: List of tags for grouping endpoints in the documentation.
-        is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to "is_deleted".
-        deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to "deleted_at".
-        updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to "updated_at".
+        is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to `"is_deleted"`.
+        deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to `"deleted_at"`.
+        updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to `"updated_at"`.
         endpoint_names: Optional dictionary to customize endpoint names for CRUD operations. Keys are operation types
-                        ("create", "read", "update", "delete", "db_delete", "read_multi", "read_paginated"), and
+                        (`"create"`, `"read"`, `"update"`, `"delete"`, `"db_delete"`, `"read_multi"`, `"read_paginated"`), and
                         values are the custom names to use. Unspecified operations will use default names.
-        filter_config: Optional FilterConfig instance or dictionary to configure filters for the `read_multi` and `read_paginated` endpoints.
+        filter_config: Optional `FilterConfig` instance or dictionary to configure filters for the `read_multi` and `read_paginated` endpoints.
 
     Raises:
         ValueError: If both `included_methods` and `deleted_methods` are provided.
@@ -74,7 +74,7 @@ class EndpointCreator:
             session=async_session,
             model=MyModel,
             create_schema=CreateMyModel,
-            update_schema=UpdateMyModel
+            update_schema=UpdateMyModel,
         )
         endpoint_creator.add_routes_to_router()
         app.include_router(endpoint_creator.router, prefix="/mymodel")
@@ -91,7 +91,7 @@ class EndpointCreator:
 
         endpoint_creator.add_routes_to_router(
             read_deps=[get_current_user],
-            update_deps=[get_current_user]
+            update_deps=[get_current_user],
         )
         ```
 
@@ -99,7 +99,7 @@ class EndpointCreator:
         ```python
         # Only create 'create' and 'read' endpoints
         endpoint_creator.add_routes_to_router(
-            included_methods=["create", "read"]
+            included_methods=["create", "read"],
         )
         ```
 
@@ -107,7 +107,7 @@ class EndpointCreator:
         ```python
         # Create all but 'update' and 'delete' endpoints
         endpoint_creator.add_routes_to_router(
-            deleted_methods=["update", "delete"]
+            deleted_methods=["update", "delete"],
         )
         ```
 
@@ -119,9 +119,9 @@ class EndpointCreator:
         other_endpoint_creator = EndpointCreator(
             session=async_session,
             model=OtherModel,
-            crud=other_model_crud,
             create_schema=CreateOtherModel,
-            update_schema=UpdateOtherModel
+            update_schema=UpdateOtherModel,
+            crud=other_model_crud,
         )
         other_endpoint_creator.add_routes_to_router()
         app.include_router(other_endpoint_creator.router, prefix="/othermodel")
@@ -141,12 +141,12 @@ class EndpointCreator:
                 "read": "fetch",  # Custom endpoint name for reading a single item
                 "update": "change",  # Custom endpoint name for updating items
                 # The delete operation will use the default name "delete"
-            }
+            },
         )
         endpoint_creator.add_routes_to_router()
         ```
 
-        Using filter_config with dict:
+        Using `filter_config` with `dict`:
         ```python
         from fastapi import FastAPI
         from fastcrud import EndpointCreator, FilterConfig
@@ -161,7 +161,7 @@ class EndpointCreator:
             model=MyModel,
             create_schema=CreateMyModel,
             update_schema=UpdateMyModel,
-            filter_config=FilterConfig(filters={"id": None, "name": "default"})
+            filter_config=FilterConfig(filters={"id": None, "name": "default"}),
         )
         # Adds CRUD routes with filtering capabilities
         endpoint_creator.add_routes_to_router()
@@ -175,7 +175,7 @@ class EndpointCreator:
         # Example GET request: /mymodel/get_multi?id=1&name=example
         ```
 
-        Using filter_config with keyword arguments:
+        Using `filter_config` with keyword arguments:
         ```python
         from fastapi import FastAPI
         from fastcrud import EndpointCreator, FilterConfig
@@ -190,7 +190,7 @@ class EndpointCreator:
             model=MyModel,
             create_schema=CreateMyModel,
             update_schema=UpdateMyModel,
-            filter_config=FilterConfig(id=None, name="default")
+            filter_config=FilterConfig(id=None, name="default"),
         )
         # Adds CRUD routes with filtering capabilities
         endpoint_creator.add_routes_to_router()
@@ -403,7 +403,7 @@ class EndpointCreator:
         """
         Creates an endpoint for hard deleting an item from the database.
 
-        This endpoint is only added if the delete_schema is provided during initialization.
+        This endpoint is only added if the `delete_schema` is provided during initialization.
         The endpoint expects an item ID as a path parameter and uses the provided SQLAlchemy
         async session to permanently delete the item from the database.
         """
@@ -453,11 +453,12 @@ class EndpointCreator:
             create_deps: List of functions to be injected as dependencies for the create endpoint.
             read_deps: List of functions to be injected as dependencies for the read endpoint.
             read_multi_deps: List of functions to be injected as dependencies for the read multiple items endpoint.
+            read_paginated_deps: List of functions to be injected as dependencies for the read paginated endpoint.
             update_deps: List of functions to be injected as dependencies for the update endpoint.
             delete_deps: List of functions to be injected as dependencies for the delete endpoint.
             db_delete_deps: List of functions to be injected as dependencies for the hard delete endpoint.
             included_methods: Optional list of methods to include. Defaults to all CRUD methods.
-            deleted_methods: Optional list of methods to exclude. Defaults to None.
+            deleted_methods: Optional list of methods to exclude. Defaults to `None`.
 
         Raises:
             ValueError: If both `included_methods` and `deleted_methods` are provided.
@@ -467,7 +468,7 @@ class EndpointCreator:
             ```python
             # Only create 'create' and 'read' endpoints
             endpoint_creator.add_routes_to_router(
-                included_methods=["create", "read"]
+                included_methods=["create", "read"],
             )
             ```
 
@@ -475,7 +476,7 @@ class EndpointCreator:
             ```python
             # Create all endpoints except 'delete' and 'db_delete'
             endpoint_creator.add_routes_to_router(
-                deleted_methods=["delete", "db_delete"]
+                deleted_methods=["delete", "db_delete"],
             )
             ```
 
@@ -488,14 +489,14 @@ class EndpointCreator:
             endpoint_creator.add_routes_to_router(
                 read_deps=[get_current_user],
                 update_deps=[get_current_user],
-                included_methods=["read", "update"]
+                included_methods=["read", "update"],
             )
             ```
 
         Note:
             This method should be called to register the endpoints with the FastAPI application.
-            If 'delete_schema' is provided, a hard delete endpoint is also registered.
-            This method assumes 'id' is the primary key for path parameters.
+            If `delete_schema` is provided on class instantiation, a hard delete endpoint is also registered.
+            This method assumes `id` is the primary key for path parameters.
         """
         if (included_methods is not None) and (deleted_methods is not None):
             raise ValueError(
@@ -634,9 +635,9 @@ class EndpointCreator:
         Adds a custom route to the FastAPI router.
 
         Args:
-            path: URL path for the custom route.
             endpoint: The endpoint function to execute when the route is called.
-            methods: A list of HTTP methods for the route (e.g., ['GET', 'POST']).
+            methods: A list of HTTP methods for the route (e.g., `['GET', 'POST']`).
+            path: URL path for the custom route.
             dependencies: A list of functions to be injected as dependencies for the route.
             include_in_schema: Whether to include this route in the OpenAPI schema.
             tags: Tags for grouping and categorizing the route in documentation.
@@ -652,11 +653,11 @@ class EndpointCreator:
 
             endpoint_creator.add_custom_route(
                 endpoint=custom_endpoint,
-                path="/custom",
                 methods=["GET"],
+                path="/custom",
                 tags=["custom"],
                 summary="Custom Endpoint",
-                description="This is a custom endpoint."
+                description="This is a custom endpoint.",
             )
             ```
         """

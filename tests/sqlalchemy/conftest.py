@@ -1,3 +1,4 @@
+from collections.abc import AsyncGenerator
 from typing import Optional
 from datetime import datetime
 
@@ -278,7 +279,7 @@ async_engine = create_async_engine(
 
 
 @pytest_asyncio.fixture(scope="function")
-async def async_session() -> AsyncSession:
+async def async_session() -> AsyncGenerator[AsyncSession]:
     session = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
 
     async with session() as s:

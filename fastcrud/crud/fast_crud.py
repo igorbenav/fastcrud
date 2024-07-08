@@ -2,7 +2,18 @@ from typing import Any, Dict, Generic, Union, Optional, Callable
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import Result, select, update, delete, func, inspect, asc, desc, or_, column
+from sqlalchemy import (
+    Result,
+    select,
+    update,
+    delete,
+    func,
+    inspect,
+    asc,
+    desc,
+    or_,
+    column,
+)
 from sqlalchemy.exc import ArgumentError, MultipleResultsFound, NoResultFound
 from sqlalchemy.sql import Join
 from sqlalchemy.ext.asyncio import AsyncSession

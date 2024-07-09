@@ -29,7 +29,8 @@ async def test_upsert_successful(async_session, test_model, read_schema):
                 "kwargs": {},
                 "expected_result": None,
             },
-            id="none",
+            marks=pytest.mark.dialect("postgresql"),
+            id="postgresql-none",
         ),
         pytest.param(
             {
@@ -54,7 +55,8 @@ async def test_upsert_successful(async_session, test_model, read_schema):
                     ]
                 },
             },
-            id="dict",
+            marks=pytest.mark.dialect("postgresql"),
+            id="postgresql-dict",
         ),
         pytest.param(
             {
@@ -75,7 +77,8 @@ async def test_upsert_successful(async_session, test_model, read_schema):
                 },
                 "expected_result": {"data": []},
             },
-            id="dict-filtered",
+            marks=pytest.mark.dialect("postgresql"),
+            id="postgresql-dict-filtered",
         ),
         pytest.param(
             {
@@ -102,11 +105,111 @@ async def test_upsert_successful(async_session, test_model, read_schema):
                     ]
                 },
             },
-            id="model",
+            marks=pytest.mark.dialect("postgresql"),
+            id="postgresql-model",
+        ),
+        pytest.param(
+            {
+                "kwargs": {},
+                "expected_result": None,
+            },
+            {
+                "kwargs": {},
+                "expected_result": None,
+            },
+            marks=pytest.mark.dialect("sqlite"),
+            id="sqlite-none",
+        ),
+        pytest.param(
+            {
+                "kwargs": {"return_columns": ["id", "name"]},
+                "expected_result": {
+                    "data": [
+                        {
+                            "id": 1,
+                            "name": "New Record",
+                        }
+                    ]
+                },
+            },
+            {
+                "kwargs": {"return_columns": ["id", "name"]},
+                "expected_result": {
+                    "data": [
+                        {
+                            "id": 1,
+                            "name": "New name",
+                        }
+                    ]
+                },
+            },
+            marks=pytest.mark.dialect("sqlite"),
+            id="sqlite-dict",
+        ),
+        pytest.param(
+            {
+                "kwargs": {"return_columns": ["id", "name"]},
+                "expected_result": {
+                    "data": [
+                        {
+                            "id": 1,
+                            "name": "New Record",
+                        }
+                    ]
+                },
+            },
+            {
+                "kwargs": {
+                    "return_columns": ["id", "name"],
+                    "name__like": "NewRecord",
+                },
+                "expected_result": {"data": []},
+            },
+            marks=pytest.mark.dialect("sqlite"),
+            id="sqlite-dict-filtered",
+        ),
+        pytest.param(
+            {
+                "kwargs": {
+                    "schema_to_select": ReadSchemaTest,
+                    "return_as_model": True,
+                },
+                "expected_result": {
+                    "data": [
+                        ReadSchemaTest(
+                            id=1, name="New Record", tier_id=1, category_id=1
+                        )
+                    ]
+                },
+            },
+            {
+                "kwargs": {
+                    "schema_to_select": ReadSchemaTest,
+                    "return_as_model": True,
+                },
+                "expected_result": {
+                    "data": [
+                        ReadSchemaTest(id=1, name="New name", tier_id=1, category_id=1)
+                    ]
+                },
+            },
+            marks=pytest.mark.dialect("sqlite"),
+            id="sqlite-model",
+        ),
+        pytest.param(
+            {
+                "kwargs": {},
+                "expected_result": None,
+            },
+            {
+                "kwargs": {},
+                "expected_result": None,
+            },
+            marks=pytest.mark.dialect("mysql"),
+            id="mysql-none",
         ),
     ],
 )
-@pytest.mark.dialect("postgresql")
 @pytest.mark.asyncio
 async def test_upsert_multi_successful(
     async_session,
@@ -137,3 +240,70 @@ async def test_upsert_multi_successful(
     )
 
     assert updated_fetched_records == update["expected_result"]
+
+
+@pytest.mark.parametrize(
+    ["insert"],
+    [
+        pytest.param(
+            {
+                "kwargs": {"return_columns": ["id", "name"]},
+                "expected_exception": {
+                    "type": ValueError,
+                    "match": r"MySQL does not support the returning clause for insert operations.",
+                },
+            },
+            marks=pytest.mark.dialect("mysql"),
+            id="mysql-dict",
+        ),
+        pytest.param(
+            {
+                "kwargs": {
+                    "name__like": "NewRecord",
+                },
+                "expected_exception": {
+                    "type": ValueError,
+                    "match": r"MySQL does not support filtering on insert operations.",
+                },
+            },
+            marks=pytest.mark.dialect("mysql"),
+            id="mysql-dict-filtered",
+        ),
+        pytest.param(
+            {
+                "kwargs": {
+                    "schema_to_select": ReadSchemaTest,
+                    "return_as_model": True,
+                },
+                "expected_exception": {
+                    "type": ValueError,
+                    "match": r"MySQL does not support the returning clause for insert operations.",
+                },
+            },
+            marks=pytest.mark.dialect("mysql"),
+            id="mysql-model",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_upsert_multi_unsupported(
+    async_session,
+    test_model,
+    read_schema,
+    test_data_tier,
+    test_data_category,
+    insert,
+):
+    for tier_item in test_data_tier:
+        async_session.add(TierModel(**tier_item))
+    for category_item in test_data_category:
+        async_session.add(CategoryModel(**category_item))
+    await async_session.commit()
+
+    crud = FastCRUD(test_model)
+    new_data = read_schema(id=1, name="New Record", tier_id=1, category_id=1)
+    with pytest.raises(
+        insert["expected_exception"]["type"],
+        match=insert["expected_exception"]["match"],
+    ):
+        await crud.upsert_multi(async_session, [new_data], **insert["kwargs"])

@@ -23,7 +23,7 @@ from sqlalchemy.engine.row import Row
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 from sqlalchemy.sql.selectable import Select
-from sqlalchemy.dialects import postgresql
+from sqlalchemy.dialects import postgresql, sqlite, mysql
 
 from fastcrud.types import (
     CreateSchemaType,
@@ -595,7 +595,7 @@ class FastCRUD(
         **kwargs: Any,
     ) -> Optional[Dict[str, Any]]:
         """
-        Upsert multiple records in the database. This method is currently only supported for PostgreSQL databases.
+        Upsert multiple records in the database. The underlying implementation varies based on the database dialect.
 
         Args:
             db: The database session to use for the operation.
@@ -609,12 +609,25 @@ class FastCRUD(
             The updated record(s) as a dictionary or Pydantic model instance or None, depending on the value of `return_as_model` and `return_columns`.
 
         Raises:
-            NotImplementedError: If the database dialect is not PostgreSQL.
+            ValueError: If the MySQL dialect is used with filters, return_columns, schema_to_select, or return_as_model.
+            NotImplementedError: If the database dialect is not supported for upsert multi.
         """
         filters = self._parse_filters(**kwargs)
 
         if db.bind.dialect.name == "postgresql":
             statement, params = await self._upsert_multi_postgresql(instances, filters)
+        elif db.bind.dialect.name == "sqlite":
+            statement, params = await self._upsert_multi_sqlite(instances, filters)
+        elif db.bind.dialect.name in ["mysql", "mariadb"]:
+            if filters:
+                raise ValueError(
+                    "MySQL does not support filtering on insert operations."
+                )
+            if return_columns or schema_to_select or return_as_model:
+                raise ValueError(
+                    "MySQL does not support the returning clause for insert operations."
+                )
+            statement, params = await self._upsert_multi_mysql(instances)
         else:
             raise NotImplementedError(
                 f"Upsert multi is not implemented for {db.bind.dialect.name}"
@@ -650,6 +663,45 @@ class FastCRUD(
                 if not column.primary_key and not column.unique
             },
             where=and_(*filters) if filters else None,
+        )
+        params = [
+            self.model(**instance.model_dump()).__dict__ for instance in instances
+        ]
+        return statement, params
+
+    async def _upsert_multi_sqlite(
+        self,
+        instances: list[Union[UpdateSchemaType, CreateSchemaType]],
+        filters: list[ColumnElement],
+    ) -> tuple[Insert, list[dict]]:
+        statement = sqlite.insert(self.model)
+        statement = statement.on_conflict_do_update(
+            index_elements=self._primary_keys,
+            set_={
+                column.name: getattr(statement.excluded, column.name)
+                for column in self.model.__table__.columns
+                if not column.primary_key and not column.unique
+            },
+            where=and_(*filters) if filters else None,
+        )
+        params = [
+            self.model(**instance.model_dump()).__dict__ for instance in instances
+        ]
+        return statement, params
+
+    async def _upsert_multi_mysql(
+        self,
+        instances: list[Union[UpdateSchemaType, CreateSchemaType]],
+    ) -> tuple[Insert, list[dict]]:
+        statement = mysql.insert(self.model)
+        statement = statement.on_duplicate_key_update(
+            {
+                column.name: getattr(statement.inserted, column.name)
+                for column in self.model.__table__.columns
+                if not column.primary_key
+                and not column.unique
+                and column.name != self.deleted_at_column
+            }
         )
         params = [
             self.model(**instance.model_dump()).__dict__ for instance in instances

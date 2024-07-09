@@ -6,23 +6,16 @@ def paginated_response(
 ) -> dict[str, Any]:
     """Create a paginated response based on the provided data and pagination parameters.
 
-    Parameters
-    ----------
-    crud_data : ListResponse[SchemaType]
-        Data to be paginated, including the list of items and total count.
-    page : int
-        Current page number.
-    items_per_page : int
-        Number of items per page.
+    Args:
+        crud_data: Data to be paginated, including the list of items and total count.
+        page: Current page number.
+        items_per_page: Number of items per page.
 
-    Returns
-    -------
-    dict[str, Any]
+    Returns:
         A structured paginated response dict containing the list of items, total count, pagination flags, and numbers.
 
-    Note
-    ----
-    The function does not actually paginate the data but formats the response to indicate pagination metadata.
+    Note:
+        The function does not actually paginate the data but formats the response to indicate pagination metadata.
     """
     return {
         "data": crud_data["data"],

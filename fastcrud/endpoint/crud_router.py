@@ -50,9 +50,9 @@ def crud_router(
     Args:
         session: The SQLAlchemy async session.
         model: The SQLAlchemy model.
-        crud: An optional FastCRUD instance. If not provided, uses FastCRUD(model).
         create_schema: Pydantic schema for creating an item.
         update_schema: Pydantic schema for updating an item.
+        crud: An optional `FastCRUD` instance. If not provided, uses `FastCRUD(model)`.
         delete_schema: Optional Pydantic schema for deleting an item.
         path: Base path for the CRUD endpoints.
         tags: Optional list of tags for grouping endpoints in the documentation.
@@ -60,25 +60,26 @@ def crud_router(
         create_deps: Optional list of functions to be injected as dependencies for the create endpoint.
         read_deps: Optional list of functions to be injected as dependencies for the read endpoint.
         read_multi_deps: Optional list of functions to be injected as dependencies for the read multiple items endpoint.
+        read_paginated_deps: Optional list of functions to be injected as dependencies for the read paginated endpoint.
         update_deps: Optional list of functions to be injected as dependencies for the update endpoint.
         delete_deps: Optional list of functions to be injected as dependencies for the delete endpoint.
         db_delete_deps: Optional list of functions to be injected as dependencies for the hard delete endpoint.
-        included_methods: Optional list of CRUD methods to include. If None, all methods are included.
+        included_methods: Optional list of CRUD methods to include. If `None`, all methods are included.
         deleted_methods: Optional list of CRUD methods to exclude.
-        endpoint_creator: Optional custom class derived from EndpointCreator for advanced customization.
-        is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to "is_deleted".
-        deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to "deleted_at".
-        updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to "updated_at".
+        endpoint_creator: Optional custom class derived from `EndpointCreator` for advanced customization.
+        is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to `"is_deleted"`.
+        deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to `"deleted_at"`.
+        updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to `"updated_at"`.
         endpoint_names: Optional dictionary to customize endpoint names for CRUD operations. Keys are operation types
-                        ("create", "read", "update", "delete", "db_delete", "read_multi", "read_paginated"), and
+                        (`"create"`, `"read"`, `"update"`, `"delete"`, `"db_delete"`, `"read_multi"`, `"read_paginated"`), and
                         values are the custom names to use. Unspecified operations will use default names.
-        filter_config: Optional FilterConfig instance or dictionary to configure filters for the `read_multi` and `read_paginated` endpoints.
+        filter_config: Optional `FilterConfig` instance or dictionary to configure filters for the `read_multi` and `read_paginated` endpoints.
 
     Returns:
-        Configured APIRouter instance with the CRUD endpoints.
+        Configured `APIRouter` instance with the CRUD endpoints.
 
     Raises:
-        ValueError: If both 'included_methods' and 'deleted_methods' are provided.
+        ValueError: If both `included_methods` and `deleted_methods` are provided.
 
     Examples:
         Basic Setup:
@@ -89,7 +90,7 @@ def crud_router(
             create_schema=CreateMyModelSchema,
             update_schema=UpdateMyModelSchema,
             path="/mymodel",
-            tags=["MyModel"]
+            tags=["MyModel"],
         )
         ```
 
@@ -107,7 +108,7 @@ def crud_router(
             read_deps=[get_current_user],
             update_deps=[get_current_user],
             path="/users",
-            tags=["Users"]
+            tags=["Users"],
         )
         ```
 
@@ -120,7 +121,7 @@ def crud_router(
             update_schema=UpdateProductSchema,
             delete_schema=DeleteProductSchema,
             path="/products",
-            tags=["Products"]
+            tags=["Products"],
         )
         ```
 
@@ -129,11 +130,11 @@ def crud_router(
         router = crud_router(
             session=async_session,
             model=OrderModel,
-            crud=CRUDOrderModel(OrderModel),
             create_schema=CreateOrderSchema,
             update_schema=UpdateOrderSchema,
+            crud=CRUDOrderModel(OrderModel),
             path="/orders",
-            tags=["Orders", "Sales"]
+            tags=["Orders", "Sales"],
         )
         ```
 
@@ -142,21 +143,21 @@ def crud_router(
         product_router = crud_router(
             session=async_session,
             model=ProductModel,
-            crud=CRUDProductModel(ProductModel),
             create_schema=CreateProductSchema,
             update_schema=UpdateProductSchema,
+            crud=CRUDProductModel(ProductModel),
             path="/products",
-            tags=["Inventory"]
+            tags=["Inventory"],
         )
 
         customer_router = crud_router(
             session=async_session,
             model=CustomerModel,
-            crud=CRUDCustomerModel(CustomerModel),
             create_schema=CreateCustomerSchema,
             update_schema=UpdateCustomerSchema,
+            crud=CRUDCustomerModel(CustomerModel),
             path="/customers",
-            tags=["CRM"]
+            tags=["CRM"],
         )
         ```
 
@@ -166,16 +167,16 @@ def crud_router(
         router = crud_router(
             session=async_session,
             model=MyModel,
-            crud=CRUDMyModel(MyModel),
             create_schema=CreateMyModel,
             update_schema=UpdateMyModel,
+            crud=CRUDMyModel(MyModel),
             included_methods=["create", "read"],
             path="/mymodel",
-            tags=["MyModel"]
+            tags=["MyModel"],
         )
         ```
 
-        Using a Custom EndpointCreator:
+        Using a Custom `EndpointCreator`:
         ```python
         class CustomEndpointCreator(EndpointCreator):
             def _custom_route(self):
@@ -201,12 +202,12 @@ def crud_router(
         router = crud_router(
             session=async_session,
             model=MyModel,
-            crud=CRUDMyModel(MyModel),
             create_schema=CreateMyModel,
             update_schema=UpdateMyModel,
-            endpoint_creator=CustomEndpointCreator,
+            crud=CRUDMyModel(MyModel),
             path="/mymodel",
-            tags=["MyModel"]
+            tags=["MyModel"],
+            endpoint_creator=CustomEndpointCreator,
         )
 
         app.include_router(my_router)
@@ -228,12 +229,12 @@ def crud_router(
                 "delete": "remove_task",
                 "db_delete": "permanently_remove_task",
                 "read_multi": "list_tasks",
-                "read_paginated": "paginate_tasks"
-            }
+                "read_paginated": "paginate_tasks",
+            },
         )
         ```
 
-        Using FilterConfig with dict:
+        Using `FilterConfig` with `dict`:
         ```python
         from fastapi import FastAPI
         from fastcrud import crud_router
@@ -248,7 +249,7 @@ def crud_router(
             model=MyModel,
             create_schema=CreateMyModel,
             update_schema=UpdateMyModel,
-            filter_config=FilterConfig(filters={"id": None, "name": "default"})
+            filter_config=FilterConfig(filters={"id": None, "name": "default"}),
         )
         # Adds CRUD routes with filtering capabilities
         app.include_router(router, prefix="/mymodel")
@@ -260,7 +261,7 @@ def crud_router(
         # Example GET request: /mymodel/get_multi?id=1&name=example
         ```
 
-        Using FilterConfig with keyword arguments:
+        Using `FilterConfig` with keyword arguments:
         ```python
         from fastapi import FastAPI
         from fastcrud import crud_router
@@ -275,7 +276,7 @@ def crud_router(
             model=MyModel,
             create_schema=CreateMyModel,
             update_schema=UpdateMyModel,
-            filter_config=FilterConfig(id=None, name="default")
+            filter_config=FilterConfig(id=None, name="default"),
         )
         # Adds CRUD routes with filtering capabilities
         app.include_router(router, prefix="/mymodel")

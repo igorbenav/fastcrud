@@ -2,7 +2,18 @@ from typing import Any, Dict, Generic, Union, Optional, Callable
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import Result, select, update, delete, func, inspect, asc, desc, or_, column
+from sqlalchemy import (
+    Result,
+    select,
+    update,
+    delete,
+    func,
+    inspect,
+    asc,
+    desc,
+    or_,
+    column,
+)
 from sqlalchemy.exc import ArgumentError, MultipleResultsFound, NoResultFound
 from sqlalchemy.sql import Join
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,9 +59,9 @@ class FastCRUD(
 
     Args:
         model: The SQLAlchemy model type.
-        is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to "is_deleted".
-        deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to "deleted_at".
-        updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to "updated_at".
+        is_deleted_column: Optional column name to use for indicating a soft delete. Defaults to `"is_deleted"`.
+        deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to `"deleted_at"`.
+        updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to `"updated_at"`.
 
     Methods:
         create:
@@ -60,7 +71,7 @@ class FastCRUD(
             Generates a SQL Alchemy `Select` statement with optional filtering and sorting.
 
         get:
-            Retrieves a single record based on filters. Supports advanced filtering through comparison operators like '__gt', '__lt', etc.
+            Retrieves a single record based on filters. Supports advanced filtering through comparison operators like `__gt`, `__lt`, etc.
 
         exists:
             Checks if a record exists based on the provided filters.
@@ -87,12 +98,12 @@ class FastCRUD(
             Hard deletes a record or multiple records from the database based on provided filters.
 
         delete:
-            Soft deletes a record if it has an "is_deleted" attribute; otherwise, performs a hard delete.
+            Soft deletes a record if it has an `"is_deleted"` attribute (or other attribute as defined by `is_deleted_column`); otherwise, performs a hard delete.
 
     Examples:
         Example 1: Basic Usage
         ----------------------
-        Create a FastCRUD instance for a User model and perform basic CRUD operations.
+        Create a FastCRUD instance for a `User` model and perform basic CRUD operations.
         ```python
         # Assuming you have a User model (either SQLAlchemy or SQLModel)
         # pydantic schemas for creation, update and deletion and an async session `db`
@@ -134,12 +145,12 @@ class FastCRUD(
         order_crud = FastCRUD(Order)
         orders = await order_crud.get_multi_joined(
             db,
-            offset=0,
-            limit=5,
+            schema_to_select=OrderReadSchema,
             join_model=Product,
             join_prefix="product_",
-            schema_to_select=OrderReadSchema,
             join_schema_to_select=ProductReadSchema,
+            offset=0,
+            limit=5,
         )
         ```
 
@@ -161,22 +172,22 @@ class FastCRUD(
         task_crud = FastCRUD(Task)
         completed_tasks = await task_crud.get_multi(
             db,
-            status='completed'
+            status='completed',
         )
         high_priority_task_count = await task_crud.count(
             db,
-            priority='high'
+            priority='high',
         )
         ```
 
         Example 6: Using Custom Column Names for Soft Delete
         ----------------------------------------------------
-        If your model uses different column names for indicating a soft delete and its timestamp, you can specify these when creating the FastCRUD instance.
+        If your model uses different column names for indicating a soft delete and its timestamp, you can specify these when creating the `FastCRUD` instance.
         ```python
         custom_user_crud = FastCRUD(
             User,
             is_deleted_column="archived",
-            deleted_at_column="archived_at"
+            deleted_at_column="archived_at",
         )
         # Now 'archived' and 'archived_at' will be used for soft delete operations.
         ```
@@ -272,18 +283,18 @@ class FastCRUD(
         Apply sorting to a SQLAlchemy query based on specified column names and sort orders.
 
         Args:
-            stmt: The SQLAlchemy Select statement to which sorting will be applied.
+            stmt: The SQLAlchemy `Select` statement to which sorting will be applied.
             sort_columns: A single column name or a list of column names on which to apply sorting.
-            sort_orders: A single sort order ('asc' or 'desc') or a list of sort orders corresponding
-                to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
+            sort_orders: A single sort order (`"asc"` or `"desc"`) or a list of sort orders corresponding
+                to the columns in `sort_columns`. If not provided, defaults to `"asc"` for each column.
 
         Raises:
             ValueError: Raised if sort orders are provided without corresponding sort columns,
-                or if an invalid sort order is provided (not 'asc' or 'desc').
+                or if an invalid sort order is provided (not `"asc"` or `"desc"`).
             ArgumentError: Raised if an invalid column name is provided that does not exist in the model.
 
         Returns:
-            The modified Select statement with sorting applied.
+            The modified `Select` statement with sorting applied.
 
         Examples:
             Applying ascending sort on a single column:
@@ -299,7 +310,7 @@ class FastCRUD(
             >>> stmt = _apply_sorting(stmt, ['name', 'age'])
 
         Note:
-            This method modifies the passed Select statement in-place by applying the order_by clause
+            This method modifies the passed `Select` statement in-place by applying the `order_by` clause
             based on the provided column names and sort orders.
         """
         if sort_orders and not sort_columns:
@@ -344,15 +355,15 @@ class FastCRUD(
         use_temporary_prefix: bool = False,
     ):
         """
-        Applies joins to the given SQL statement based on a list of JoinConfig objects.
+        Applies joins to the given SQL statement based on a list of `JoinConfig` objects.
 
         Args:
             stmt: The initial SQL statement.
             joins_config: Configurations for all joins.
-            use_temporary_prefix: Whether to use or not an aditional prefix for joins. Default False.
+            use_temporary_prefix: Whether to use or not an additional prefix for joins. Default `False`.
 
         Returns:
-            Select: The modified SQL statement with joins applied.
+            The modified SQL statement with joins applied.
         """
         for join in joins_config:
             model = join.alias or join.model
@@ -387,7 +398,7 @@ class FastCRUD(
         Args:
             db: The SQLAlchemy async session.
             object: The Pydantic schema containing the data to be saved.
-            commit: If True, commits the transaction immediately. Default is True.
+            commit: If `True`, commits the transaction immediately. Default is `True`.
 
         Returns:
             The created database object.
@@ -408,17 +419,19 @@ class FastCRUD(
     ) -> Select:
         """
         Constructs a SQL Alchemy `Select` statement with optional column selection, filtering, and sorting.
+
         This method allows for advanced filtering through comparison operators, enabling queries to be refined beyond simple equality checks.
-        For filtering details see:
-        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
+
+        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
 
         Args:
             schema_to_select: Pydantic schema to determine which columns to include in the selection. If not provided, selects all columns of the model.
-            sort_columns: A single column name or list of column names to sort the query results by. Must be used in conjunction with sort_orders.
-            sort_orders: A single sort order ('asc' or 'desc') or a list of sort orders, corresponding to each column in sort_columns. If not specified, defaults to ascending order for all sort_columns.
+            sort_columns: A single column name or list of column names to sort the query results by. Must be used in conjunction with `sort_orders`.
+            sort_orders: A single sort order (`"asc"` or `"desc"`) or a list of sort orders, corresponding to each column in `sort_columns`. If not specified, defaults to ascending order for all `sort_columns`.
+            **kwargs: Filters to apply to the query, including advanced comparison operators for more detailed querying.
 
         Returns:
-            Selectable: An SQL Alchemy `Select` statement object that can be executed or further modified.
+            An SQL Alchemy `Select` statement object that can be executed or further modified.
 
         Examples:
             Selecting specific columns with filtering and sorting:
@@ -427,7 +440,7 @@ class FastCRUD(
                 schema_to_select=UserReadSchema,
                 sort_columns=['age', 'name'],
                 sort_orders=['asc', 'desc'],
-                age__gt=18
+                age__gt=18,
             )
             ```
 
@@ -436,12 +449,12 @@ class FastCRUD(
             stmt = await crud.select()
             ```
 
-            Selecting users with a specific role, ordered by name:
+            Selecting users with a specific `role`, ordered by `name`:
             ```python
             stmt = await crud.select(
                 schema_to_select=UserReadSchema,
                 sort_columns='name',
-                role='admin'
+                role='admin',
             )
             ```
         Note:
@@ -468,22 +481,23 @@ class FastCRUD(
     ) -> Optional[Union[dict, BaseModel]]:
         """
         Fetches a single record based on specified filters.
+
         This method allows for advanced filtering through comparison operators, enabling queries to be refined beyond simple equality checks.
-        For filtering details see:
-        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
+
+        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
 
         Args:
             db: The database session to use for the operation.
             schema_to_select: Optional Pydantic schema for selecting specific columns.
-            return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
+            return_as_model: If `True`, converts the fetched data to Pydantic models based on `schema_to_select`. Defaults to `False`.
             one_or_none: Flag to get strictly one or no result. Multiple results are not allowed.
             **kwargs: Filters to apply to the query, using field names for direct matches or appending comparison operators for advanced queries.
 
         Raises:
-            ValueError: If return_as_model is True but schema_to_select is not provided.
+            ValueError: If `return_as_model` is `True` but `schema_to_select` is not provided.
 
         Returns:
-            A dictionary or a Pydantic model instance of the fetched database row, or None if no match is found.
+            A dictionary or a Pydantic model instance of the fetched database row, or `None` if no match is found.
 
         Examples:
             Fetch a user by ID:
@@ -532,16 +546,17 @@ class FastCRUD(
         return_as_model: bool = False,
     ) -> Union[BaseModel, Dict[str, Any], None]:
         """Update the instance or create it if it doesn't exists.
+
         Note: This method will perform two transactions to the database (get and create or update).
 
         Args:
-            db (AsyncSession): The database session to use for the operation.
-            instance (Union[UpdateSchemaType, type[BaseModel]]): A Pydantic schema representing the instance.
-            schema_to_select (Optional[type[BaseModel]], optional): Optional Pydantic schema for selecting specific columns. Defaults to None.
-            return_as_model (bool, optional): If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
+            db: The database session to use for the operation.
+            instance: A Pydantic schema representing the instance.
+            schema_to_select: Optional Pydantic schema for selecting specific columns. Defaults to `None`.
+            return_as_model: If `True`, converts the fetched data to Pydantic models based on `schema_to_select`. Defaults to `False`.
 
         Returns:
-            BaseModel: the created or updated instance
+            The created or updated instance
         """
         _pks = self._get_pk_dict(instance)
         schema_to_select = schema_to_select or type(instance)
@@ -570,18 +585,18 @@ class FastCRUD(
     async def exists(self, db: AsyncSession, **kwargs: Any) -> bool:
         """
         Checks if any records exist that match the given filter conditions.
-        For filtering details see:
-        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
+
+        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
 
         Args:
             db: The database session to use for the operation.
             **kwargs: Filters to apply to the query, supporting both direct matches and advanced comparison operators for refined search criteria.
 
         Returns:
-            True if at least one record matches the filter conditions, False otherwise.
+            `True` if at least one record matches the filter conditions, `False` otherwise.
 
         Examples:
-            Fetch a user by ID exists:
+            Check if a user with a specific ID exists:
             ```python
             exists = await crud.exists(db, id=1)
             ```
@@ -591,12 +606,12 @@ class FastCRUD(
             exists = await crud.exists(db, age__gt=30)
             ```
 
-            Check if any user registered before Jan 1, 2020:
+            Check if any user was registered before Jan 1, 2020:
             ```python
             exists = await crud.exists(db, registration_date__lt=datetime(2020, 1, 1))
             ```
 
-            Check if a username other than 'admin' exists:
+            Check if a username other than `admin` exists:
             ```python
             exists = await crud.exists(db, username__ne='admin')
             ```
@@ -614,8 +629,9 @@ class FastCRUD(
         **kwargs: Any,
     ) -> int:
         """
-        Counts records that match specified filters. For filtering details see:
-        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
+        Counts records that match specified filters.
+
+        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
 
         Can also count records based on a configuration of joins, useful for complex queries involving relationships.
 
@@ -638,7 +654,7 @@ class FastCRUD(
             count = await crud.count(db, age__gt=30)
             ```
 
-            Count users with a username other than 'admin':
+            Count users with a username other than `admin`:
             ```python
             count = await crud.count(db, username__ne='admin')
             ```
@@ -649,13 +665,13 @@ class FastCRUD(
                 JoinConfig(
                     model=ProjectsParticipantsAssociation,
                     join_on=Project.id == ProjectsParticipantsAssociation.project_id,
-                    join_type="inner"
+                    join_type="inner",
                 ),
                 JoinConfig(
                     model=Participant,
                     join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
-                    join_type="inner"
-                )
+                    join_type="inner",
+                ),
             ]
             count = await crud.count(db, joins_config=joins_config)
             ```
@@ -666,14 +682,14 @@ class FastCRUD(
                 JoinConfig(
                     model=ProjectsParticipantsAssociation,
                     join_on=Project.id == ProjectsParticipantsAssociation.project_id,
-                    join_type="inner"
+                    join_type="inner",
                 ),
                 JoinConfig(
                     model=Participant,
                     join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
                     join_type="inner",
-                    filters={'name': 'Jane Doe'}
-                )
+                    filters={'name': 'Jane Doe'},
+                ),
             ]
             count = await crud.count(db, joins_config=joins_config)
             ```
@@ -737,8 +753,8 @@ class FastCRUD(
     ) -> dict[str, Any]:
         """
         Fetches multiple records based on filters, supporting sorting, pagination.
-        For filtering details see:
-        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
+
+        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
 
         Args:
             db: The database session to use for the operation.
@@ -746,46 +762,82 @@ class FastCRUD(
             limit: Maximum number of records to fetch in one call. Use `None` for "no limit", fetching all matching rows. Note that in order to use `limit=None`, you'll have to provide a custom endpoint to facilitate it, which you should only do if you really seriously want to allow the user to get all the data at once.
             schema_to_select: Optional Pydantic schema for selecting specific columns. Required if `return_as_model` is True.
             sort_columns: Column names to sort the results by.
-            sort_orders: Corresponding sort orders ('asc', 'desc') for each column in sort_columns.
-            return_as_model: If True, returns data as instances of the specified Pydantic model.
-            return_total_count: If True, also returns the total count of rows with the selected filters. Useful for pagination.
+            sort_orders: Corresponding sort orders (`"asc"`, `"desc"`) for each column in `sort_columns`.
+            return_as_model: If `True`, returns data as instances of the specified Pydantic model.
+            return_total_count: If `True`, also returns the total count of rows with the selected filters. Useful for pagination.
             **kwargs: Filters to apply to the query, including advanced comparison operators for more detailed querying.
 
         Returns:
-            A dictionary containing 'data' with fetched records and 'total_count' indicating the total number of records matching the filters.
+            A dictionary containing `"data"` with fetched records and `"total_count"` indicating the total number of records matching the filters.
 
         Raises:
-            ValueError: If limit or offset is negative, or if schema_to_select is required but not provided or invalid.
+            ValueError: If `limit` or `offset` is negative, or if `schema_to_select` is required but not provided or invalid.
 
         Examples:
             Fetch the first 10 users:
             ```python
-            users = await crud.get_multi(db, 0, 10)
+            users = await crud.get_multi(
+                db,
+                0,
+                10,
+            )
             ```
 
             Fetch next 10 users with sorted by username:
             ```python
-            users = await crud.get_multi(db, 10, 10, sort_columns='username', sort_orders='desc')
+            users = await crud.get_multi(
+                db,
+                10,
+                10,
+                sort_columns='username',
+                sort_orders='desc',
+            )
             ```
 
             Fetch 10 users older than 30, sorted by age in descending order:
             ```python
-            get_multi(db, offset=0, limit=10, age__gt=30, sort_columns='age', sort_orders='desc')
+            get_multi(
+                db,
+                offset=0,
+                limit=10,
+                sort_columns='age',
+                sort_orders='desc',
+                age__gt=30,
+            )
             ```
 
             Fetch 10 users with a registration date before Jan 1, 2020:
             ```python
-            get_multi(db, offset=0, limit=10, registration_date__lt=datetime(2020, 1, 1))
+            get_multi(
+                db,
+                offset=0,
+                limit=10,
+                registration_date__lt=datetime(2020, 1, 1),
+            )
             ```
 
-            Fetch 10 users with a username other than 'admin', returning as model instances (ensure appropriate schema is passed):
+            Fetch 10 users with a username other than `admin`, returning as model instances (ensure appropriate schema is passed):
             ```python
-            get_multi(db, offset=0, limit=10, username__ne='admin', schema_to_select=UserSchema, return_as_model=True)
+            get_multi(
+                db,
+                offset=0,
+                limit=10,
+                schema_to_select=UserSchema,
+                return_as_model=True,
+                username__ne='admin',
+            )
             ```
 
             Fetch users with filtering and multiple column sorting:
             ```python
-            users = await crud.get_multi(db, 0, 10, is_active=True, sort_columns=['username', 'email'], sort_orders=['asc', 'desc'])
+            users = await crud.get_multi(
+                db,
+                0,
+                10,
+                sort_columns=['username', 'email'],
+                sort_orders=['asc', 'desc'],
+                is_active=True,
+            )
             ```
         """
         if (limit is not None and limit < 0) or offset < 0:
@@ -844,58 +896,77 @@ class FastCRUD(
         **kwargs: Any,
     ) -> Optional[dict[str, Any]]:
         """
-        Fetches a single record with one or multiple joins on other models. If 'join_on' is not provided, the method attempts
-        to automatically detect the join condition using foreign key relationships. For multiple joins, use 'joins_config' to
-        specify each join configuration. For filtering details see:
-        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
+        Fetches a single record with one or multiple joins on other models. If `join_on` is not provided, the method attempts
+        to automatically detect the join condition using foreign key relationships. For multiple joins, use `joins_config` to
+        specify each join configuration.
+
+        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
 
         Args:
             db: The SQLAlchemy async session.
             schema_to_select: Pydantic schema for selecting specific columns from the primary model. Required if `return_as_model` is True.
             join_model: The model to join with.
-            join_on: SQLAlchemy Join object for specifying the ON clause of the join. If None, the join condition is auto-detected based on foreign keys.
-            join_prefix: Optional prefix to be added to all columns of the joined model. If None, no prefix is added.
+            join_on: SQLAlchemy Join object for specifying the `ON` clause of the join. If `None`, the join condition is auto-detected based on foreign keys.
+            join_prefix: Optional prefix to be added to all columns of the joined model. If `None`, no prefix is added.
             join_schema_to_select: Pydantic schema for selecting specific columns from the joined model.
-            join_type: Specifies the type of join operation to perform. Can be "left" for a left outer join or "inner" for an inner join.
+            join_type: Specifies the type of join operation to perform. Can be `"left"` for a left outer join or `"inner"` for an inner join.
             alias: An instance of `AliasedClass` for the join model, useful for self-joins or multiple joins on the same model. Result of `aliased(join_model)`.
             join_filters: Filters applied to the joined model, specified as a dictionary mapping column names to their expected values.
-            joins_config: A list of JoinConfig instances, each specifying a model to join with, join condition, optional prefix for column names, schema for selecting specific columns, and the type of join. This parameter enables support for multiple joins.
-            nest_joins: If True, nested data structures will be returned where joined model data are nested under the join_prefix as a dictionary.
-            relationship_type: Specifies the relationship type, such as 'one-to-one' or 'one-to-many'. Used to determine how to nest the joined data. If None, uses one-to-one.
+            joins_config: A list of `JoinConfig` instances, each specifying a model to join with, join condition, optional prefix for column names, schema for selecting specific columns, and the type of join. This parameter enables support for multiple joins.
+            nest_joins: If `True`, nested data structures will be returned where joined model data are nested under the `join_prefix` as a dictionary.
+            relationship_type: Specifies the relationship type, such as `"one-to-one"` or `"one-to-many"`. Used to determine how to nest the joined data. If `None`, uses `"one-to-one"`.
             **kwargs: Filters to apply to the primary model query, supporting advanced comparison operators for refined searching.
 
         Returns:
-            A dictionary representing the joined record, or None if no record matches the criteria.
+            A dictionary representing the joined record, or `None` if no record matches the criteria.
 
         Raises:
-            ValueError: If both single join parameters and 'joins_config' are used simultaneously.
-            ArgumentError: If any provided model in 'joins_config' is not recognized or invalid.
+            ValueError: If both single join parameters and `joins_config` are used simultaneously.
+            ArgumentError: If any provided model in `joins_config` is not recognized or invalid.
             NoResultFound: If no record matches the criteria with the provided filters.
 
         Examples:
-            Simple example: Joining User and Tier models without explicitly providing join_on
+            Simple example: Joining `User` and `Tier` models without explicitly providing `join_on`
             ```python
             result = await crud_user.get_joined(
                 db=session,
-                join_model=Tier,
                 schema_to_select=UserSchema,
-                join_schema_to_select=TierSchema
+                join_model=Tier,
+                join_schema_to_select=TierSchema,
             )
             ```
 
             Fetch a user and their associated tier, filtering by user ID:
             ```python
-            get_joined(db, User, Tier, schema_to_select=UserSchema, join_schema_to_select=TierSchema, id=1)
+            result = await crud_user.get_joined(
+                db,
+                schema_to_select=UserSchema,
+                join_model=Tier,
+                join_schema_to_select=TierSchema,
+                id=1,
+            )
             ```
 
             Fetch a user and their associated tier, where the user's age is greater than 30:
             ```python
-            get_joined(db, User, Tier, schema_to_select=UserSchema, join_schema_to_select=TierSchema, age__gt=30)
+            result = await crud_user.get_joined(
+                db,
+                schema_to_select=UserSchema,
+                join_model=Tier,
+                join_schema_to_select=TierSchema,
+                age__gt=30,
+            )
             ```
 
-            Fetch a user and their associated tier, excluding users with the 'admin' username:
+            Fetch a user and their associated tier, excluding users with the `admin` username:
             ```python
-            get_joined(db, User, Tier, schema_to_select=UserSchema, join_schema_to_select=TierSchema, username__ne='admin')
+            result = await crud_user.get_joined(
+                db,
+                schema_to_select=UserSchema,
+                join_model=Tier,
+                join_schema_to_select=TierSchema,
+                username__ne='admin',
+            )
             ```
 
             Complex example: Joining with a custom join condition, additional filter parameters, and a prefix
@@ -903,16 +974,16 @@ class FastCRUD(
             from sqlalchemy import and_
             result = await crud_user.get_joined(
                 db=session,
-                join_model=Tier,
-                join_prefix="tier_",
-                join_on=and_(User.tier_id == Tier.id, User.is_superuser == True),
                 schema_to_select=UserSchema,
+                join_model=Tier,
+                join_on=and_(User.tier_id == Tier.id, User.is_superuser == True),
+                join_prefix="tier_",
                 join_schema_to_select=TierSchema,
-                username="john_doe"
+                username="john_doe",
             )
             ```
 
-            Example of using 'joins_config' for multiple joins:
+            Example of using `joins_config` for multiple joins:
             ```python
             from fastcrud import JoinConfig
 
@@ -933,8 +1004,8 @@ class FastCRUD(
                         join_prefix="dept_",
                         schema_to_select=DepartmentSchema,
                         join_type="inner",
-                    )
-                ]
+                    ),
+                ],
             )
             ```
 
@@ -954,17 +1025,17 @@ class FastCRUD(
                         join_on=BookingModel.owner_id == owner_alias.id,
                         join_prefix="owner_",
                         alias=owner_alias,
-                        schema_to_select=UserSchema
+                        schema_to_select=UserSchema,
                     ),
                     JoinConfig(
                         model=ModelTest,
                         join_on=BookingModel.user_id == user_alias.id,
                         join_prefix="user_",
                         alias=user_alias,
-                        schema_to_select=UserSchema
-                    )
+                        schema_to_select=UserSchema,
+                    ),
                 ],
-                id=1
+                id=1,
             )
             ```
 
@@ -974,23 +1045,23 @@ class FastCRUD(
                 JoinConfig(
                     model=ProjectsParticipantsAssociation,
                     join_on=Project.id == ProjectsParticipantsAssociation.project_id,
-                    join_type="inner"
+                    join_type="inner",
                 ),
                 JoinConfig(
                     model=Participant,
                     join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
                     join_type="inner",
-                    filters={'role': 'Designer'}
-                )
+                    filters={'role': 'Designer'},
+                ),
             ]
             project = await crud.get_joined(
                 db=session,
                 schema_to_select=ProjectSchema,
-                joins_config=joins_config
+                joins_config=joins_config,
             )
             ```
 
-            Example of using 'joins_config' for multiple joins with nested joins enabled:
+            Example of using `joins_config` for multiple joins with nested joins enabled:
             ```python
             from fastcrud import JoinConfig
 
@@ -1011,9 +1082,9 @@ class FastCRUD(
                         join_prefix="dept_",
                         schema_to_select=DepartmentSchema,
                         join_type="inner",
-                    )
+                    ),
                 ],
-                nest_joins=True
+                nest_joins=True,
             )
             # Expect 'result' to have 'tier' and 'dept' as nested dictionaries
             ```
@@ -1022,11 +1093,11 @@ class FastCRUD(
             ```python
             result = await crud_user.get_joined(
                 db=session,
+                schema_to_select=UserSchema,
                 join_model=Profile,
                 join_on=User.profile_id == Profile.id,
-                schema_to_select=UserSchema,
                 join_schema_to_select=ProfileSchema,
-                relationship_type='one-to-one' # note that this is the default behavior
+                relationship_type='one-to-one', # note that this is the default behavior
             )
             # Expect 'result' to have 'profile' as a nested dictionary
             ```
@@ -1035,14 +1106,15 @@ class FastCRUD(
             ```python
             result = await crud_user.get_joined(
                 db=session,
+                schema_to_select=UserSchema,
                 join_model=Post,
                 join_on=User.id == Post.user_id,
-                schema_to_select=UserSchema,
                 join_schema_to_select=PostSchema,
                 relationship_type='one-to-many',
-                nest_joins=True
+                nest_joins=True,
             )
             # Expect 'result' to have 'posts' as a nested list of dictionaries
+            ```
         """
         if joins_config and (
             join_model or join_prefix or join_on or join_schema_to_select or alias
@@ -1134,75 +1206,73 @@ class FastCRUD(
     ) -> dict[str, Any]:
         """
         Fetch multiple records with a join on another model, allowing for pagination, optional sorting, and model conversion.
-        For filtering details see:
-        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
+
+        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
 
         Args:
             db: The SQLAlchemy async session.
             schema_to_select: Pydantic schema for selecting specific columns from the primary model. Required if `return_as_model` is True.
             join_model: The model to join with.
-            join_on: SQLAlchemy Join object for specifying the ON clause of the join. If None, the join condition is auto-detected based on foreign keys.
-            join_prefix: Optional prefix to be added to all columns of the joined model. If None, no prefix is added.
+            join_on: SQLAlchemy Join object for specifying the `ON` clause of the join. If `None`, the join condition is auto-detected based on foreign keys.
+            join_prefix: Optional prefix to be added to all columns of the joined model. If `None`, no prefix is added.
             join_schema_to_select: Pydantic schema for selecting specific columns from the joined model.
-            join_type: Specifies the type of join operation to perform. Can be "left" for a left outer join or "inner" for an inner join.
+            join_type: Specifies the type of join operation to perform. Can be `"left"` for a left outer join or `"inner"` for an inner join.
             alias: An instance of `AliasedClass` for the join model, useful for self-joins or multiple joins on the same model. Result of `aliased(join_model)`.
             join_filters: Filters applied to the joined model, specified as a dictionary mapping column names to their expected values.
-            nest_joins: If True, nested data structures will be returned where joined model data are nested under the join_prefix as a dictionary.
+            nest_joins: If `True`, nested data structures will be returned where joined model data are nested under the `join_prefix` as a dictionary.
             offset: The offset (number of records to skip) for pagination.
             limit: Maximum number of records to fetch in one call. Use `None` for "no limit", fetching all matching rows. Note that in order to use `limit=None`, you'll have to provide a custom endpoint to facilitate it, which you should only do if you really seriously want to allow the user to get all the data at once.
             sort_columns: A single column name or a list of column names on which to apply sorting.
-            sort_orders: A single sort order ('asc' or 'desc') or a list of sort orders corresponding to the columns in sort_columns. If not provided, defaults to 'asc' for each column.
-            return_as_model: If True, converts the fetched data to Pydantic models based on schema_to_select. Defaults to False.
-            joins_config: List of JoinConfig instances for specifying multiple joins. Each instance defines a model to join with, join condition, optional prefix for column names, schema for selecting specific columns, and join type.
-            return_total_count: If True, also returns the total count of rows with the selected filters. Useful for pagination.
-            relationship_type: Specifies the relationship type, such as 'one-to-one' or 'one-to-many'. Used to determine how to nest the joined data. If None, uses one-to-one.
+            sort_orders: A single sort order (`"asc"` or `"desc"`) or a list of sort orders corresponding to the columns in `sort_columns`. If not provided, defaults to `"asc"` for each column.
+            return_as_model: If `True`, converts the fetched data to Pydantic models based on `schema_to_select`. Defaults to `False`.
+            joins_config: List of `JoinConfig` instances for specifying multiple joins. Each instance defines a model to join with, join condition, optional prefix for column names, schema for selecting specific columns, and join type.
+            return_total_count: If `True`, also returns the total count of rows with the selected filters. Useful for pagination.
+            relationship_type: Specifies the relationship type, such as `"one-to-one"` or `"one-to-many"`. Used to determine how to nest the joined data. If `None`, uses `"one-to-one"`.
             **kwargs: Filters to apply to the primary query, including advanced comparison operators for refined searching.
 
         Returns:
-            A dictionary containing the fetched rows under 'data' key and total count under 'total_count'.
+            A dictionary containing the fetched rows under `"data"` key and total count under `"total_count"`.
 
         Raises:
-            ValueError: If limit or offset is negative, or if schema_to_select is required but not provided or invalid.
-                        Also if both 'joins_config' and any of the single join parameters are provided or none of 'joins_config' and 'join_model' is provided.
+            ValueError: If either `limit` or `offset` are negative, or if `schema_to_select` is required but not provided or invalid.
+                        Also if both `joins_config` and any of the single join parameters are provided or none of `joins_config` and `join_model` is provided.
 
         Examples:
-            Fetching multiple User records joined with Tier records, using left join, returning raw data:
+            Fetching multiple `User` records joined with `Tier` records, using left join, returning raw data:
             ```python
             users = await crud_user.get_multi_joined(
                 db=session,
+                schema_to_select=UserSchema,
                 join_model=Tier,
                 join_prefix="tier_",
-                schema_to_select=UserSchema,
                 join_schema_to_select=TierSchema,
                 offset=0,
-                limit=10
+                limit=10,
             )
             ```
 
             Fetch users joined with their tiers, sorted by username, where user's age is greater than 30:
             ```python
-            users = get_multi_joined(
+            users = await crud_user.get_multi_joined(
                 db,
-                User,
-                Tier,
                 schema_to_select=UserSchema,
+                join_model=Tier,
                 join_schema_to_select=TierSchema,
-                age__gt=30,
                 sort_columns='username',
-                sort_orders='asc'
+                sort_orders='asc',
+                age__gt=30,
             )
             ```
 
-            Fetch users joined with their tiers, excluding users with 'admin' username, returning as model instances:
+            Fetch users joined with their tiers, excluding users with `admin` username, returning as model instances:
             ```python
-            users = get_multi_joined(
+            users = await crud_user.get_multi_joined(
                 db,
-                User,
-                Tier,
                 schema_to_select=UserSchema,
+                join_model=Tier,
                 join_schema_to_select=TierSchema,
+                return_as_model=True,
                 username__ne='admin',
-                return_as_model=True
             )
             ```
 
@@ -1210,15 +1280,15 @@ class FastCRUD(
             ```python
             users = await crud_user.get_multi_joined(
                 db=session,
+                schema_to_select=UserSchema,
                 join_model=Tier,
                 join_prefix="tier_",
-                schema_to_select=UserSchema,
                 join_schema_to_select=TierSchema,
                 offset=0,
                 limit=10,
                 sort_columns=['username'],
                 sort_orders=['desc'],
-                return_as_model=True
+                return_as_model=True,
             )
             ```
 
@@ -1226,19 +1296,19 @@ class FastCRUD(
             ```python
             users = await crud_user.get_multi_joined(
                 db=session,
-                join_model=Tier,
-                join_prefix="tier_",
-                join_on=User.tier_id == Tier.id,
                 schema_to_select=UserSchema,
+                join_model=Tier,
+                join_on=User.tier_id == Tier.id,
+                join_prefix="tier_",
                 join_schema_to_select=TierSchema,
                 offset=0,
                 limit=10,
+                return_as_model=True,
                 is_active=True,
-                return_as_model=True
             )
             ```
 
-            Example using 'joins_config' for multiple joins:
+            Example using `joins_config` for multiple joins:
             ```python
             from fastcrud import JoinConfig
 
@@ -1259,12 +1329,12 @@ class FastCRUD(
                         join_prefix="dept_",
                         schema_to_select=DepartmentSchema,
                         join_type="inner",
-                    )
+                    ),
                 ],
                 offset=0,
                 limit=10,
                 sort_columns='username',
-                sort_orders='asc'
+                sort_orders='asc',
             )
             ```
 
@@ -1287,21 +1357,21 @@ class FastCRUD(
                         model=ModelTest,
                         join_on=BookingModel.owner_id == owner_alias.id,
                         join_prefix="owner_",
+                        schema_to_select=UserSchema,  # Schema for the joined model
                         alias=owner_alias,
-                        schema_to_select=UserSchema  # Schema for the joined model
                     ),
                     JoinConfig(
                         model=ModelTest,
                         join_on=BookingModel.user_id == user_alias.id,
                         join_prefix="user_",
+                        schema_to_select=UserSchema,
                         alias=user_alias,
-                        schema_to_select=UserSchema
                     )
                 ],
                 offset=10,  # Skip the first 10 records
                 limit=5,  # Fetch up to 5 records
                 sort_columns=['booking_date'],  # Sort by booking_date
-                sort_orders=['desc']  # In descending order
+                sort_orders=['desc'],  # In descending order
             )
             ```
 
@@ -1311,20 +1381,20 @@ class FastCRUD(
                 JoinConfig(
                     model=ProjectsParticipantsAssociation,
                     join_on=Project.id == ProjectsParticipantsAssociation.project_id,
-                    join_type="inner"
+                    join_type="inner",
                 ),
                 JoinConfig(
                     model=Participant,
                     join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
                     join_type="inner",
-                    filters={'role': 'Developer'}
-                )
+                    filters={'role': 'Developer'},
+                ),
             ]
             projects = await crud.get_multi_joined(
                 db=session,
                 schema_to_select=ProjectSchema,
                 joins_config=joins_config,
-                limit=10
+                limit=10,
             )
             ```
 
@@ -1347,28 +1417,28 @@ class FastCRUD(
                         join_prefix="creator_",
                         schema_to_select=UserSchema,
                         join_type="left",
-                        alias=aliased(User, name="task_creator")
-                    )
+                        alias=aliased(User, name="task_creator"),
+                    ),
                 ],
                 nest_joins=True,
                 offset=0,
                 limit=5,
                 sort_columns='project_name',
-                sort_orders='asc'
+                sort_orders='asc',
             )
-        ```
+            ```
 
         Example using one-to-one relationship:
         ```python
         users = await crud_user.get_multi_joined(
             db=session,
+            schema_to_select=UserSchema,
             join_model=Profile,
             join_on=User.profile_id == Profile.id,
-            schema_to_select=UserSchema,
             join_schema_to_select=ProfileSchema,
-            relationship_type='one-to-one', # note that this is the default behavior
             offset=0,
-            limit=10
+            limit=10,
+            relationship_type='one-to-one', # note that this is the default behavior
         )
         # Expect 'profile' to be nested as a dictionary under each user
         ```
@@ -1377,14 +1447,14 @@ class FastCRUD(
         ```python
         users = await crud_user.get_multi_joined(
             db=session,
+            schema_to_select=UserSchema,
             join_model=Post,
             join_on=User.id == Post.user_id,
-            schema_to_select=UserSchema,
             join_schema_to_select=PostSchema,
-            relationship_type='one-to-many',
             nest_joins=True,
             offset=0,
-            limit=10
+            limit=10,
+            relationship_type='one-to-many',
         )
         # Expect 'posts' to be nested as a list of dictionaries under each user
         ```
@@ -1517,39 +1587,62 @@ class FastCRUD(
     ) -> dict[str, Any]:
         """
         Implements cursor-based pagination for fetching records. This method is designed for efficient data retrieval in large datasets and is ideal for features like infinite scrolling.
-        For filtering details see:
-        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
+
+        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
 
         Args:
             db: The SQLAlchemy async session.
-            cursor: The cursor value to start fetching records from. Defaults to None.
+            cursor: The cursor value to start fetching records from. Defaults to `None`.
             limit: Maximum number of rows to fetch.
             schema_to_select: Pydantic schema for selecting specific columns.
             sort_column: Column name to use for sorting and cursor pagination.
-            sort_order: Sorting direction, either 'asc' or 'desc'.
+            sort_order: Sorting direction, either `"asc"` or `"desc"`.
             **kwargs: Filters to apply to the query, including advanced comparison operators for detailed querying.
 
         Returns:
-            A dictionary containing the fetched rows under 'data' key and the next cursor value under 'next_cursor'.
+            A dictionary containing the fetched rows under `"data"` key and the next cursor value under `"next_cursor"`.
 
         Examples:
             Fetch the first set of records (e.g., the first page in an infinite scrolling scenario)
             ```python
-            first_page = await crud.get_multi_by_cursor(db, limit=10, sort_column='created_at', sort_order='desc')
+            first_page = await crud.get_multi_by_cursor(
+                db,
+                limit=10,
+                sort_column='created_at',
+                sort_order='desc',
+            )
 
-            Fetch the next set of records using the cursor from the first page
+            # Fetch the next set of records using the cursor from the first page
             next_cursor = first_page['next_cursor']
-            second_page = await crud.get_multi_by_cursor(db, cursor=next_cursor, limit=10, sort_column='created_at', sort_order='desc')
+            second_page = await crud.get_multi_by_cursor(
+                db,
+                cursor=next_cursor,
+                limit=10,
+                sort_column='created_at',
+                sort_order='desc',
+            )
             ```
 
             Fetch records with age greater than 30 using cursor-based pagination:
             ```python
-            get_multi_by_cursor(db, limit=10, sort_column='age', sort_order='asc', age__gt=30)
+            first_page = await crud.get_multi_by_cursor(
+                db,
+                limit=10,
+                sort_column='age',
+                sort_order='asc',
+                age__gt=30,
+            )
             ```
 
             Fetch records excluding a specific username using cursor-based pagination:
             ```python
-            get_multi_by_cursor(db, limit=10, sort_column='username', sort_order='asc', username__ne='admin')
+            first_page = await crud.get_multi_by_cursor(
+                db,
+                limit=10,
+                sort_column='username',
+                sort_order='asc',
+                username__ne='admin',
+            )
             ```
 
         Note:
@@ -1604,52 +1697,73 @@ class FastCRUD(
     ) -> Optional[Union[dict, BaseModel]]:
         """
         Updates an existing record or multiple records in the database based on specified filters. This method allows for precise targeting of records to update.
-        For filtering details see:
-        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
+
+        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
 
         Args:
             db: The database session to use for the operation.
             object: A Pydantic schema or dictionary containing the update data.
-            allow_multiple: If True, allows updating multiple records that match the filters. If False, raises an error if more than one record matches the filters.
-            commit: If True, commits the transaction immediately. Default is True.
-            return_columns: A list of column names to return after the update. If return_as_model is True, all columns are returned.
-            schema_to_select: Pydantic schema for selecting specific columns from the updated record(s). Required if `return_as_model` is True.
-            return_as_model: If True, returns the updated record(s) as Pydantic model instances based on `schema_to_select`. Default is False.
-            one_or_none: If True, returns a single record if only one record matches the filters. Default is False.
+            allow_multiple: If `True`, allows updating multiple records that match the filters. If `False`, raises an error if more than one record matches the filters.
+            commit: If `True`, commits the transaction immediately. Default is `True`.
+            return_columns: A list of column names to return after the update. If `return_as_model` is True, all columns are returned.
+            schema_to_select: Pydantic schema for selecting specific columns from the updated record(s). Required if `return_as_model` is `True`.
+            return_as_model: If `True`, returns the updated record(s) as Pydantic model instances based on `schema_to_select`. Default is False.
+            one_or_none: If `True`, returns a single record if only one record matches the filters. Default is `False`.
             **kwargs: Filters to identify the record(s) to update, supporting advanced comparison operators for refined querying.
 
         Returns:
-            The updated record(s) as a dictionary or Pydantic model instance or None, depending on the value of `return_as_model` and `return_columns`.
+            The updated record(s) as a dictionary or Pydantic model instance or `None`, depending on the value of `return_as_model` and `return_columns`.
 
         Raises:
-            MultipleResultsFound: If `allow_multiple` is False and more than one record matches the filters.
+            MultipleResultsFound: If `allow_multiple` is `False` and more than one record matches the filters.
             ValueError: If extra fields not present in the model are provided in the update data.
-            ValueError: If `return_as_model` is True but `schema_to_select` is not provided.
+            ValueError: If `return_as_model` is `True` but `schema_to_select` is not provided.
 
         Examples:
             Update a user's email based on their ID:
             ```python
-            update(db, {'email': 'new_email@example.com'}, id=1)
+            await user_crud.update(db, {'email': 'new_email@example.com'}, id=1)
             ```
 
-            Update users' statuses to 'inactive' where age is greater than 30 and allow updates to multiple records:
+            Update users' statuses to `"inactive"` where age is greater than 30 and allow updates to multiple records:
             ```python
-            update(db, {'status': 'inactive'}, allow_multiple=True, age__gt=30)
+            await user_crud.update(
+                db,
+                {'status': 'inactive'},
+                allow_multiple=True,
+                age__gt=30,
+            )
             ```
 
             Update a user's username excluding specific user ID and prevent multiple updates:
             ```python
-            update(db, {'username': 'new_username'}, id__ne=1, allow_multiple=False)
+            await user_crud.update(
+                db,
+                {'username': 'new_username'},
+                allow_multiple=False,
+                id__ne=1,
+            )
             ```
 
             Update a user's email and return the updated record as a Pydantic model instance:
             ```python
-            update(db, {'email': 'new_email@example.com'}, id=1, schema_to_select=UserSchema, return_as_model=True)
+            await user_crud.update(
+                db,
+                {'email': 'new_email@example.com'},
+                schema_to_select=UserSchema,
+                return_as_model=True,
+                id=1,
+            )
             ```
 
             Update a user's email and return the updated record as a dictionary:
             ```python
-            update(db, {'email': 'new_email@example.com'}, id=1, return_columns=['id', 'email'])
+            await user_crud.update(
+                db,
+                {'email': 'new_email@example.com'},
+                return_columns=['id', 'email'],
+                id=1,
+            )
             ```
         """
         if not allow_multiple and (total_count := await self.count(db, **kwargs)) > 1:
@@ -1753,35 +1867,43 @@ class FastCRUD(
     ) -> None:
         """
         Deletes a record or multiple records from the database based on specified filters.
-        For filtering details see:
-        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
+
+        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
 
         Args:
             db: The database session to use for the operation.
-            allow_multiple: If True, allows deleting multiple records that match the filters. If False, raises an error if more than one record matches the filters.
-            commit: If True, commits the transaction immediately. Default is True.
+            allow_multiple: If `True`, allows deleting multiple records that match the filters. If `False`, raises an error if more than one record matches the filters.
+            commit: If `True`, commits the transaction immediately. Default is `True`.
             **kwargs: Filters to identify the record(s) to delete, including advanced comparison operators for detailed querying.
 
         Returns:
             None
 
         Raises:
-            MultipleResultsFound: If `allow_multiple` is False and more than one record matches the filters.
+            MultipleResultsFound: If `allow_multiple` is `False` and more than one record matches the filters.
 
         Examples:
             Delete a user based on their ID:
             ```python
-            db_delete(db, id=1)
+            await user_crud.db_delete(db, id=1)
             ```
 
             Delete users older than 30 years and allow deletion of multiple records:
             ```python
-            db_delete(db, allow_multiple=True, age__gt=30)
+            await user_crud.db_delete(
+                db,
+                allow_multiple=True,
+                age__gt=30,
+            )
             ```
 
             Delete a user with a specific username, ensuring only one record is deleted:
             ```python
-            db_delete(db, username='unique_username', allow_multiple=False)
+            await user_crud.db_delete(
+                db,
+                allow_multiple=False,
+                username='unique_username',
+            )
             ```
         """
         if not allow_multiple and (total_count := await self.count(db, **kwargs)) > 1:
@@ -1804,19 +1926,19 @@ class FastCRUD(
         **kwargs: Any,
     ) -> None:
         """
-        Soft deletes a record or optionally multiple records if it has an "is_deleted" attribute, otherwise performs a hard delete, based on specified filters.
-        For filtering details see:
-        https://igorbenav.github.io/fastcrud/advanced/crud/#advanced-filters
+        Soft deletes a record or optionally multiple records if it has an `"is_deleted"` attribute, otherwise performs a hard delete, based on specified filters.
+
+        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
 
         Args:
             db: The database session to use for the operation.
             db_row: Optional existing database row to delete. If provided, the method will attempt to delete this specific row, ignoring other filters.
-            allow_multiple: If True, allows deleting multiple records that match the filters. If False, raises an error if more than one record matches the filters.
-            commit: If True, commits the transaction immediately. Default is True.
+            allow_multiple: If `True`, allows deleting multiple records that match the filters. If `False`, raises an error if more than one record matches the filters.
+            commit: If `True`, commits the transaction immediately. Default is `True`.
             **kwargs: Filters to identify the record(s) to delete, supporting advanced comparison operators for refined querying.
 
         Raises:
-            MultipleResultsFound: If `allow_multiple` is False and more than one record matches the filters.
+            MultipleResultsFound: If `allow_multiple` is `False` and more than one record matches the filters.
             NoResultFound: If no record matches the filters.
 
         Returns:
@@ -1825,17 +1947,25 @@ class FastCRUD(
         Examples:
             Soft delete a specific user by ID:
             ```python
-            delete(db, id=1)
+            await user_crud.delete(db, id=1)
             ```
 
             Hard delete users with account creation dates before 2020, allowing deletion of multiple records:
             ```python
-            delete(db, allow_multiple=True, creation_date__lt=datetime(2020, 1, 1))
+            await user_crud.delete(
+                db,
+                allow_multiple=True,
+                creation_date__lt=datetime(2020, 1, 1),
+            )
             ```
 
             Soft delete a user with a specific email, ensuring only one record is deleted:
             ```python
-            delete(db, email='unique@example.com', allow_multiple=False)
+            await user_crud.delete(
+                db,
+                allow_multiple=False,
+                email='unique@example.com',
+            )
             ```
         """
         filters = self._parse_filters(**kwargs)

@@ -20,7 +20,7 @@ Define your SQLAlchemy models and Pydantic schemas for data representation.
 
 ### Step 2: Initialize FastCRUD
 
-Create a FastCRUD instance for your model to handle CRUD operations.
+Create a `FastCRUD` instance for your model to handle CRUD operations.
 
 ```python
 from fastcrud import FastCRUD
@@ -52,12 +52,12 @@ FastCRUD offers a comprehensive suite of methods for CRUD operations, each desig
 create(
     db: AsyncSession,
     object: CreateSchemaType,
-    commit: bool = True
+    commit: bool = True,
 ) -> ModelType
 ```
 
 **Purpose**: To create a new record in the database.  
-**Usage Example**: Creates an item with name 'New Item'.
+**Usage Example**: Creates an item with name `"New Item"`.
 
 ```python
 new_item = await item_crud.create(db, ItemCreateSchema(name="New Item"))
@@ -77,12 +77,12 @@ get(
     schema_to_select: Optional[type[BaseModel]] = None,
     return_as_model: bool = False,
     one_or_none: bool = False,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> Optional[Union[dict, BaseModel]]
 ```
 
 **Purpose**: To fetch a single record based on filters, with an option to select specific columns using a Pydantic schema.  
-**Usage Example**: Fetches the item with item_id as its id.
+**Usage Example**: Fetches the item with `item_id` as its `id`.
 
 ```python
 item = await item_crud.get(db, id=item_id)
@@ -93,12 +93,12 @@ item = await item_crud.get(db, id=item_id)
 ```python
 exists(
     db: AsyncSession,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> bool
 ```
 
 **Purpose**: To check if a record exists based on provided filters.  
-**Usage Example**: Checks whether an item with name 'Existing Item' exists.
+**Usage Example**: Checks whether an item with name `"Existing Item"` exists.
 
 ```python
 exists = await item_crud.exists(db, name="Existing Item")
@@ -110,12 +110,12 @@ exists = await item_crud.exists(db, name="Existing Item")
 count(
     db: AsyncSession,
     joins_config: Optional[list[JoinConfig]] = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> int
 ```
 
 **Purpose**: To count the number of records matching provided filters.  
-**Usage Example**: Counts the number of items with the 'Books' category.
+**Usage Example**: Counts the number of items with the `"Books"` category.
 
 ```python
 count = await item_crud.count(db, category="Books")
@@ -133,7 +133,7 @@ get_multi(
     sort_orders: Optional[Union[str, list[str]]] = None,
     return_as_model: bool = False,
     return_total_count: bool = True,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> dict[str, Any]
 ```
 
@@ -152,12 +152,16 @@ update(
     object: Union[UpdateSchemaType, dict[str, Any]], 
     allow_multiple: bool = False,
     commit: bool = True,
-    **kwargs: Any
-) -> None
+    return_columns: Optional[list[str]] = None,
+    schema_to_select: Optional[type[BaseModel]] = None,
+    return_as_model: bool = False,
+    one_or_none: bool = False,
+    **kwargs: Any,
+) -> Optional[Union[dict, BaseModel]]
 ```
 
 **Purpose**: To update an existing record in the database.  
-**Usage Example**: Updates the description of the item with item_id as its id.
+**Usage Example**: Updates the description of the item with `item_id` as its `id`.
 
 ```python
 await item_crud.update(db, ItemUpdateSchema(description="Updated"), id=item_id)
@@ -171,12 +175,12 @@ delete(
     db_row: Optional[Row] = None, 
     allow_multiple: bool = False,
     commit: bool = True,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None
 ```
 
 **Purpose**: To delete a record from the database, with support for soft delete.  
-**Usage Example**: Deletes the item with item_id as its id, performs a soft delete if the model has the 'is_deleted' column.
+**Usage Example**: Deletes the item with `item_id` as its `id`, performs a soft delete if the model has the `is_deleted` column.
 
 ```python
 await item_crud.delete(db, id=item_id)
@@ -189,12 +193,12 @@ db_delete(
     db: AsyncSession, 
     allow_multiple: bool = False,
     commit: bool = True,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None
 ```
 
 **Purpose**: To hard delete a record from the database.  
-**Usage Example**: Hard deletes the item with item_id as its id.
+**Usage Example**: Hard deletes the item with `item_id` as its `id`.
 
 ```python
 await item_crud.db_delete(db, id=item_id)
@@ -218,15 +222,21 @@ get_multi(
     sort_orders: Optional[Union[str, list[str]]] = None,
     return_as_model: bool = False,
     return_total_count: bool = True,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> dict[str, Any]
 ```
 
 **Purpose**: To fetch multiple records based on specified filters, with options for sorting and pagination.  
-**Usage Example**: Gets the first 10 items sorted by 'name' in ascending order.
+**Usage Example**: Gets the first 10 items sorted by `name` in ascending order.
 
 ```python
-items = await item_crud.get_multi(db, offset=0, limit=10, sort_columns=['name'], sort_orders=['asc'])
+items = await item_crud.get_multi(
+    db,
+    offset=0,
+    limit=10,
+    sort_columns=['name'],
+    sort_orders=['asc'],
+)
 ```
 
 ### 2. Get Joined
@@ -234,12 +244,13 @@ items = await item_crud.get_multi(db, offset=0, limit=10, sort_columns=['name'],
 ```python
 get_joined(
     db: AsyncSession,
-    join_model: Optional[ModelType] = None,
-    join_prefix: Optional[str] = None,
-    join_on: Optional[Union[Join, BinaryExpression]] = None,
     schema_to_select: Optional[type[BaseModel]] = None,
+    join_model: Optional[ModelType] = None,
+    join_on: Optional[Union[Join, BinaryExpression]] = None,
+    join_prefix: Optional[str] = None,
     join_schema_to_select: Optional[type[BaseModel]] = None,
     join_type: str = "left",
+    alias: Optional[AliasedClass] = None,
     join_filters: Optional[dict] = None,
     joins_config: Optional[list[JoinConfig]] = None,
     nest_joins: bool = False,
@@ -248,8 +259,8 @@ get_joined(
 ) -> Optional[dict[str, Any]]
 ```
 
-**Purpose**: To fetch a single record with one or multiple joins on other models.
-**Usage Example**: Fetches order details for a specific order by joining with the Customer table, selecting specific columns as defined in OrderSchema and CustomerSchema.
+**Purpose**: To fetch a single record with one or multiple joins on other models.  
+**Usage Example**: Fetches order details for a specific order by joining with the `Customer` table, selecting specific columns as defined in `OrderSchema` and `CustomerSchema`.
 
 ```python
 order_details = await order_crud.get_joined(
@@ -257,7 +268,7 @@ order_details = await order_crud.get_joined(
     join_model=Customer,
     schema_to_select=OrderSchema,
     join_schema_to_select=CustomerSchema,
-    id=order_id
+    id=order_id,
 )
 ```
 
@@ -266,13 +277,13 @@ order_details = await order_crud.get_joined(
 ```python
 get_multi_joined(
     db: AsyncSession,
-    join_model: Optional[type[ModelType]] = None,
-    join_prefix: Optional[str] = None,
-    join_on: Optional[Any] = None,
     schema_to_select: Optional[type[BaseModel]] = None,
+    join_model: Optional[type[ModelType]] = None,
+    join_on: Optional[Any] = None,
+    join_prefix: Optional[str] = None,
     join_schema_to_select: Optional[type[BaseModel]] = None,
     join_type: str = "left",
-    alias: Optional[str] = None,
+    alias: Optional[AliasedClass[Any]] = None,
     join_filters: Optional[dict] = None,
     nest_joins: bool = False,
     offset: int = 0,
@@ -288,16 +299,16 @@ get_multi_joined(
 ```
 
 **Purpose**: Similar to `get_joined`, but for fetching multiple records.  
-**Usage Example**: Retrieves a paginated list of orders (up to 5), joined with the Customer table, using specified schemas for selective column retrieval from both tables.
+**Usage Example**: Retrieves a paginated list of orders (up to 5), joined with the `Customer` table, using specified schemas for selective column retrieval from both tables.
 
 ```python
 orders = await order_crud.get_multi_joined(
     db,
+    schema_to_select=OrderSchema,
     join_model=Customer,
+    join_schema_to_select=CustomerSchema,
     offset=0,
     limit=5,
-    schema_to_select=OrderSchema,
-    join_schema_to_select=CustomerSchema
 )
 ```
 
@@ -311,7 +322,7 @@ get_multi_by_cursor(
     schema_to_select: Optional[type[BaseModel]] = None,
     sort_column: str = "id",
     sort_order: str = "asc",
-    **kwargs: Any
+    **kwargs: Any,
 ) -> dict[str, Any]
 ```
 
@@ -324,7 +335,7 @@ paginated_items = await item_crud.get_multi_by_cursor(
     cursor=last_cursor,
     limit=10,
     sort_column='created_at',
-    sort_order='desc'
+    sort_order='desc',
 )
 ```
 
@@ -336,16 +347,20 @@ async def select(
     schema_to_select: Optional[type[BaseModel]] = None,
     sort_columns: Optional[Union[str, list[str]]] = None,
     sort_orders: Optional[Union[str, list[str]]] = None,
-    **kwargs: Any
-) -> Selectable
+    **kwargs: Any,
+) -> Select
 ```
 
-**Purpose**: Constructs a SQL Alchemy Select statement with optional column selection, filtering, and sorting.
-**Usage Example**: Selects all items, filtering by 'name' and sorting by 'id'. Returns the `select` statement.
+**Purpose**: Constructs a SQL Alchemy `Select` statement with optional column selection, filtering, and sorting.
+**Usage Example**: Selects all items, filtering by `name` and sorting by `id`. Returns the `Select` statement.
 
 ```python
-stmt = await item_crud.select(schema_to_select=ItemSchema, sort_columns='id', name='John')
-# Note: This method returns a SQL Alchemy Selectable object, not the actual query result.
+stmt = await item_crud.select(
+    schema_to_select=ItemSchema,
+    sort_columns='id',
+    name='John',
+)
+# Note: This method returns a SQL Alchemy Select object, not the actual query result.
 ```
 
 ### 6. Count for Joined Models
@@ -354,12 +369,12 @@ stmt = await item_crud.select(schema_to_select=ItemSchema, sort_columns='id', na
 count(
     db: AsyncSession,
     joins_config: Optional[list[JoinConfig]] = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> int
 ```
 
-**Purpose**: To count records that match specified filters, especially useful in scenarios involving joins between models. This method supports counting unique entities across relationships, a common requirement in many-to-many or complex relationships.
-**Usage Example**: Count the number of unique projects a participant is involved in, considering a many-to-many relationship between Project and Participant models.
+**Purpose**: To count records that match specified filters, especially useful in scenarios involving joins between models. This method supports counting unique entities across relationships, a common requirement in many-to-many or complex relationships.  
+**Usage Example**: Count the number of unique projects a participant is involved in, considering a many-to-many relationship between `Project` and `Participant` models.
 
 ```python
 # Assuming a Project model related to a Participant model through a many-to-many relationship
@@ -369,10 +384,10 @@ projects_count = await project_crud.count(
         JoinConfig(
             model=Participant,
             join_on=ProjectsParticipantsAssociation.project_id == Project.id,
-            join_type="inner"
-        )
+            join_type="inner",
+        ),
     ],
-    participant_id=specific_participant_id
+    participant_id=specific_participant_id,
 )
 ```
 

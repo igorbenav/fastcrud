@@ -1,4 +1,3 @@
-
 # Comprehensive Guide to Joins in FastCRUD
 
 FastCRUD simplifies CRUD operations while offering capabilities for handling complex data relationships. This guide thoroughly explores the use of `JoinConfig` for executing join operations in FastCRUD methods such as `count`, `get_joined`, and `get_multi_joined`, alongside simplified join techniques for straightforward scenarios.
@@ -11,15 +10,14 @@ FastCRUD simplifies CRUD operations while offering capabilities for handling com
 - **`join_on`**: The condition defining how the join connects to other models.
 - **`join_prefix`**: An optional prefix for the joined columns to avoid column name conflicts.
 - **`schema_to_select`**: An optional Pydantic schema for selecting specific columns from the joined model.
-- **`join_type`**: The type of join (e.g., "left", "inner").
+- **`join_type`**: The type of join (e.g., `"left"`, `"inner"`).
 - **`alias`**: An optional SQLAlchemy `AliasedClass` for complex scenarios like self-referential joins or multiple joins on the same model.
 - **`filters`**: An optional dictionary to apply filters directly to the joined model.
-- **`relationship_type`**: Specifies the relationship type, such as `one-to-one` or `one-to-many`. Default is `one-to-one`.
+- **`relationship_type`**: Specifies the relationship type, such as `"one-to-one"` or `"one-to-many"`. Default is `"one-to-one"`.
 
 !!! TIP
 
-    For `many-to-many`, you don't need to pass a `relationship_type`.
-
+    For `"many-to-many"`, you don't need to pass a `relationship_type`.
 
 ## Applying Joins in FastCRUD Methods
 
@@ -39,14 +37,14 @@ task_count = await task_crud.count(
     joins_config=[
         JoinConfig(
             model=User, 
-            join_on=Task.assigned_user_id == User.id
+            join_on=Task.assigned_user_id == User.id,
         ),
         JoinConfig(
             model=Department, 
             join_on=User.department_id == Department.id, 
-            filters={"name": "Engineering"}
-        )
-    ]
+            filters={"name": "Engineering"},
+        ),
+    ],
 )
 ```
 
@@ -58,12 +56,13 @@ These methods are essential for retrieving records from a primary model while in
 
 For simpler join requirements, FastCRUD allows specifying join parameters directly:
 
-- **`model`**: The target model to join.
+- **`join_model`**: The target model to join.
 - **`join_on`**: The join condition.
-- **`join_type`**: Specifies the SQL join type.
 - **`join_prefix`**: Optional prefix for columns from the joined model.
+- **`join_schema_to_select`**: An optional Pydantic schema for selecting specific columns from the joined model.
+- **`join_type`**: Specifies the SQL join type.
 - **`alias`**: An optional SQLAlchemy `AliasedClass` for complex scenarios like self-referential joins or multiple joins on the same model.
-- **`filters`**: Additional filters for the joined model.
+- **`join_filters`**: Additional filters for the joined model.
 
 #### Examples of Simple Joining
 
@@ -73,14 +72,16 @@ tasks_with_users = await task_crud.get_joined(
     db=db,
     join_model=User,
     join_on=Task.user_id == User.id,
-    join_type="left"
+    join_type="left",
 )
 ```
 
 #### Getting Joined Data Nested
 
 Note that by default, `FastCRUD` joins all the data and returns it in a single dictionary.
+
 Let's define two tables:
+
 ```python
 class User(Base):
     __tablename__ = "user"
@@ -102,9 +103,9 @@ user_tier = await user_crud.get_joined(
     db=db,
     join_model=Tier,
     join_on=User.tier_id == Tier.id,
+    join_prefix="tier_",
     join_type="left",
-    join_prefix="tier_",,
-    id=1
+    id=1,
 )
 ```
 
@@ -126,8 +127,8 @@ user_tier = await user_crud.get_joined(
     db=db,
     join_model=Tier,
     join_on=User.tier_id == Tier.id,
-    join_type="left",
     join_prefix="tier_",
+    join_type="left",
     nest_joins=True,
     id=1,
 )
@@ -142,13 +143,14 @@ And you will get:
     "tier": {
         "id": 1,
         "name": "Free",
-    },
+    }
 }
 ```
 
 This works for both `get_joined` and `get_multi_joined`.
 
 !!! WARNING
+
     Note that the final `"_"` in the passed `"tier_"` is stripped.
 
 ### Complex Joins Using `JoinConfig`
@@ -169,32 +171,32 @@ users = await user_crud.get_multi_joined(
         JoinConfig(
             model=Department, 
             join_on=User.department_id == Department.id, 
-            join_prefix="dept_"
+            join_prefix="dept_",
         ),
         JoinConfig(
             model=Role, 
             join_on=User.role_id == Role.id, 
-            join_prefix="role_"
+            join_prefix="role_",
         ),
         JoinConfig(
             model=User, 
             alias=manager_alias, 
             join_on=User.manager_id == manager_alias.id, 
-            join_prefix="manager_"
-        )
-    ]
+            join_prefix="manager_",
+        ),
+    ],
 )
 ```
 
 
 ### Handling One-to-One and One-to-Many Joins in FastCRUD
 
-FastCRUD provides flexibility in handling one-to-one and one-to-many relationships through `get_joined` and `get_multi_joined` methods, along with the ability to specify how joined data should be structured using both the `relationship_type` (default `one-to-one`) and the `nest_joins` (default `False`) parameters.
+FastCRUD provides flexibility in handling one-to-one and one-to-many relationships through `get_joined` and `get_multi_joined` methods, along with the ability to specify how joined data should be structured using both the `relationship_type` (default `"one-to-one"`) and the `nest_joins` (default `False`) parameters.
 
 #### One-to-One Relationships
+
 - **`get_joined`**: Fetch a single record and its directly associated record (e.g., a user and their profile).
 - **`get_multi_joined`** (with `nest_joins=False`): Retrieve multiple records, each linked to a single related record from another table (e.g., users and their profiles).
-
 
 ##### Example
 
@@ -220,9 +222,9 @@ user_tier = await user_crud.get_joined(
     db=db,
     join_model=Tier,
     join_on=User.tier_id == Tier.id,
-    join_type="left",
     join_prefix="tier_",
-    id=1
+    join_type="left",
+    id=1,
 )
 ```
 
@@ -246,10 +248,10 @@ user_tier = await user_crud.get_joined(
     db=db,
     join_model=Tier,
     join_on=User.tier_id == Tier.id,
-    join_type="left",
     join_prefix="tier_",
+    join_type="left",
     nest_joins=True,
-    id=1
+    id=1,
 )
 ```
 
@@ -266,15 +268,14 @@ The result will be:
 }
 ```
 
-
 #### One-to-Many Relationships
+
 - **`get_joined`** (with `nest_joins=True`): Retrieve a single record with all its related records nested within it (e.g., a user and all their blog posts).
 - **`get_multi_joined`** (with `nest_joins=True`): Fetch multiple primary records, each with their related records nested (e.g., multiple users and all their blog posts).
 
 !!! WARNING
 
     When using `nest_joins=True`, the performance will always be a bit worse than when using `nest_joins=False`. For cases where more performance is necessary, consider using `nest_joins=False` and remodeling your database.
-
 
 ##### Example
 
@@ -300,10 +301,10 @@ user_posts = await user_crud.get_joined(
     db=db,
     join_model=Post,
     join_on=User.id == Post.user_id,
-    join_type="left",
     join_prefix="post_",
+    join_type="left",
     nest_joins=True,
-    id=1
+    id=1,
 )
 ```
 
@@ -356,10 +357,12 @@ Our models include `Project`, `Participant`, and an association model `ProjectsP
 
 ```python
 from sqlalchemy import Column, Integer, String, ForeignKey, Table
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
+
 
 class Project(Base):
     __tablename__ = 'projects'
@@ -369,6 +372,7 @@ class Project(Base):
     # Relationship to Participant through the association table
     participants = relationship("Participant", secondary=projects_participants_association)
 
+
 class Participant(Base):
     __tablename__ = 'participants'
     id = Column(Integer, primary_key=True)
@@ -376,6 +380,7 @@ class Participant(Base):
     role = Column(String)
     # Relationship to Project through the association table
     projects = relationship("Project", secondary=projects_participants_association)
+
 
 # Association table for the many-to-many relationship
 class ProjectsParticipantsAssociation(Base):
@@ -399,21 +404,21 @@ joins_config = [
     JoinConfig(
         model=ProjectsParticipantsAssociation,
         join_on=Project.id == ProjectsParticipantsAssociation.project_id,
+        join_prefix="pp_",
         join_type="inner",
-        join_prefix="pp_"
     ),
     JoinConfig(
         model=Participant,
         join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
+        join_prefix="participant_",
         join_type="inner",
-        join_prefix="participant_"
-    )
+    ),
 ]
 
 # Fetch projects with their participants
 projects_with_participants = await crud_project.get_multi_joined(
     db_session, 
-    joins_config=joins_config
+    joins_config=joins_config,
 )
 
 # Now, `projects_with_participants['data']` will contain projects along with their participant information.
@@ -433,12 +438,14 @@ class Project(Base):
     description = Column(String)
     participants = relationship("Participant", secondary=projects_participants_association)
 
+
 class Participant(Base):
     __tablename__ = 'participants'
     id = Column(Integer, primary key=True)
     name = Column(String)
     role = Column(String)
     projects = relationship("Project", secondary=projects_participants_association)
+
 
 class ProjectsParticipantsAssociation(Base):
     __tablename__ = "projects_participants_association"
@@ -457,20 +464,20 @@ joins_config = [
     JoinConfig(
         model=ProjectsParticipantsAssociation,
         join_on=Project.id == ProjectsParticipantsAssociation.project_id,
+        join_prefix="pp_",
         join_type="inner",
-        join_prefix="pp_"
     ),
     JoinConfig(
         model=Participant,
         join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
+        join_prefix="participant_",
         join_type="inner",
-        join_prefix="participant_"
     )
 ]
 
 projects_with_participants = await crud_project.get_multi_joined(
     db_session, 
-    joins_config=joins_config
+    joins_config=joins_config,
 )
 ```
 

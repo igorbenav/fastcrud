@@ -186,6 +186,25 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 
 You can control which CRUD operations are exposed by using `included_methods` and `deleted_methods`. These parameters allow you to specify exactly which CRUD methods should be included or excluded when setting up the router. By default, all CRUD endpoints are included.
 
+??? example "`mymodel/model.py`"
+
+    ```python
+    --8<--
+    fastcrud/examples/mymodel/model.py:imports
+    fastcrud/examples/mymodel/model.py:model_simple
+    --8<--
+    ```
+
+??? example "`mymodel/schemas.py`"
+
+    ```python
+    --8<--
+    fastcrud/examples/mymodel/schemas.py:imports
+    fastcrud/examples/mymodel/schemas.py:createschema
+    fastcrud/examples/mymodel/schemas.py:updateschema
+    --8<--
+    ```
+
 ### Using `included_methods`
 
 Using `included_methods` you may define exactly the methods you want to be included.
@@ -195,8 +214,8 @@ Using `included_methods` you may define exactly the methods you want to be inclu
 my_router = crud_router(
     session=get_session,
     model=MyModel,
-    create_schema=CreateMyModel,
-    update_schema=UpdateMyModel,
+    create_schema=CreateMyModelSchema,
+    update_schema=UpdateMyModelSchema,
     crud=FastCRUD(MyModel),
     path="/mymodel",
     tags=["MyModel"],
@@ -215,8 +234,8 @@ Using `deleted_methods` you define the methods that will not be included.
 my_router = crud_router(
     session=get_session,
     model=MyModel,
-    create_schema=CreateMyModel,
-    update_schema=UpdateMyModel,
+    create_schema=CreateMyModelSchema,
+    update_schema=UpdateMyModelSchema,
     crud=FastCRUD(MyModel),
     path="/mymodel",
     tags=["MyModel"],
@@ -240,10 +259,11 @@ Here's how you can customize endpoint names using the `crud_router` function:
 
 ```python
 from fastapi import FastAPI
-from yourapp.crud import crud_router
-from yourapp.models import YourModel
-from yourapp.schemas import CreateYourModelSchema, UpdateYourModelSchema
-from yourapp.database import async_session
+from fastcrud import crud_router
+
+from .database import async_session
+from .mymodel.model import MyModel
+from .mymodel.schemas import CreateMyModelSchema, UpdateMyModelSchema
 
 app = FastAPI()
 
@@ -260,11 +280,11 @@ custom_endpoint_names = {
 # Setup CRUD router with custom endpoint names
 app.include_router(crud_router(
     session=async_session,
-    model=YourModel,
-    create_schema=CreateYourModelSchema,
-    update_schema=UpdateYourModelSchema,
-    path="/yourmodel",
-    tags=["YourModel"],
+    model=MyModel,
+    create_schema=CreateMyModelSchema,
+    update_schema=UpdateMyModelSchema,
+    path="/mymodel",
+    tags=["MyModel"],
     endpoint_names=custom_endpoint_names,
 ))
 ```
@@ -290,11 +310,11 @@ custom_endpoint_names = {
 # Initialize and use the custom EndpointCreator
 endpoint_creator = EndpointCreator(
     session=async_session,
-    model=YourModel,
-    create_schema=CreateYourModelSchema,
-    update_schema=UpdateYourModelSchema,
-    path="/yourmodel",
-    tags=["YourModel"],
+    model=MyModel,
+    create_schema=CreateMyModelSchema,
+    update_schema=UpdateMyModelSchema,
+    path="/mymodel",
+    tags=["MyModel"],
     endpoint_names=custom_endpoint_names,
 )
 
@@ -347,7 +367,7 @@ class MyCustomEndpointCreator(EndpointCreator):
 
 ### Adding custom routes
 
-```python hl_lines="5-9"
+```python hl_lines="5-11"
 from fastcrud import EndpointCreator
 
 # Define the custom EndpointCreator
@@ -416,8 +436,8 @@ class MyCustomEndpointCreator(EndpointCreator):
 my_router = crud_router(
     session=get_session,
     model=MyModel,
-    create_schema=CreateMyModel,
-    update_schema=UpdateMyModel,
+    create_schema=CreateMyModelSchema,
+    update_schema=UpdateMyModelSchema,
     crud=FastCRUD(MyModel),
     path="/mymodel",
     tags=["MyModel"],
@@ -439,18 +459,18 @@ Here's how to specify custom soft delete columns when utilizing `EndpointCreator
 First, ensure your SQLAlchemy model is equipped with the custom soft delete columns. Here's an example model with custom columns for soft deletion:
 
 ```python
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
-from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime
+--8<--
+fastcrud/examples/mymodel/model.py:imports
+fastcrud/examples/mymodel/model.py:model_softdelete
+--8<--
+```
 
-Base = declarative_base()
+And a schema necessary to activate the soft delete endpoint:
 
-class MyModel(Base):
-    __tablename__ = 'my_model'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    archived = Column(Boolean, default=False)  # Custom soft delete column
-    archived_at = Column(DateTime)  # Custom timestamp column for soft delete
+```python
+--8<--
+fastcrud/examples/mymodel/schemas.py:deleteschema
+--8<--
 ```
 
 ### Using `EndpointCreator` and `crud_router` with Custom Soft Delete or Update Columns
@@ -511,7 +531,10 @@ By specifying custom column names for soft deletion, you can adapt FastCRUD to f
 
 You can also customize your `updated_at` column:
 
-```python hl_lines="11"
+```python hl_lines="20"
+--8<--
+fastcrud/examples/mymodel/model.py:model
+--8<--
 app.include_router(endpoint_creator(
     session=async_session,
     model=MyModel,

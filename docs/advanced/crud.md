@@ -525,8 +525,11 @@ This method constructs a SQL Alchemy `Select` statement, offering optional colum
 #### Usage Example:
 
 ```python
+--8<--
+fastcrud/examples/mymodel/schemas.py:readschema
+--8<--
 stmt = await my_model_crud.select(
-    schema_to_select=MySchema,
+    schema_to_select=ReadMyModelSchema,
     sort_columns='name',
     name__like='%example%',
 )

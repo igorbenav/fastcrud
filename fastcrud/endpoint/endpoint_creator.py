@@ -61,20 +61,40 @@ class EndpointCreator:
 
     Examples:
         Basic Setup:
+
+        ??? example "`mymodel/model.py`"
+
+            ```python
+            --8<--
+            fastcrud/examples/mymodel/model.py:imports
+            fastcrud/examples/mymodel/model.py:model_simple
+            --8<--
+            ```
+
+        ??? example "`mymodel/schemas.py`"
+
+            ```python
+            --8<--
+            fastcrud/examples/mymodel/schemas.py:imports
+            fastcrud/examples/mymodel/schemas.py:createschema
+            fastcrud/examples/mymodel/schemas.py:updateschema
+            --8<--
+            ```
+
         ```python
         from fastapi import FastAPI
         from fastcrud import EndpointCreator
 
-        from myapp.models import MyModel
-        from myapp.schemas import CreateMyModel, UpdateMyModel
-        from myapp.database import async_session
+        from .database import async_session
+        from .mymodel.model import MyModel
+        from .mymodel.schemas import CreateMyModelSchema, UpdateMyModelSchema
 
         app = FastAPI()
         endpoint_creator = EndpointCreator(
             session=async_session,
             model=MyModel,
-            create_schema=CreateMyModel,
-            update_schema=UpdateMyModel,
+            create_schema=CreateMyModelSchema,
+            update_schema=UpdateMyModelSchema,
         )
         endpoint_creator.add_routes_to_router()
         app.include_router(endpoint_creator.router, prefix="/mymodel")
@@ -132,8 +152,8 @@ class EndpointCreator:
         endpoint_creator = EndpointCreator(
             session=async_session,
             model=MyModel,
-            create_schema=CreateMyModel,
-            update_schema=UpdateMyModel,
+            create_schema=CreateMyModelSchema,
+            update_schema=UpdateMyModelSchema,
             path="/mymodel",
             tags=["MyModel"],
             endpoint_names={
@@ -151,16 +171,16 @@ class EndpointCreator:
         from fastapi import FastAPI
         from fastcrud import EndpointCreator, FilterConfig
 
-        from myapp.models import MyModel
-        from myapp.schemas import CreateMyModel, UpdateMyModel
-        from myapp.database import async_session
+        from .database import async_session
+        from .mymodel.model import MyModel
+        from .mymodel.schemas import CreateMyModelSchema, UpdateMyModelSchema
 
         app = FastAPI()
         endpoint_creator = EndpointCreator(
             session=async_session,
             model=MyModel,
-            create_schema=CreateMyModel,
-            update_schema=UpdateMyModel,
+            create_schema=CreateMyModelSchema,
+            update_schema=UpdateMyModelSchema,
             filter_config=FilterConfig(filters={"id": None, "name": "default"}),
         )
         # Adds CRUD routes with filtering capabilities
@@ -180,16 +200,16 @@ class EndpointCreator:
         from fastapi import FastAPI
         from fastcrud import EndpointCreator, FilterConfig
 
-        from myapp.models import MyModel
-        from myapp.schemas: CreateMyModel, UpdateMyModel
-        from myapp.database: async_session
+        from .database import async_session
+        from .mymodel.model import MyModel
+        from .mymodel.schemas import CreateMyModelSchema, UpdateMyModelSchema
 
         app = FastAPI()
         endpoint_creator = EndpointCreator(
             session=async_session,
             model=MyModel,
-            create_schema=CreateMyModel,
-            update_schema=UpdateMyModel,
+            create_schema=CreateMyModelSchema,
+            update_schema=UpdateMyModelSchema,
             filter_config=FilterConfig(id=None, name="default"),
         )
         # Adds CRUD routes with filtering capabilities

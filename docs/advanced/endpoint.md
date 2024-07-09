@@ -1,7 +1,7 @@
 # Advanced Use of EndpointCreator
 
 ## Available Automatic Endpoints
-FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints for your FastAPI application. Here's an overview of the available automatic endpoints and how they work:
+FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints for your FastAPI application. Here's an overview of the available automatic endpoints and how they work, based on [the automatic endpoints we've generated before](../usage/endpoint.md#step-3-use-crud_router-to-create-endpoints):
 
 ### Create
 
@@ -9,7 +9,7 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Method**: `POST`
 - **Description**: Creates a new item in the database.
 - **Request Body**: JSON object based on the `create_schema`.
-- **Example Request**: `POST /yourmodel/create` with JSON body.
+- **Example Request**: `POST /items/create` with JSON body.
 
 ### Read
 
@@ -17,13 +17,17 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Method**: `GET`
 - **Description**: Retrieves a single item by its ID.
 - **Path Parameters**: `id` - The ID of the item to retrieve.
-- **Example Request**: `GET /yourmodel/get/1`.
+- **Example Request**: `GET /items/get/1`.
 - **Example Return**:
 ```javascript
 {
     "id": 1,
     "name": "Item 1",
-    "description": "Description of item 1"
+    "description": "Description of item 1",
+    "category": "Movies",
+    "price": 5.99,
+    "last_sold": null,
+    "created_at": "2024-01-01 12:00:00"
 }
 ```
 
@@ -35,15 +39,47 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Query Parameters**:
     - `offset` (optional): The offset from where to start fetching items.
     - `limit` (optional): The maximum number of items to return.
-- **Example Request**: `GET /yourmodel/get_multi?offset=3&limit=4`.
+- **Example Request**: `GET /items/get_multi?offset=3&limit=4`.
 - **Example Return**:
 ```javascript
 {
   "data": [
-    {"id": 4, "name": "Item 4", "description": "Description of item 4"},
-    {"id": 5, "name": "Item 5", "description": "Description of item 5"},
-    {"id": 6, "name": "Item 6", "description": "Description of item 6"},
-    {"id": 7, "name": "Item 7", "description": "Description of item 7"}
+    {
+        "id": 4,
+        "name": "Item 4",
+        "description": "Description of item 4",
+        "category": "Books",
+        "price": 5.99,
+        "last_sold": null,
+        "created_at": "2024-01-01 12:01:00"
+    },
+    {
+        "id": 5,
+        "name": "Item 5",
+        "description": "Description of item 5",
+        "category": "Music",
+        "price": 5.99,
+        "last_sold": "2024-04-01 00:00:00",
+        "created_at": "2024-01-01 12:10:00"
+    },
+    {
+        "id": 6,
+        "name": "Item 6",
+        "description": "Description of item 6",
+        "category": "TV",
+        "price": 5.99,
+        "last_sold": null,
+        "created_at": "2024-01-01 12:15:00"
+    },
+    {
+        "id": 7,
+        "name": "Item 7",
+        "description": "Description of item 7",
+        "category": "Books",
+        "price": 5.99,
+        "last_sold": null,
+        "created_at": "2024-01-01 13:00:30"
+    }
   ],
   "total_count": 50
 }
@@ -58,14 +94,38 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Query Parameters**:
     - `page`: The page number, starting from 1.
     - `itemsPerPage`: The number of items per page.
-- **Example Request**: `GET /yourmodel/get_paginated?page=1&itemsPerPage=3`.
+- **Example Request**: `GET /items/get_paginated?page=1&itemsPerPage=3`.
 - **Example Return**:
 ```javascript
 {
   "data": [
-    {"id": 1, "name": "Item 1", "description": "Description of item 1"},
-    {"id": 2, "name": "Item 2", "description": "Description of item 2"},
-    {"id": 3, "name": "Item 3", "description": "Description of item 3"}
+    {
+        "id": 1,
+        "name": "Item 1",
+        "description": "Description of item 1",
+        "category": "Movies",
+        "price": 5.99,
+        "last_sold": null,
+        "created_at": "2024-01-01 12:00:01"
+    },
+    {
+        "id": 2,
+        "name": "Item 2",
+        "description": "Description of item 2",
+        "category": "TV",
+        "price": 19.99,
+        "last_sold": null,
+        "created_at": "2024-01-01 12:00:15"
+    },
+    {
+        "id": 3,
+        "name": "Item 3",
+        "description": "Description of item 3",
+        "category": "Books",
+        "price": 4.99,
+        "last_sold": null,
+        "created_at": "2024-01-01 12:00:16"
+    }
   ],
   "total_count": 50,
   "has_more": true,
@@ -101,7 +161,7 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Description**: Updates an existing item by its ID.
 - **Path Parameters**: `id` - The ID of the item to update.
 - **Request Body**: JSON object based on the `update_schema`.
-- **Example Request**: `PATCH /yourmodel/update/1` with JSON body.
+- **Example Request**: `PATCH /items/update/1` with JSON body.
 - **Example Return**: `None`
 
 ### Delete
@@ -110,7 +170,7 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Method**: `DELETE`
 - **Description**: Deletes (soft delete if configured) an item by its ID.
 - **Path Parameters**: `id` - The ID of the item to delete.
-- **Example Request**: `DELETE /yourmodel/delete/1`.
+- **Example Request**: `DELETE /items/delete/1`.
 - **Example Return**: `None`
 
 ### DB Delete (Hard Delete)
@@ -119,7 +179,7 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Method**: `DELETE`
 - **Description**: Permanently deletes an item by its ID, bypassing the soft delete mechanism.
 - **Path Parameters**: `id` - The ID of the item to hard delete.
-- **Example Request**: `DELETE /yourmodel/db_delete/1`.
+- **Example Request**: `DELETE /items/db_delete/1`.
 - **Example Return**: `None`
 
 ## Selective CRUD Operations
@@ -250,7 +310,6 @@ app.include_router(endpoint_creator.router)
 
     `default_endpoint_names` for `EndpointCreator` are going to be changed to empty strings in the next major release.
     See [this issue](https://github.com/igorbenav/fastcrud/issues/67) for more details.
-
 
 ## Extending `EndpointCreator`
 

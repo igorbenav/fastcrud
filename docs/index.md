@@ -55,14 +55,14 @@ Assuming you have your model, schemas and database connection:
 # imports here
 
 # define your model
-class Item(Base):
-    __tablename__ = 'items'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
+--8<--
+fastcrud/examples/item/model.py:model
+--8<--
 
 # your schemas
-class ItemSchema(BaseModel):
-    name: str
+--8<--
+fastcrud/examples/item/schemas.py:itemschema
+--8<--
 
 # database connection
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
@@ -137,30 +137,21 @@ Below are examples demonstrating both approaches:
 
 Here's a quick example to get you started:
 
-#### Define Your Model and Schema
+#### Define Your Model and Schemas
 
-```python title="models/item.py"
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import DeclarativeBase
-from pydantic import BaseModel
+```python title="item/model.py"
+--8<--
+fastcrud/examples/item/model.py:imports
+fastcrud/examples/item/model.py:model
+--8<--
+```
 
-class Base(DeclarativeBase):
-    pass
-
-class Item(Base):
-    __tablename__ = 'items'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    description = Column(String)
-
-class ItemCreateSchema(BaseModel):
-    name: str
-    description: str
-
-class ItemUpdateSchema(BaseModel):
-    name: str
-    description: str
-
+```python title="item/schemas.py"
+--8<--
+fastcrud/examples/item/schemas.py:imports
+fastcrud/examples/item/schemas.py:createschema
+fastcrud/examples/item/schemas.py:updateschema
+--8<--
 ```
 
 #### Set Up FastAPI and FastCRUD
@@ -173,7 +164,9 @@ from fastcrud import crud_router
 from fastcrud import FastCRUD
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from item import Base, Item, ItemCreateSchema, ItemUpdateSchema
+
+from .item.model import Base, Item
+from .item.schemas import CreateItemSchema, UpdateItemSchema
 
 # Database setup (Async SQLAlchemy)
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
@@ -195,16 +188,17 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # CRUD operations setup
-crud = FastCRUD(Item)
+item_crud = FastCRUD(Item)
 
 # CRUD router setup
 item_router = crud_router(
     session=get_session,
     model=Item,
-    create_schema=ItemCreateSchema,
-    update_schema=ItemUpdateSchema,
+    create_schema=CreateItemSchema,
+    update_schema=UpdateItemSchema,
+    crud=item_crud,
     path="/items",
-    tags=["Items"]
+    tags=["Items"],
 )
 
 app.include_router(item_router)
@@ -214,12 +208,13 @@ app.include_router(item_router)
 
 For more control over your endpoints, you can use FastCRUD directly within your custom FastAPI route functions. Here's an example:
 
-```python title="api/v1/item.py" hl_lines="10 14 18"
+```python title="api/v1/items.py" hl_lines="10 14 18"
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastcrud import FastCRUD
-from yourapp.models import Item
-from yourapp.schemas import ItemCreateSchema, ItemUpdateSchema
+
+from .item.model import Item
+from .item.schemas import CreateItemSchema, UpdateItemSchema
 
 # Assume async_session is already set up as per the previous example
 
@@ -227,7 +222,7 @@ from yourapp.schemas import ItemCreateSchema, ItemUpdateSchema
 item_crud = FastCRUD(Item)
 
 @app.post("/custom/items/")
-async def create_item(item_data: ItemCreateSchema, db: AsyncSession = Depends(get_session)):
+async def create_item(item_data: CreateItemSchema, db: AsyncSession = Depends(get_session)):
     return await item_crud.create(db, item_data)
 
 @app.get("/custom/items/{item_id}")

@@ -1,16 +1,27 @@
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from typing import Optional
 from datetime import datetime
 
 import pytest
 import pytest_asyncio
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    Boolean,
+    DateTime,
+    make_url,
+)
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase, relationship
 from pydantic import BaseModel, ConfigDict
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.sql import func
+from testcontainers.postgres import PostgresContainer
+from testcontainers.mysql import MySqlContainer
 
 from fastcrud.crud.fast_crud import FastCRUD
 from fastcrud.endpoint.crud_router import crud_router
@@ -25,7 +36,7 @@ class MultiPkModel(Base):
     __tablename__ = "multi_pk"
     id = Column(Integer, primary_key=True)
     uuid = Column(String(32), primary_key=True)
-    name = Column(String, unique=True)
+    name = Column(String(32), unique=True)
     test_id = Column(Integer, ForeignKey("test.id"))
     test = relationship("ModelTest", back_populates="multi_pk")
 
@@ -34,13 +45,13 @@ class CategoryModel(Base):
     __tablename__ = "category"
     tests = relationship("ModelTest", back_populates="category")
     id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True)
+    name = Column(String(32), unique=True)
 
 
 class ModelTest(Base):
     __tablename__ = "test"
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String(32))
     tier_id = Column(Integer, ForeignKey("tier.id"))
     category_id = Column(
         Integer, ForeignKey("category.id"), nullable=True, default=None
@@ -55,7 +66,7 @@ class ModelTest(Base):
 class ModelTestWithTimestamp(Base):
     __tablename__ = "model_test_with_timestamp"
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String(32))
     tier_id = Column(Integer, ForeignKey("tier.id"))
     category_id = Column(
         Integer, ForeignKey("category.id"), nullable=True, default=None
@@ -70,7 +81,7 @@ class ModelTestWithTimestamp(Base):
 class TierModel(Base):
     __tablename__ = "tier"
     id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True)
+    name = Column(String(32), unique=True)
     tests = relationship("ModelTest", back_populates="tier")
 
 
@@ -87,8 +98,8 @@ class BookingModel(Base):
 class Project(Base):
     __tablename__ = "projects"
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
-    description = Column(String)
+    name = Column(String(32), nullable=False)
+    description = Column(String(32))
     participants = relationship(
         "Participant",
         secondary="projects_participants_association",
@@ -99,8 +110,8 @@ class Project(Base):
 class Participant(Base):
     __tablename__ = "participants"
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
-    role = Column(String)
+    name = Column(String(32), nullable=False)
+    role = Column(String(32))
     projects = relationship(
         "Project",
         secondary="projects_participants_association",
@@ -117,13 +128,13 @@ class ProjectsParticipantsAssociation(Base):
 class Card(Base):
     __tablename__ = "cards"
     id = Column(Integer, primary_key=True)
-    title = Column(String)
+    title = Column(String(32))
 
 
 class Article(Base):
     __tablename__ = "articles"
     id = Column(Integer, primary_key=True)
-    title = Column(String)
+    title = Column(String(32))
     card_id = Column(Integer, ForeignKey("cards.id"))
     card = relationship("Card", back_populates="articles")
 
@@ -134,26 +145,26 @@ Card.articles = relationship("Article", order_by=Article.id, back_populates="car
 class Client(Base):
     __tablename__ = "clients"
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
-    contact = Column(String, nullable=False)
-    phone = Column(String, nullable=False)
-    email = Column(String, nullable=False)
+    name = Column(String(32), nullable=False)
+    contact = Column(String(32), nullable=False)
+    phone = Column(String(32), nullable=False)
+    email = Column(String(32), nullable=False)
 
 
 class Department(Base):
     __tablename__ = "departments"
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
+    name = Column(String(32), nullable=False)
 
 
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
-    username = Column(String, nullable=False, unique=True)
-    email = Column(String, nullable=False, unique=True)
-    phone = Column(String, nullable=True)
-    profile_image_url = Column(String, nullable=True)
+    name = Column(String(32), nullable=False)
+    username = Column(String(32), nullable=False, unique=True)
+    email = Column(String(32), nullable=False, unique=True)
+    phone = Column(String(32), nullable=True)
+    profile_image_url = Column(String(32), nullable=True)
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     company_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
     department = relationship("Department", backref="users")
@@ -163,8 +174,8 @@ class User(Base):
 class Task(Base):
     __tablename__ = "tasks"
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
-    description = Column(String, nullable=True)
+    name = Column(String(32), nullable=False)
+    description = Column(String(32), nullable=True)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -273,13 +284,10 @@ class TaskRead(TaskReadSub):
     client: Optional[ClientRead]
 
 
-async_engine = create_async_engine(
-    "sqlite+aiosqlite:///:memory:", echo=True, future=True
-)
+@asynccontextmanager
+async def _async_session(url: str) -> AsyncGenerator[AsyncSession]:
+    async_engine = create_async_engine(url, echo=True, future=True)
 
-
-@pytest_asyncio.fixture(scope="function")
-async def async_session() -> AsyncGenerator[AsyncSession]:
     session = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
 
     async with session() as s:
@@ -292,6 +300,31 @@ async def async_session() -> AsyncGenerator[AsyncSession]:
         await conn.run_sync(Base.metadata.drop_all)
 
     await async_engine.dispose()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def async_session(request: pytest.FixtureRequest) -> AsyncGenerator[AsyncSession]:
+    dialect_marker = request.node.get_closest_marker("dialect")
+    dialect = dialect_marker.args[0] if dialect_marker else "sqlite"
+    if dialect == "postgresql":
+        with PostgresContainer(driver="psycopg") as pg:
+            async with _async_session(
+                url=pg.get_connection_url(host=pg.get_container_host_ip())
+            ) as session:
+                yield session
+    elif dialect == "sqlite":
+        async with _async_session(url="sqlite+aiosqlite:///:memory:") as session:
+            yield session
+    elif dialect == "mysql":
+        with MySqlContainer() as mysql:
+            async with _async_session(
+                url=make_url(name_or_url=mysql.get_connection_url())._replace(
+                    drivername="mysql+aiomysql"
+                )
+            ) as session:
+                yield session
+    else:
+        raise ValueError(f"Unsupported dialect: {dialect}")
 
 
 @pytest.fixture(scope="function")

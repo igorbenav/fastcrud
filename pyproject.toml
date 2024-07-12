@@ -44,7 +44,16 @@ sqlmodel = "^0.0.14"
 mypy = "^1.9.0"
 ruff = "^0.3.4"
 coverage = "^7.4.4"
+testcontainers = "^4.7.1"
+psycopg = "^3.2.1"
+aiomysql = "^0.2.0"
+cryptography = "^36.0.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+markers = [
+    "dialect(name): mark test to run only on specific SQL dialect",
+]

@@ -431,7 +431,7 @@ class FastCRUD(
 
         This method allows for advanced filtering through comparison operators, enabling queries to be refined beyond simple equality checks.
 
-        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
+        For filtering details see [the Advanced Filters documentation](../advanced/crud.md/#advanced-filters)
 
         Args:
             schema_to_select: Pydantic schema to determine which columns to include in the selection. If not provided, selects all columns of the model.
@@ -493,7 +493,7 @@ class FastCRUD(
 
         This method allows for advanced filtering through comparison operators, enabling queries to be refined beyond simple equality checks.
 
-        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
+        For filtering details see [the Advanced Filters documentation](../advanced/crud.md/#advanced-filters)
 
         Args:
             db: The database session to use for the operation.
@@ -718,7 +718,7 @@ class FastCRUD(
         """
         Checks if any records exist that match the given filter conditions.
 
-        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
+        For filtering details see [the Advanced Filters documentation](../advanced/crud.md/#advanced-filters)
 
         Args:
             db: The database session to use for the operation.
@@ -763,7 +763,7 @@ class FastCRUD(
         """
         Counts records that match specified filters.
 
-        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
+        For filtering details see [the Advanced Filters documentation](../advanced/crud.md/#advanced-filters)
 
         Can also count records based on a configuration of joins, useful for complex queries involving relationships.
 
@@ -886,7 +886,7 @@ class FastCRUD(
         """
         Fetches multiple records based on filters, supporting sorting, pagination.
 
-        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
+        For filtering details see [the Advanced Filters documentation](../advanced/crud.md/#advanced-filters)
 
         Args:
             db: The database session to use for the operation.
@@ -1032,7 +1032,7 @@ class FastCRUD(
         to automatically detect the join condition using foreign key relationships. For multiple joins, use `joins_config` to
         specify each join configuration.
 
-        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
+        For filtering details see [the Advanced Filters documentation](../advanced/crud.md/#advanced-filters)
 
         Args:
             db: The SQLAlchemy async session.
@@ -1339,7 +1339,7 @@ class FastCRUD(
         """
         Fetch multiple records with a join on another model, allowing for pagination, optional sorting, and model conversion.
 
-        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
+        For filtering details see [the Advanced Filters documentation](../advanced/crud.md/#advanced-filters)
 
         Args:
             db: The SQLAlchemy async session.
@@ -1720,7 +1720,7 @@ class FastCRUD(
         """
         Implements cursor-based pagination for fetching records. This method is designed for efficient data retrieval in large datasets and is ideal for features like infinite scrolling.
 
-        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
+        For filtering details see [the Advanced Filters documentation](../advanced/crud.md/#advanced-filters)
 
         Args:
             db: The SQLAlchemy async session.
@@ -1830,7 +1830,7 @@ class FastCRUD(
         """
         Updates an existing record or multiple records in the database based on specified filters. This method allows for precise targeting of records to update.
 
-        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
+        For filtering details see [the Advanced Filters documentation](../advanced/crud.md/#advanced-filters)
 
         Args:
             db: The database session to use for the operation.
@@ -2000,7 +2000,7 @@ class FastCRUD(
         """
         Deletes a record or multiple records from the database based on specified filters.
 
-        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
+        For filtering details see [the Advanced Filters documentation](../advanced/crud.md/#advanced-filters)
 
         Args:
             db: The database session to use for the operation.
@@ -2060,7 +2060,7 @@ class FastCRUD(
         """
         Soft deletes a record or optionally multiple records if it has an `"is_deleted"` attribute, otherwise performs a hard delete, based on specified filters.
 
-        For filtering details see [the Advanced Filters documentation](../../advanced/crud/#advanced-filters)
+        For filtering details see [the Advanced Filters documentation](../advanced/crud.md/#advanced-filters)
 
         Args:
             db: The database session to use for the operation.

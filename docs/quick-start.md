@@ -8,23 +8,21 @@ Assuming you have your SQLAlchemy model, Pydantic schemas and database connectio
 
 Define your SQLAlchemy model
 
-```python title="setup.py" hl_lines="9-12"
+```python title="setup.py" hl_lines="11-19"
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
+
 class Base(DeclarativeBase):
     pass
 
-class Item(Base):
-    __tablename__ = 'items'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
 
-class ItemCreateSchema(BaseModel):
-    name: str
-
+--8<--
+fastcrud/examples/item/model.py:model
+fastcrud/examples/item/schemas.py:itemschema
+--8<--
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
@@ -32,23 +30,21 @@ async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False
 
 Then your Pydantic schemas
 
-```python title="setup.py" hl_lines="14 15"
+```python title="setup.py" hl_lines="22-27"
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
+
 class Base(DeclarativeBase):
     pass
 
-class Item(Base):
-    __tablename__ = 'items'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
 
-class ItemCreateSchema(BaseModel):
-    name: str
-
+--8<--
+fastcrud/examples/item/model.py:model
+fastcrud/examples/item/schemas.py:itemschema
+--8<--
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
@@ -56,23 +52,21 @@ async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False
 
 And, finally, your database connection
 
-```python title="setup.py" hl_lines="17-19"
+```python title="setup.py" hl_lines="30-32"
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
+
 class Base(DeclarativeBase):
     pass
 
-class Item(Base):
-    __tablename__ = 'items'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
 
-class ItemCreateSchema(BaseModel):
-    name: str
-
+--8<--
+fastcrud/examples/item/model.py:model
+fastcrud/examples/item/schemas.py:itemschema
+--8<--
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

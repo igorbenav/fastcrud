@@ -18,28 +18,24 @@ Before proceeding, ensure you have FastAPI and FastCRUD installed in your enviro
 
 First, define your SQLAlchemy model and corresponding Pydantic schemas for creating and updating data.
 
-```python title="models/item.py"
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import DeclarativeBase
-from pydantic import BaseModel
+???+ example "`item/model.py`"
 
-class Base(DeclarativeBase):
-    pass
+    ```python
+    --8<--
+    fastcrud/examples/item/model.py:imports
+    fastcrud/examples/item/model.py:model
+    --8<--
+    ```
 
-class Item(Base):
-    __tablename__ = 'items'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    description = Column(String)
+???+ example "`item/schemas.py`"
 
-class ItemCreateSchema(BaseModel):
-    name: str
-    description: str
-
-class ItemUpdateSchema(BaseModel):
-    name: str
-    description: str
-```
+    ```python
+    --8<--
+    fastcrud/examples/item/schemas.py:imports
+    fastcrud/examples/item/schemas.py:createschema
+    fastcrud/examples/item/schemas.py:updateschema
+    --8<--
+    ```
 
 ### Step 2: Set Up FastAPI and FastCRUD
 
@@ -80,8 +76,8 @@ app = FastAPI(lifespan=lifespan)
 item_router = crud_router(
     session=get_session,
     model=Item,
-    create_schema=ItemCreateSchema,
-    update_schema=ItemUpdateSchema,
+    create_schema=CreateItemSchema,
+    update_schema=UpdateItemSchema,
     path="/items",
     tags=["Items"],
 )
@@ -107,28 +103,25 @@ Using the `EndpointCreator` class in FastCRUD is a more flexible way to add CRUD
 
 Define your SQLAlchemy models and corresponding Pydantic schemas for data validation.
 
-```python title="models/item.py"
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import DeclarativeBase
-from pydantic import BaseModel
+???+ example "`item/model.py`"
 
-class Base(DeclarativeBase):
-    pass
+    ```python
+    --8<--
+    fastcrud/examples/item/model.py:imports
+    fastcrud/examples/item/model.py:model
+    --8<--
+    ```
 
-class Item(Base):
-    __tablename__ = 'items'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    description = Column(String)
+???+ example "`item/schemas.py`"
 
-class ItemCreateSchema(BaseModel):
-    name: str
-    description: str
-
-class ItemUpdateSchema(BaseModel):
-    name: str
-    description: str
-```
+    ```python
+    --8<--
+    fastcrud/examples/item/schemas.py:imports
+    fastcrud/examples/item/schemas.py:createschema
+    fastcrud/examples/item/schemas.py:updateschema
+    fastcrud/examples/item/schemas.py:deleteschema
+    --8<--
+    ```
 
 ### Step 2: Set Up FastAPI and FastCRUD
 
@@ -162,7 +155,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # CRUD operations setup
-crud = FastCRUD(Item)
+item_crud = FastCRUD(Item)
 ```
 
 ### Step 3: Initialize `EndpointCreator`
@@ -175,13 +168,13 @@ from fastcrud import EndpointCreator
 # Initialize EndpointCreator
 endpoint_creator = EndpointCreator(
     session=get_session,
-    model=YourModel,
-    create_schema=YourCreateSchema,
-    update_schema=YourUpdateSchema,
-    crud=crud,
-    delete_schema=YourDeleteSchema,
-    path="/yourmodelpath",
-    tags=["YourModelTag"],
+    model=Item,
+    create_schema=CreateItemSchema,
+    update_schema=UpdateItemSchema,
+    crud=item_crud,
+    delete_schema=DeleteItemSchema,
+    path="/itempath",
+    tags=["ItemTag"]
 )
 ```
 

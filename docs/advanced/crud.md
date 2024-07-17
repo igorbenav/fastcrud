@@ -149,6 +149,7 @@ items = await item_crud.get_multi(
 ```
 
 ### AND clauses
+
 AND clauses can be achieved by chaining multiple filters together.
 
 ```python
@@ -160,13 +161,13 @@ items = await item_crud.get_multi(
 )
 ```
 
-#### Counting Records
+### Counting Records
 
 ```python
-# Count items added in the last month
+# Count items created in the last month
 item_count = await item_crud.count(
     db=db,
-    added_at__gte=datetime.datetime.now() - datetime.timedelta(days=30),
+    created_at__gte=datetime.datetime.now() - datetime.timedelta(days=30),
 )
 ```
 
@@ -177,12 +178,12 @@ For `create`, `update`, `db_delete` and `delete` methods of `FastCRUD`, you have
 ```python
 from fastcrud import FastCRUD
 
-from .models.item import Item
 from .database import session as db
+from .item.model import Item
 
-crud_items = FastCRUD(Item)
+item_crud = FastCRUD(Item)
 
-await crud_items.delete(
+await item_crud.delete(
     db=db, 
     commit=False, 
     id=1,
@@ -197,15 +198,16 @@ In `update` method, you can pass `return_columns` parameter containing a list of
 ```python
 from fastcrud import FastCRUD
 
-from .models.item import Item
 from .database import session as db
+from .item.model import Item
 
-crud_items = FastCRUD(Item)
-item = await crud_items.update(
+item_crud = FastCRUD(Item)
+
+item = await item_crud.update(
     db=db,
     object={"price": 9.99},
-    price__lt=10
     return_columns=["price"],
+    price__lt=10,
 )
 # this will return the updated price
 ```
@@ -215,17 +217,18 @@ You can also pass `schema_to_select` parameter and `return_as_model` to return t
 ```python
 from fastcrud import FastCRUD
 
-from .models.item import Item
-from .schemas.item import ItemSchema
 from .database import session as db
+from .item.model import Base, Item
+from .item.schemas import ItemSchema
 
-crud_items = FastCRUD(Item)
-item = await crud_items.update(
+item_crud = FastCRUD(Item)
+
+item = await item_crud.update(
     db=db,
     object={"price": 9.99},
-    price__lt=10
     schema_to_select=ItemSchema,
     return_as_model=True,
+    price__lt=10,
 )
 # this will return the updated data in the form of ItemSchema
 ```
@@ -237,11 +240,12 @@ If you pass `None` to `limit` in `get_multi` and `get_multi_joined`, you get the
 ```python
 from fastcrud import FastCRUD
 
-from .models.item import Item
 from .database import session as db
+from .item.model import Item
 
-crud_items = FastCRUD(Item)
-items = await crud_items.get_multi(db=db, limit=None)
+item_crud = FastCRUD(Item)
+
+items = await item_crud.get_multi(db=db, limit=None)
 # this will return all items in the db
 ```
 
@@ -260,15 +264,15 @@ FastCRUD provides an `upsert_multi` method to efficiently upsert multiple record
 ```python
 from fastcrud import FastCRUD
 
-from .models.item import Item
-from .schemas.item import ItemCreateSchema
 from .database import session as db
+from .item.model import Item
+from .item.schemas import CreateItemSchema, ItemSchema
 
-crud_items = FastCRUD(Item)
-items = await crud_items.upsert_multi(
+item_crud = FastCRUD(Item)
+items = await item_crud.upsert_multi(
     db=db,
     instances=[
-        ItemCreateSchema(price=9.99),
+        CreateItemSchema(price=9.99),
     ],
     schema_to_select=ItemSchema,
     return_as_model=True,
@@ -521,8 +525,11 @@ This method constructs a SQL Alchemy `Select` statement, offering optional colum
 #### Usage Example:
 
 ```python
+--8<--
+fastcrud/examples/mymodel/schemas.py:readschema
+--8<--
 stmt = await my_model_crud.select(
-    schema_to_select=MySchema,
+    schema_to_select=ReadMyModelSchema,
     sort_columns='name',
     name__like='%example%',
 )

@@ -6,19 +6,16 @@ Wherever in the docs you see a SQLAlchemy model or Pydantic schema being used, y
 
 Define your SQLModel model
 
-```python title="setup.py" hl_lines="5-8"
+```python title="setup.py" hl_lines="6-15"
 from sqlmodel import SQLModel, Field
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 
-class Item(SQLModel):
-    __tablename__ = 'items'
-    id: int = Field(primary_key=True)
-    name: str
 
-class ItemCreateSchema(SQLModel):
-    name: str
-
+--8<--
+fastcrud/examples/item/sqlmodel.py:model
+fastcrud/examples/item/sqlmodel.py:itemschema
+--8<--
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
@@ -26,19 +23,16 @@ async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False
 
 Then your schemas
 
-```python title="setup.py" hl_lines="10 11"
+```python title="setup.py" hl_lines="18-23"
 from sqlmodel import SQLModel, Field
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 
-class Item(SQLModel):
-    __tablename__ = 'items'
-    id: int = Field(primary_key=True)
-    name: str
 
-class ItemCreateSchema(SQLModel):
-    name: str
-
+--8<--
+fastcrud/examples/item/sqlmodel.py:model
+fastcrud/examples/item/sqlmodel.py:itemschema
+--8<--
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
@@ -46,19 +40,16 @@ async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False
 
 And, finally, your database connection
 
-```python title="setup.py" hl_lines="13-15"
+```python title="setup.py" hl_lines="26-28"
 from sqlmodel import SQLModel, Field
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 
-class Item(SQLModel):
-    __tablename__ = 'items'
-    id: int = Field(primary_key=True)
-    name: str
 
-class ItemCreateSchema(SQLModel):
-    name: str
-
+--8<--
+fastcrud/examples/item/sqlmodel.py:model
+fastcrud/examples/item/sqlmodel.py:itemschema
+--8<--
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

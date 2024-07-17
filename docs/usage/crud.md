@@ -14,9 +14,26 @@ FastCRUD is a versatile tool for handling CRUD (Create, Read, Update, Delete) op
 
 Define your SQLAlchemy models and Pydantic schemas for data representation.
 
-```python
-# SQLAlchemy models and Pydantic schema definitions
-```
+??? example "Models and Schemas Used Below"
+
+    ??? example "`item/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/item/model.py:imports
+        fastcrud/examples/item/model.py:model
+        --8<--
+        ```
+
+    ??? example "`item/schemas.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/item/schemas.py:imports
+        fastcrud/examples/item/schemas.py:createschema
+        fastcrud/examples/item/schemas.py:updateschema
+        --8<--
+        ```
 
 ### Step 2: Initialize FastCRUD
 
@@ -26,7 +43,7 @@ Create a `FastCRUD` instance for your model to handle CRUD operations.
 from fastcrud import FastCRUD
 
 # Creating a FastCRUD instance
-my_model_crud = FastCRUD(MyModel)
+item_crud = FastCRUD(Item)
 ```
 
 ### Step 3: Pick your Method
@@ -35,7 +52,7 @@ Then you just pick the method you need and use it like this:
 
 ```python
 # Creating a new record
-new_record = await my_model_crud.create(db_session, create_schema_instance)
+new_record = await item_crud.create(db_session, create_schema_instance)
 ```
 
 More on available methods below.
@@ -60,7 +77,7 @@ create(
 **Usage Example**: Creates an item with name `"New Item"`.
 
 ```python
-new_item = await item_crud.create(db, ItemCreateSchema(name="New Item"))
+new_item = await item_crud.create(db, CreateItemSchema(name="New Item"))
 ```
 
 !!! WARNING
@@ -164,7 +181,11 @@ update(
 **Usage Example**: Updates the description of the item with `item_id` as its `id`.
 
 ```python
-await item_crud.update(db, ItemUpdateSchema(description="Updated"), id=item_id)
+await item_crud.update(
+    db,
+    UpdateItemSchema(description="Updated"),
+    id=item_id,
+)
 ```
 
 ### 7. Delete

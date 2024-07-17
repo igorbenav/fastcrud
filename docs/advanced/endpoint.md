@@ -1,7 +1,7 @@
 # Advanced Use of EndpointCreator
 
 ## Available Automatic Endpoints
-FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints for your FastAPI application. Here's an overview of the available automatic endpoints and how they work:
+FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints for your FastAPI application. Here's an overview of the available automatic endpoints and how they work, based on [the automatic endpoints we've generated before](../usage/endpoint.md#step-3-use-crud_router-to-create-endpoints):
 
 ### Create
 
@@ -9,7 +9,7 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Method**: `POST`
 - **Description**: Creates a new item in the database.
 - **Request Body**: JSON object based on the `create_schema`.
-- **Example Request**: `POST /yourmodel/create` with JSON body.
+- **Example Request**: `POST /items/create` with JSON body.
 
 ### Read
 
@@ -17,13 +17,17 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Method**: `GET`
 - **Description**: Retrieves a single item by its ID.
 - **Path Parameters**: `id` - The ID of the item to retrieve.
-- **Example Request**: `GET /yourmodel/get/1`.
+- **Example Request**: `GET /items/get/1`.
 - **Example Return**:
 ```javascript
 {
     "id": 1,
     "name": "Item 1",
-    "description": "Description of item 1"
+    "description": "Description of item 1",
+    "category": "Movies",
+    "price": 5.99,
+    "last_sold": null,
+    "created_at": "2024-01-01 12:00:00"
 }
 ```
 
@@ -35,15 +39,47 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Query Parameters**:
     - `offset` (optional): The offset from where to start fetching items.
     - `limit` (optional): The maximum number of items to return.
-- **Example Request**: `GET /yourmodel/get_multi?offset=3&limit=4`.
+- **Example Request**: `GET /items/get_multi?offset=3&limit=4`.
 - **Example Return**:
 ```javascript
 {
   "data": [
-    {"id": 4, "name": "Item 4", "description": "Description of item 4"},
-    {"id": 5, "name": "Item 5", "description": "Description of item 5"},
-    {"id": 6, "name": "Item 6", "description": "Description of item 6"},
-    {"id": 7, "name": "Item 7", "description": "Description of item 7"}
+    {
+        "id": 4,
+        "name": "Item 4",
+        "description": "Description of item 4",
+        "category": "Books",
+        "price": 5.99,
+        "last_sold": null,
+        "created_at": "2024-01-01 12:01:00"
+    },
+    {
+        "id": 5,
+        "name": "Item 5",
+        "description": "Description of item 5",
+        "category": "Music",
+        "price": 5.99,
+        "last_sold": "2024-04-01 00:00:00",
+        "created_at": "2024-01-01 12:10:00"
+    },
+    {
+        "id": 6,
+        "name": "Item 6",
+        "description": "Description of item 6",
+        "category": "TV",
+        "price": 5.99,
+        "last_sold": null,
+        "created_at": "2024-01-01 12:15:00"
+    },
+    {
+        "id": 7,
+        "name": "Item 7",
+        "description": "Description of item 7",
+        "category": "Books",
+        "price": 5.99,
+        "last_sold": null,
+        "created_at": "2024-01-01 13:00:30"
+    }
   ],
   "total_count": 50
 }
@@ -58,14 +94,38 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Query Parameters**:
     - `page`: The page number, starting from 1.
     - `itemsPerPage`: The number of items per page.
-- **Example Request**: `GET /yourmodel/get_paginated?page=1&itemsPerPage=3`.
+- **Example Request**: `GET /items/get_paginated?page=1&itemsPerPage=3`.
 - **Example Return**:
 ```javascript
 {
   "data": [
-    {"id": 1, "name": "Item 1", "description": "Description of item 1"},
-    {"id": 2, "name": "Item 2", "description": "Description of item 2"},
-    {"id": 3, "name": "Item 3", "description": "Description of item 3"}
+    {
+        "id": 1,
+        "name": "Item 1",
+        "description": "Description of item 1",
+        "category": "Movies",
+        "price": 5.99,
+        "last_sold": null,
+        "created_at": "2024-01-01 12:00:01"
+    },
+    {
+        "id": 2,
+        "name": "Item 2",
+        "description": "Description of item 2",
+        "category": "TV",
+        "price": 19.99,
+        "last_sold": null,
+        "created_at": "2024-01-01 12:00:15"
+    },
+    {
+        "id": 3,
+        "name": "Item 3",
+        "description": "Description of item 3",
+        "category": "Books",
+        "price": 4.99,
+        "last_sold": null,
+        "created_at": "2024-01-01 12:00:16"
+    }
   ],
   "total_count": 50,
   "has_more": true,
@@ -101,7 +161,7 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Description**: Updates an existing item by its ID.
 - **Path Parameters**: `id` - The ID of the item to update.
 - **Request Body**: JSON object based on the `update_schema`.
-- **Example Request**: `PATCH /yourmodel/update/1` with JSON body.
+- **Example Request**: `PATCH /items/update/1` with JSON body.
 - **Example Return**: `None`
 
 ### Delete
@@ -110,7 +170,7 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Method**: `DELETE`
 - **Description**: Deletes (soft delete if configured) an item by its ID.
 - **Path Parameters**: `id` - The ID of the item to delete.
-- **Example Request**: `DELETE /yourmodel/delete/1`.
+- **Example Request**: `DELETE /items/delete/1`.
 - **Example Return**: `None`
 
 ### DB Delete (Hard Delete)
@@ -119,12 +179,31 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Method**: `DELETE`
 - **Description**: Permanently deletes an item by its ID, bypassing the soft delete mechanism.
 - **Path Parameters**: `id` - The ID of the item to hard delete.
-- **Example Request**: `DELETE /yourmodel/db_delete/1`.
+- **Example Request**: `DELETE /items/db_delete/1`.
 - **Example Return**: `None`
 
 ## Selective CRUD Operations
 
 You can control which CRUD operations are exposed by using `included_methods` and `deleted_methods`. These parameters allow you to specify exactly which CRUD methods should be included or excluded when setting up the router. By default, all CRUD endpoints are included.
+
+??? example "`mymodel/model.py`"
+
+    ```python
+    --8<--
+    fastcrud/examples/mymodel/model.py:imports
+    fastcrud/examples/mymodel/model.py:model_simple
+    --8<--
+    ```
+
+??? example "`mymodel/schemas.py`"
+
+    ```python
+    --8<--
+    fastcrud/examples/mymodel/schemas.py:imports
+    fastcrud/examples/mymodel/schemas.py:createschema
+    fastcrud/examples/mymodel/schemas.py:updateschema
+    --8<--
+    ```
 
 ### Using `included_methods`
 
@@ -135,8 +214,8 @@ Using `included_methods` you may define exactly the methods you want to be inclu
 my_router = crud_router(
     session=get_session,
     model=MyModel,
-    create_schema=CreateMyModel,
-    update_schema=UpdateMyModel,
+    create_schema=CreateMyModelSchema,
+    update_schema=UpdateMyModelSchema,
     crud=FastCRUD(MyModel),
     path="/mymodel",
     tags=["MyModel"],
@@ -155,8 +234,8 @@ Using `deleted_methods` you define the methods that will not be included.
 my_router = crud_router(
     session=get_session,
     model=MyModel,
-    create_schema=CreateMyModel,
-    update_schema=UpdateMyModel,
+    create_schema=CreateMyModelSchema,
+    update_schema=UpdateMyModelSchema,
     crud=FastCRUD(MyModel),
     path="/mymodel",
     tags=["MyModel"],
@@ -180,10 +259,11 @@ Here's how you can customize endpoint names using the `crud_router` function:
 
 ```python
 from fastapi import FastAPI
-from yourapp.crud import crud_router
-from yourapp.models import YourModel
-from yourapp.schemas import CreateYourModelSchema, UpdateYourModelSchema
-from yourapp.database import async_session
+from fastcrud import crud_router
+
+from .database import async_session
+from .mymodel.model import MyModel
+from .mymodel.schemas import CreateMyModelSchema, UpdateMyModelSchema
 
 app = FastAPI()
 
@@ -200,11 +280,11 @@ custom_endpoint_names = {
 # Setup CRUD router with custom endpoint names
 app.include_router(crud_router(
     session=async_session,
-    model=YourModel,
-    create_schema=CreateYourModelSchema,
-    update_schema=UpdateYourModelSchema,
-    path="/yourmodel",
-    tags=["YourModel"],
+    model=MyModel,
+    create_schema=CreateMyModelSchema,
+    update_schema=UpdateMyModelSchema,
+    path="/mymodel",
+    tags=["MyModel"],
     endpoint_names=custom_endpoint_names,
 ))
 ```
@@ -230,11 +310,11 @@ custom_endpoint_names = {
 # Initialize and use the custom EndpointCreator
 endpoint_creator = EndpointCreator(
     session=async_session,
-    model=YourModel,
-    create_schema=CreateYourModelSchema,
-    update_schema=UpdateYourModelSchema,
-    path="/yourmodel",
-    tags=["YourModel"],
+    model=MyModel,
+    create_schema=CreateMyModelSchema,
+    update_schema=UpdateMyModelSchema,
+    path="/mymodel",
+    tags=["MyModel"],
     endpoint_names=custom_endpoint_names,
 )
 
@@ -250,7 +330,6 @@ app.include_router(endpoint_creator.router)
 
     `default_endpoint_names` for `EndpointCreator` are going to be changed to empty strings in the next major release.
     See [this issue](https://github.com/igorbenav/fastcrud/issues/67) for more details.
-
 
 ## Extending `EndpointCreator`
 
@@ -288,7 +367,7 @@ class MyCustomEndpointCreator(EndpointCreator):
 
 ### Adding custom routes
 
-```python hl_lines="5-9"
+```python hl_lines="5-11"
 from fastcrud import EndpointCreator
 
 # Define the custom EndpointCreator
@@ -357,8 +436,8 @@ class MyCustomEndpointCreator(EndpointCreator):
 my_router = crud_router(
     session=get_session,
     model=MyModel,
-    create_schema=CreateMyModel,
-    update_schema=UpdateMyModel,
+    create_schema=CreateMyModelSchema,
+    update_schema=UpdateMyModelSchema,
     crud=FastCRUD(MyModel),
     path="/mymodel",
     tags=["MyModel"],
@@ -380,18 +459,18 @@ Here's how to specify custom soft delete columns when utilizing `EndpointCreator
 First, ensure your SQLAlchemy model is equipped with the custom soft delete columns. Here's an example model with custom columns for soft deletion:
 
 ```python
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
-from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime
+--8<--
+fastcrud/examples/mymodel/model.py:imports
+fastcrud/examples/mymodel/model.py:model_softdelete
+--8<--
+```
 
-Base = declarative_base()
+And a schema necessary to activate the soft delete endpoint:
 
-class MyModel(Base):
-    __tablename__ = 'my_model'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    archived = Column(Boolean, default=False)  # Custom soft delete column
-    archived_at = Column(DateTime)  # Custom timestamp column for soft delete
+```python
+--8<--
+fastcrud/examples/mymodel/schemas.py:deleteschema
+--8<--
 ```
 
 ### Using `EndpointCreator` and `crud_router` with Custom Soft Delete or Update Columns
@@ -452,7 +531,10 @@ By specifying custom column names for soft deletion, you can adapt FastCRUD to f
 
 You can also customize your `updated_at` column:
 
-```python hl_lines="11"
+```python hl_lines="20"
+--8<--
+fastcrud/examples/mymodel/model.py:model
+--8<--
 app.include_router(endpoint_creator(
     session=async_session,
     model=MyModel,

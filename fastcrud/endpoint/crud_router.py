@@ -83,8 +83,31 @@ def crud_router(
 
     Examples:
         Basic Setup:
+
+        ??? example "Models and Schemas Used Below"
+
+            ??? example "`mymodel/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/mymodel/model.py:imports
+                fastcrud/examples/mymodel/model.py:model_simple
+                --8<--
+                ```
+
+            ??? example "`mymodel/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/mymodel/schemas.py:imports
+                fastcrud/examples/mymodel/schemas.py:createschema
+                fastcrud/examples/mymodel/schemas.py:updateschema
+                fastcrud/examples/mymodel/schemas.py:deleteschema
+                --8<--
+                ```
+
         ```python
-        router = crud_router(
+        mymodel_router = crud_router(
             session=async_session,
             model=MyModel,
             create_schema=CreateMyModelSchema,
@@ -163,16 +186,23 @@ def crud_router(
 
         With Selective CRUD Methods:
         ```python
+        CRUDMyModel = FastCRUD[
+            MyModel,
+            CreateMyModelSchema,
+            UpdateMyModelSchema,
+            UpdateMyModelSchema,
+            DeleteMyModelSchema,
+        ]
         # Only include 'create' and 'read' methods
-        router = crud_router(
+        mymodel_router = crud_router(
             session=async_session,
             model=MyModel,
-            create_schema=CreateMyModel,
-            update_schema=UpdateMyModel,
+            create_schema=CreateMyModelSchema,
+            update_schema=UpdateMyModelSchema,
             crud=CRUDMyModel(MyModel),
-            included_methods=["create", "read"],
             path="/mymodel",
             tags=["MyModel"],
+            included_methods=["create", "read"],
         )
         ```
 
@@ -199,18 +229,25 @@ def crud_router(
                         # Other parameters as needed
                     )
 
-        router = crud_router(
+        CRUDMyModel = FastCRUD[
+            MyModel,
+            CreateMyModelSchema,
+            UpdateMyModelSchema,
+            UpdateMyModelSchema,
+            DeleteMyModelSchema,
+        ]
+        mymodel_router = crud_router(
             session=async_session,
             model=MyModel,
-            create_schema=CreateMyModel,
-            update_schema=UpdateMyModel,
+            create_schema=CreateMyModelSchema,
+            update_schema=UpdateMyModelSchema,
             crud=CRUDMyModel(MyModel),
             path="/mymodel",
             tags=["MyModel"],
             endpoint_creator=CustomEndpointCreator,
         )
 
-        app.include_router(my_router)
+        app.include_router(mymodel_router)
         ```
 
         Customizing Endpoint Names:
@@ -238,21 +275,22 @@ def crud_router(
         ```python
         from fastapi import FastAPI
         from fastcrud import crud_router
-        from myapp.models import MyModel
-        from myapp.schemas import CreateMyModel, UpdateMyModel
-        from myapp.database import async_session
+
+        from .database import async_session
+        from .mymodel.model import MyModel
+        from .mymodel.schemas import CreateMyModelSchema, UpdateMyModelSchema
 
         app = FastAPI()
 
-        router = crud_router(
+        mymodel_router = crud_router(
             session=async_session,
             model=MyModel,
-            create_schema=CreateMyModel,
-            update_schema=UpdateMyModel,
+            create_schema=CreateMyModelSchema,
+            update_schema=UpdateMyModelSchema,
             filter_config=FilterConfig(filters={"id": None, "name": "default"}),
         )
         # Adds CRUD routes with filtering capabilities
-        app.include_router(router, prefix="/mymodel")
+        app.include_router(mymodel_router, prefix="/mymodel")
 
         # Explanation:
         # The FilterConfig specifies that 'id' should be a query parameter with no default value
@@ -265,21 +303,22 @@ def crud_router(
         ```python
         from fastapi import FastAPI
         from fastcrud import crud_router
-        from myapp.models import MyModel
-        from myapp.schemas import CreateMyModel, UpdateMyModel
-        from myapp.database import async_session
+
+        from .database import async_session
+        from .mymodel.model import MyModel
+        from .mymodel.schemas import CreateMyModelSchema, UpdateMyModelSchema
 
         app = FastAPI()
 
-        router = crud_router(
+        mymodel_router = crud_router(
             session=async_session,
             model=MyModel,
-            create_schema=CreateMyModel,
-            update_schema=UpdateMyModel,
+            create_schema=CreateMyModelSchema,
+            update_schema=UpdateMyModelSchema,
             filter_config=FilterConfig(id=None, name="default"),
         )
         # Adds CRUD routes with filtering capabilities
-        app.include_router(router, prefix="/mymodel")
+        app.include_router(mymodel_router, prefix="/mymodel")
 
         # Explanation:
         # The FilterConfig specifies that 'id' should be a query parameter with no default value

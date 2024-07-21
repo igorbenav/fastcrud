@@ -104,6 +104,8 @@ class FastCRUD(
             Soft deletes a record if it has an `"is_deleted"` attribute (or other attribute as defined by `is_deleted_column`); otherwise, performs a hard delete.
 
     Examples:
+        ??? example "Models and Schemas Used Below"
+
             ??? example "`customer/model.py`"
 
                 ```python

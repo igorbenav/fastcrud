@@ -104,6 +104,51 @@ class FastCRUD(
             Soft deletes a record if it has an `"is_deleted"` attribute (or other attribute as defined by `is_deleted_column`); otherwise, performs a hard delete.
 
     Examples:
+            ??? example "`customer/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/customer/model.py:imports
+                fastcrud/examples/customer/model.py:model
+                --8<--
+                ```
+
+            ??? example "`product/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/product/model.py:imports
+                fastcrud/examples/product/model.py:model
+                --8<--
+                ```
+
+            ??? example "`product/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/product/schemas.py:imports
+                fastcrud/examples/product/schemas.py:readschema
+                --8<--
+                ```
+
+            ??? example "`order/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/order/model.py:imports
+                fastcrud/examples/order/model.py:model
+                --8<--
+                ```
+
+            ??? example "`order/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/order/schemas.py:imports
+                fastcrud/examples/order/schemas.py:readschema
+                --8<--
+                ```
+
         Example 1: Basic Usage
         ----------------------
         Create a FastCRUD instance for a `User` model and perform basic CRUD operations.

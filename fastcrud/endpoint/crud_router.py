@@ -106,6 +106,71 @@ def crud_router(
                 --8<--
                 ```
 
+            ---
+
+            ??? example "`customer/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/customer/model.py:imports
+                fastcrud/examples/customer/model.py:model
+                --8<--
+                ```
+
+            ??? example "`customer/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/customer/schemas.py:imports
+                fastcrud/examples/customer/schemas.py:createschema
+                fastcrud/examples/customer/schemas.py:readschema
+                fastcrud/examples/customer/schemas.py:updateschema
+                fastcrud/examples/customer/schemas.py:deleteschema
+                --8<--
+                ```
+
+            ??? example "`product/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/product/model.py:imports
+                fastcrud/examples/product/model.py:model
+                --8<--
+                ```
+
+            ??? example "`product/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/product/schemas.py:imports
+                fastcrud/examples/product/schemas.py:createschema
+                fastcrud/examples/product/schemas.py:readschema
+                fastcrud/examples/product/schemas.py:updateschema
+                fastcrud/examples/product/schemas.py:deleteschema
+                --8<--
+                ```
+
+            ??? example "`order/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/order/model.py:imports
+                fastcrud/examples/order/model.py:model
+                --8<--
+                ```
+
+            ??? example "`order/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/order/schemas.py:imports
+                fastcrud/examples/order/schemas.py:createschema
+                fastcrud/examples/order/schemas.py:readschema
+                fastcrud/examples/order/schemas.py:updateschema
+                fastcrud/examples/order/schemas.py:deleteschema
+                --8<--
+                ```
+
         ```python
         mymodel_router = crud_router(
             session=async_session,

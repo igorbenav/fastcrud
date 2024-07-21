@@ -35,6 +35,53 @@ Define your SQLAlchemy models and Pydantic schemas for data representation.
         --8<--
         ```
 
+    ---
+
+    ??? example "`customer/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/customer/model.py:imports
+        fastcrud/examples/customer/model.py:model
+        --8<--
+        ```
+
+    ??? example "`customer/schemas.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/customer/schemas.py:imports
+        fastcrud/examples/customer/schemas.py:readschema
+        --8<--
+        ```
+
+    ??? example "`product/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/product/model.py:imports
+        fastcrud/examples/product/model.py:model
+        --8<--
+        ```
+
+    ??? example "`order/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/order/model.py:imports
+        fastcrud/examples/order/model.py:model
+        --8<--
+        ```
+
+    ??? example "`order/schemas.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/order/schemas.py:imports
+        fastcrud/examples/order/schemas.py:readschema
+        --8<--
+        ```
+
 ### Step 2: Initialize FastCRUD
 
 Create a `FastCRUD` instance for your model to handle CRUD operations.
@@ -44,6 +91,7 @@ from fastcrud import FastCRUD
 
 # Creating a FastCRUD instance
 item_crud = FastCRUD(Item)
+order_crud = FastCRUD(Order)
 ```
 
 ### Step 3: Pick your Method
@@ -281,14 +329,14 @@ get_joined(
 ```
 
 **Purpose**: To fetch a single record with one or multiple joins on other models.  
-**Usage Example**: Fetches order details for a specific order by joining with the `Customer` table, selecting specific columns as defined in `OrderSchema` and `CustomerSchema`.
+**Usage Example**: Fetches order details for a specific order by joining with the `Customer` table, selecting specific columns as defined in `ReadOrderSchema` and `ReadCustomerSchema`.
 
 ```python
 order_details = await order_crud.get_joined(
     db,
+    schema_to_select=ReadOrderSchema,
     join_model=Customer,
-    schema_to_select=OrderSchema,
-    join_schema_to_select=CustomerSchema,
+    join_schema_to_select=ReadCustomerSchema,
     id=order_id,
 )
 ```
@@ -325,9 +373,9 @@ get_multi_joined(
 ```python
 orders = await order_crud.get_multi_joined(
     db,
-    schema_to_select=OrderSchema,
+    schema_to_select=ReadOrderSchema,
     join_model=Customer,
-    join_schema_to_select=CustomerSchema,
+    join_schema_to_select=ReadCustomerSchema,
     offset=0,
     limit=5,
 )

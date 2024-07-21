@@ -174,7 +174,9 @@ class FastCRUD(
 
         Example 2: Advanced Filtering and Pagination
         --------------------------------------------
+
         Use advanced filtering, sorting, and pagination for fetching records.
+
         ```python
         product_crud = FastCRUD(Product)
         products = await product_crud.get_multi(
@@ -188,15 +190,17 @@ class FastCRUD(
 
         Example 3: Join Operations with Custom Schemas
         ----------------------------------------------
+
         Perform join operations between two models using custom schemas for selection.
+
         ```python
         order_crud = FastCRUD(Order)
         orders = await order_crud.get_multi_joined(
             db,
-            schema_to_select=OrderReadSchema,
+            schema_to_select=ReadOrderSchema,
             join_model=Product,
             join_prefix="product_",
-            join_schema_to_select=ProductReadSchema,
+            join_schema_to_select=ReadProductSchema,
             offset=0,
             limit=5,
         )

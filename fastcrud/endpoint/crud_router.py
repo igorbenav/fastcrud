@@ -202,9 +202,9 @@ def crud_router(
 
         Adding Delete Endpoints:
         ```python
-        router = crud_router(
+        product_router = crud_router(
             session=async_session,
-            model=ProductModel,
+            model=Product,
             create_schema=CreateProductSchema,
             update_schema=UpdateProductSchema,
             delete_schema=DeleteProductSchema,
@@ -215,12 +215,19 @@ def crud_router(
 
         Customizing Path and Tags:
         ```python
-        router = crud_router(
+        OrderCRUD = FastCRUD[
+            Order,
+            CreateOrderSchema,
+            UpdateOrderSchema,
+            UpdateOrderSchema,
+            DeleteOrderSchema,
+        ]
+        order_router = crud_router(
             session=async_session,
-            model=OrderModel,
+            model=Order,
             create_schema=CreateOrderSchema,
             update_schema=UpdateOrderSchema,
-            crud=CRUDOrderModel(OrderModel),
+            crud=OrderCRUD(Order),
             path="/orders",
             tags=["Orders", "Sales"],
         )
@@ -228,22 +235,36 @@ def crud_router(
 
         Integrating Multiple Models:
         ```python
+        ProductCRUD = FastCRUD[
+            Product,
+            CreateProductSchema,
+            UpdateProductSchema,
+            UpdateProductSchema,
+            DeleteProductSchema,
+        ]
         product_router = crud_router(
             session=async_session,
-            model=ProductModel,
+            model=Product,
             create_schema=CreateProductSchema,
             update_schema=UpdateProductSchema,
-            crud=CRUDProductModel(ProductModel),
+            crud=ProductCRUD(Product),
             path="/products",
             tags=["Inventory"],
         )
 
+        CustomerCRUD = FastCRUD[
+            Customer,
+            CreateCustomerSchema,
+            UpdateCustomerSchema,
+            UpdateCustomerSchema,
+            DeleteCustomerSchema,
+        ]
         customer_router = crud_router(
             session=async_session,
-            model=CustomerModel,
+            model=Customer,
             create_schema=CreateCustomerSchema,
             update_schema=UpdateCustomerSchema,
-            crud=CRUDCustomerModel(CustomerModel),
+            crud=CustomerCRUD(Customer),
             path="/customers",
             tags=["CRM"],
         )

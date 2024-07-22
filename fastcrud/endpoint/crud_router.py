@@ -185,8 +185,9 @@ def crud_router(
         ```
 
         With Selective CRUD Methods:
+
         ```python
-        CRUDMyModel = FastCRUD[
+        MyModelCRUD = FastCRUD[
             MyModel,
             CreateMyModelSchema,
             UpdateMyModelSchema,
@@ -199,7 +200,7 @@ def crud_router(
             model=MyModel,
             create_schema=CreateMyModelSchema,
             update_schema=UpdateMyModelSchema,
-            crud=CRUDMyModel(MyModel),
+            crud=MyModelCRUD(MyModel),
             path="/mymodel",
             tags=["MyModel"],
             included_methods=["create", "read"],
@@ -207,6 +208,7 @@ def crud_router(
         ```
 
         Using a Custom `EndpointCreator`:
+
         ```python
         class CustomEndpointCreator(EndpointCreator):
             def _custom_route(self):
@@ -229,7 +231,7 @@ def crud_router(
                         # Other parameters as needed
                     )
 
-        CRUDMyModel = FastCRUD[
+        MyModelCRUD = FastCRUD[
             MyModel,
             CreateMyModelSchema,
             UpdateMyModelSchema,
@@ -241,7 +243,7 @@ def crud_router(
             model=MyModel,
             create_schema=CreateMyModelSchema,
             update_schema=UpdateMyModelSchema,
-            crud=CRUDMyModel(MyModel),
+            crud=MyModelCRUD(MyModel),
             path="/mymodel",
             tags=["MyModel"],
             endpoint_creator=CustomEndpointCreator,
@@ -272,6 +274,7 @@ def crud_router(
         ```
 
         Using `FilterConfig` with `dict`:
+
         ```python
         from fastapi import FastAPI
         from fastcrud import crud_router
@@ -300,6 +303,7 @@ def crud_router(
         ```
 
         Using `FilterConfig` with keyword arguments:
+
         ```python
         from fastapi import FastAPI
         from fastcrud import crud_router

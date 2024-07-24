@@ -151,25 +151,128 @@ class FastCRUD(
                 --8<--
                 ```
 
+            ---
+
+            ??? example "`tier/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/tier/model.py:imports
+                fastcrud/examples/tier/model.py:model
+                --8<--
+                ```
+
+            ??? example "`tier/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/tier/schemas.py:imports
+                fastcrud/examples/tier/schemas.py:readschema
+                --8<--
+                ```
+
+            ??? example "`department/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/department/model.py:imports
+                fastcrud/examples/department/model.py:model
+                --8<--
+                ```
+
+            ??? example "`department/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/department/schemas.py:imports
+                fastcrud/examples/department/schemas.py:readschema
+                --8<--
+                ```
+
+            ??? example "`user/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/user/model.py:imports
+                fastcrud/examples/user/model.py:model
+                --8<--
+                ```
+
+            ??? example "`user/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/user/schemas.py:imports
+                fastcrud/examples/user/schemas.py:createschema
+                fastcrud/examples/user/schemas.py:readschema
+                fastcrud/examples/user/schemas.py:updateschema
+                fastcrud/examples/user/schemas.py:deleteschema
+                --8<--
+                ```
+
+            ??? example "`story/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/story/model.py:imports
+                fastcrud/examples/story/model.py:model
+                --8<--
+                ```
+
+            ??? example "`story/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/story/schemas.py:imports
+                fastcrud/examples/story/schemas.py:createschema
+                fastcrud/examples/story/schemas.py:readschema
+                fastcrud/examples/story/schemas.py:updateschema
+                fastcrud/examples/story/schemas.py:deleteschema
+                --8<--
+                ```
+
+            ??? example "`task/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/task/model.py:imports
+                fastcrud/examples/task/model.py:model
+                --8<--
+                ```
+
+            ??? example "`task/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/task/schemas.py:imports
+                fastcrud/examples/task/schemas.py:createschema
+                fastcrud/examples/task/schemas.py:readschema
+                fastcrud/examples/task/schemas.py:updateschema
+                fastcrud/examples/task/schemas.py:deleteschema
+                --8<--
+                ```
+
         Example 1: Basic Usage
         ----------------------
+
         Create a FastCRUD instance for a `User` model and perform basic CRUD operations.
+
         ```python
         # Assuming you have a User model (either SQLAlchemy or SQLModel)
         # pydantic schemas for creation, update and deletion and an async session `db`
-        CRUDUser = FastCRUD[User, UserCreateInternal, UserUpdate, UserUpdateInternal, UserDelete]
-        user_crud = CRUDUser(User)
+        UserCRUD = FastCRUD[User, CreateUserSchema, UpdateUserSchema, None, DeleteUserSchema]
+        user_crud = UserCRUD(User)
 
-        # If you don't care about typing, you can also just ignore the CRUDUser part
+        # If you don't care about typing, you can also just ignore the UserCRUD part
         # Straight up define user_crud with FastCRUD
         user_crud = FastCRUD(User)
 
         # Create a new user
-        new_user = await user_crud.create(db, UserCreateSchema(name="Alice"))
+        new_user = await user_crud.create(db, CreateUserSchema(name="Alice"))
         # Read a user
         user = await user_crud.get(db, id=new_user.id)
         # Update a user
-        await user_crud.update(db, UserUpdateSchema(email="alice@example.com"), id=new_user.id)
+        await user_crud.update(db, UpdateUserSchema(email="alice@example.com"), id=new_user.id)
         # Delete a user
         await user_crud.delete(db, id=new_user.id)
         ```
@@ -230,6 +333,7 @@ class FastCRUD(
         Example 5: Dynamic Filtering and Counting
         -----------------------------------------
         Dynamically filter records based on various criteria and count the results.
+
         ```python
         task_crud = FastCRUD(Task)
         completed_tasks = await task_crud.get_multi(
@@ -244,8 +348,19 @@ class FastCRUD(
 
         Example 6: Using Custom Column Names for Soft Delete
         ----------------------------------------------------
+
         If your model uses different column names for indicating a soft delete and its timestamp, you can specify these when creating the `FastCRUD` instance.
+
         ```python
+        --8<--
+        fastcrud/examples/user/model.py:model_common
+        --8<--
+            ...
+        --8<--
+        fastcrud/examples/user/model.py:model_archived
+        --8<--
+
+
         custom_user_crud = FastCRUD(
             User,
             is_deleted_column="archived",
@@ -497,9 +612,10 @@ class FastCRUD(
 
         Examples:
             Selecting specific columns with filtering and sorting:
+
             ```python
-            stmt = await crud.select(
-                schema_to_select=UserReadSchema,
+            stmt = await user_crud.select(
+                schema_to_select=ReadUserSchema,
                 sort_columns=['age', 'name'],
                 sort_orders=['asc', 'desc'],
                 age__gt=18,
@@ -507,18 +623,21 @@ class FastCRUD(
             ```
 
             Creating a statement to select all users without any filters:
+
             ```python
-            stmt = await crud.select()
+            stmt = await user_crud.select()
             ```
 
             Selecting users with a specific `role`, ordered by `name`:
+
             ```python
-            stmt = await crud.select(
+            stmt = await user_crud.select(
                 schema_to_select=UserReadSchema,
                 sort_columns='name',
                 role='admin',
             )
             ```
+
         Note:
             This method does not execute the generated SQL statement.
             Use `db.execute(stmt)` to run the query and fetch results.
@@ -563,23 +682,27 @@ class FastCRUD(
 
         Examples:
             Fetch a user by ID:
+
             ```python
-            user = await crud.get(db, id=1)
+            user = await user_crud.get(db, id=1)
             ```
 
             Fetch a user with an age greater than 30:
+
             ```python
-            user = await crud.get(db, age__gt=30)
+            user = await user_crud.get(db, age__gt=30)
             ```
 
             Fetch a user with a registration date before Jan 1, 2020:
+
             ```python
-            user = await crud.get(db, registration_date__lt=datetime(2020, 1, 1))
+            user = await user_crud.get(db, registration_date__lt=datetime(2020, 1, 1))
             ```
 
             Fetch a user not equal to a specific username:
+
             ```python
-            user = await crud.get(db, username__ne='admin')
+            user = await user_crud.get(db, username__ne='admin')
             ```
         """
         stmt = await self.select(schema_to_select=schema_to_select, **kwargs)
@@ -781,23 +904,27 @@ class FastCRUD(
 
         Examples:
             Check if a user with a specific ID exists:
+
             ```python
-            exists = await crud.exists(db, id=1)
+            exists = await user_crud.exists(db, id=1)
             ```
 
             Check if any user is older than 30:
+
             ```python
-            exists = await crud.exists(db, age__gt=30)
+            exists = await user_crud.exists(db, age__gt=30)
             ```
 
             Check if any user was registered before Jan 1, 2020:
+
             ```python
-            exists = await crud.exists(db, registration_date__lt=datetime(2020, 1, 1))
+            exists = await user_crud.exists(db, registration_date__lt=datetime(2020, 1, 1))
             ```
 
             Check if a username other than `admin` exists:
+
             ```python
-            exists = await crud.exists(db, username__ne='admin')
+            exists = await user_crud.exists(db, username__ne='admin')
             ```
         """
         filters = self._parse_filters(**kwargs)
@@ -829,18 +956,21 @@ class FastCRUD(
 
         Examples:
             Count users by ID:
+
             ```python
-            count = await crud.count(db, id=1)
+            count = await user_crud.count(db, id=1)
             ```
 
             Count users older than 30:
+
             ```python
-            count = await crud.count(db, age__gt=30)
+            count = await user_crud.count(db, age__gt=30)
             ```
 
             Count users with a username other than `admin`:
+
             ```python
-            count = await crud.count(db, username__ne='admin')
+            count = await user_crud.count(db, username__ne='admin')
             ```
 
             Count projects with at least one participant (many-to-many relationship):
@@ -959,8 +1089,9 @@ class FastCRUD(
 
         Examples:
             Fetch the first 10 users:
+
             ```python
-            users = await crud.get_multi(
+            users = await user_crud.get_multi(
                 db,
                 0,
                 10,
@@ -968,8 +1099,9 @@ class FastCRUD(
             ```
 
             Fetch next 10 users with sorted by username:
+
             ```python
-            users = await crud.get_multi(
+            users = await user_crud.get_multi(
                 db,
                 10,
                 10,
@@ -979,8 +1111,9 @@ class FastCRUD(
             ```
 
             Fetch 10 users older than 30, sorted by age in descending order:
+
             ```python
-            get_multi(
+            users = await user_crud.get_multi(
                 db,
                 offset=0,
                 limit=10,
@@ -992,7 +1125,7 @@ class FastCRUD(
 
             Fetch 10 users with a registration date before Jan 1, 2020:
             ```python
-            get_multi(
+            users = await user_crud.get_multi(
                 db,
                 offset=0,
                 limit=10,
@@ -1001,20 +1134,22 @@ class FastCRUD(
             ```
 
             Fetch 10 users with a username other than `admin`, returning as model instances (ensure appropriate schema is passed):
+
             ```python
-            get_multi(
+            users = await user_crud.get_multi(
                 db,
                 offset=0,
                 limit=10,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 return_as_model=True,
                 username__ne='admin',
             )
             ```
 
             Fetch users with filtering and multiple column sorting:
+
             ```python
-            users = await crud.get_multi(
+            users = await user_crud.get_multi(
                 db,
                 0,
                 10,
@@ -1111,82 +1246,90 @@ class FastCRUD(
 
         Examples:
             Simple example: Joining `User` and `Tier` models without explicitly providing `join_on`
+
             ```python
-            result = await crud_user.get_joined(
+            result = await user_crud.get_joined(
                 db=session,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 join_model=Tier,
-                join_schema_to_select=TierSchema,
+                join_schema_to_select=ReadTierSchema,
             )
             ```
 
             Fetch a user and their associated tier, filtering by user ID:
+
             ```python
-            result = await crud_user.get_joined(
+            result = await user_crud.get_joined(
                 db,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 join_model=Tier,
-                join_schema_to_select=TierSchema,
+                join_schema_to_select=ReadTierSchema,
                 id=1,
             )
             ```
 
             Fetch a user and their associated tier, where the user's age is greater than 30:
+
             ```python
-            result = await crud_user.get_joined(
+            result = await user_crud.get_joined(
                 db,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 join_model=Tier,
-                join_schema_to_select=TierSchema,
+                join_schema_to_select=ReadTierSchema,
                 age__gt=30,
             )
             ```
 
             Fetch a user and their associated tier, excluding users with the `admin` username:
+
             ```python
-            result = await crud_user.get_joined(
+            result = await user_crud.get_joined(
                 db,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 join_model=Tier,
-                join_schema_to_select=TierSchema,
+                join_schema_to_select=ReadTierSchema,
                 username__ne='admin',
             )
             ```
 
             Complex example: Joining with a custom join condition, additional filter parameters, and a prefix
+
             ```python
             from sqlalchemy import and_
-            result = await crud_user.get_joined(
+            result = await user_crud.get_joined(
                 db=session,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 join_model=Tier,
                 join_on=and_(User.tier_id == Tier.id, User.is_superuser == True),
                 join_prefix="tier_",
-                join_schema_to_select=TierSchema,
+                join_schema_to_select=ReadTierSchema,
                 username="john_doe",
             )
             ```
 
             Example of using `joins_config` for multiple joins:
+
             ```python
             from fastcrud import JoinConfig
 
-            result = await crud_user.get_joined(
+            # Using same User/Tier/Department models/schemas as above.
+
+            result = await user_crud.get_joined(
                 db=session,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 joins_config=[
                     JoinConfig(
                         model=Tier,
                         join_on=User.tier_id == Tier.id,
                         join_prefix="tier_",
-                        schema_to_select=TierSchema,
+                        schema_to_select=ReadTierSchema,
                         join_type="left",
                     ),
                     JoinConfig(
                         model=Department,
                         join_on=User.department_id == Department.id,
                         join_prefix="dept_",
-                        schema_to_select=DepartmentSchema,
+                        schema_to_select=ReadDepartmentSchema,
                         join_type="inner",
                     ),
                 ],
@@ -1246,25 +1389,26 @@ class FastCRUD(
             ```
 
             Example of using `joins_config` for multiple joins with nested joins enabled:
+
             ```python
             from fastcrud import JoinConfig
 
-            result = await crud_user.get_joined(
+            result = await user_crud.get_joined(
                 db=session,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 joins_config=[
                     JoinConfig(
                         model=Tier,
                         join_on=User.tier_id == Tier.id,
                         join_prefix="tier_",
-                        schema_to_select=TierSchema,
+                        schema_to_select=ReadTierSchema,
                         join_type="left",
                     ),
                     JoinConfig(
                         model=Department,
                         join_on=User.department_id == Department.id,
                         join_prefix="dept_",
-                        schema_to_select=DepartmentSchema,
+                        schema_to_select=ReadDepartmentSchema,
                         join_type="inner",
                     ),
                 ],
@@ -1423,25 +1567,27 @@ class FastCRUD(
 
         Examples:
             Fetching multiple `User` records joined with `Tier` records, using left join, returning raw data:
+
             ```python
-            users = await crud_user.get_multi_joined(
+            users = await user_crud.get_multi_joined(
                 db=session,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 join_model=Tier,
                 join_prefix="tier_",
-                join_schema_to_select=TierSchema,
+                join_schema_to_select=ReadTierSchema,
                 offset=0,
                 limit=10,
             )
             ```
 
             Fetch users joined with their tiers, sorted by username, where user's age is greater than 30:
+
             ```python
-            users = await crud_user.get_multi_joined(
+            users = await user_crud.get_multi_joined(
                 db,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 join_model=Tier,
-                join_schema_to_select=TierSchema,
+                join_schema_to_select=ReadTierSchema,
                 sort_columns='username',
                 sort_orders='asc',
                 age__gt=30,
@@ -1449,25 +1595,27 @@ class FastCRUD(
             ```
 
             Fetch users joined with their tiers, excluding users with `admin` username, returning as model instances:
+
             ```python
-            users = await crud_user.get_multi_joined(
+            users = await user_crud.get_multi_joined(
                 db,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 join_model=Tier,
-                join_schema_to_select=TierSchema,
+                join_schema_to_select=ReadTierSchema,
                 return_as_model=True,
                 username__ne='admin',
             )
             ```
 
             Fetching and sorting by username in descending order, returning as Pydantic model:
+
             ```python
-            users = await crud_user.get_multi_joined(
+            users = await user_crud.get_multi_joined(
                 db=session,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 join_model=Tier,
                 join_prefix="tier_",
-                join_schema_to_select=TierSchema,
+                join_schema_to_select=ReadTierSchema,
                 offset=0,
                 limit=10,
                 sort_columns=['username'],
@@ -1477,14 +1625,15 @@ class FastCRUD(
             ```
 
             Fetching with complex conditions and custom join, returning as Pydantic model:
+
             ```python
-            users = await crud_user.get_multi_joined(
+            users = await user_crud.get_multi_joined(
                 db=session,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 join_model=Tier,
                 join_on=User.tier_id == Tier.id,
                 join_prefix="tier_",
-                join_schema_to_select=TierSchema,
+                join_schema_to_select=ReadTierSchema,
                 offset=0,
                 limit=10,
                 return_as_model=True,
@@ -1493,25 +1642,26 @@ class FastCRUD(
             ```
 
             Example using `joins_config` for multiple joins:
+
             ```python
             from fastcrud import JoinConfig
 
-            users = await crud_user.get_multi_joined(
+            users = await user_crud.get_multi_joined(
                 db=session,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 joins_config=[
                     JoinConfig(
                         model=Tier,
                         join_on=User.tier_id == Tier.id,
                         join_prefix="tier_",
-                        schema_to_select=TierSchema,
+                        schema_to_select=ReadTierSchema,
                         join_type="left",
                     ),
                     JoinConfig(
                         model=Department,
                         join_on=User.department_id == Department.id,
                         join_prefix="dept_",
-                        schema_to_select=DepartmentSchema,
+                        schema_to_select=ReadDepartmentSchema,
                         join_type="inner",
                     ),
                 ],
@@ -1582,24 +1732,26 @@ class FastCRUD(
             )
             ```
 
-            Fetching a list of projects, each with nested details of associated tasks and task creators, using nested joins:
+            Fetching a list of stories, each with nested details of associated tasks and task creators, using nested joins:
+
             ```python
-            projects = await crud.get_multi_joined(
+            story_crud = FastCRUD(Story)
+            stories = await story_crud.get_multi_joined(
                 db=session,
-                schema_to_select=ProjectSchema,
+                schema_to_select=ReadStorySchema,
                 joins_config=[
                     JoinConfig(
                         model=Task,
-                        join_on=Project.id == Task.project_id,
+                        join_on=Story.id == Task.story_id,
                         join_prefix="task_",
-                        schema_to_select=TaskSchema,
+                        schema_to_select=ReadTaskSchema,
                         join_type="left",
                     ),
                     JoinConfig(
                         model=User,
                         join_on=Task.creator_id == User.id,
                         join_prefix="creator_",
-                        schema_to_select=UserSchema,
+                        schema_to_select=ReadUserSchema,
                         join_type="left",
                         alias=aliased(User, name="task_creator"),
                     ),
@@ -1607,7 +1759,7 @@ class FastCRUD(
                 nest_joins=True,
                 offset=0,
                 limit=5,
-                sort_columns='project_name',
+                sort_columns='name',
                 sort_orders='asc',
             )
             ```
@@ -1787,29 +1939,31 @@ class FastCRUD(
             A dictionary containing the fetched rows under `"data"` key and the next cursor value under `"next_cursor"`.
 
         Examples:
-            Fetch the first set of records (e.g., the first page in an infinite scrolling scenario)
+            Fetch the first set of records (e.g., the first page in an infinite scrolling scenario):
+
             ```python
-            first_page = await crud.get_multi_by_cursor(
+            first_page = await user_crud.get_multi_by_cursor(
                 db,
                 limit=10,
-                sort_column='created_at',
+                sort_column='registration_date',
                 sort_order='desc',
             )
 
             # Fetch the next set of records using the cursor from the first page
             next_cursor = first_page['next_cursor']
-            second_page = await crud.get_multi_by_cursor(
+            second_page = await user_crud.get_multi_by_cursor(
                 db,
                 cursor=next_cursor,
                 limit=10,
-                sort_column='created_at',
+                sort_column='registration_date',
                 sort_order='desc',
             )
             ```
 
             Fetch records with age greater than 30 using cursor-based pagination:
+
             ```python
-            first_page = await crud.get_multi_by_cursor(
+            first_page = await user_crud.get_multi_by_cursor(
                 db,
                 limit=10,
                 sort_column='age',
@@ -1819,8 +1973,9 @@ class FastCRUD(
             ```
 
             Fetch records excluding a specific username using cursor-based pagination:
+
             ```python
-            first_page = await crud.get_multi_by_cursor(
+            first_page = await user_crud.get_multi_by_cursor(
                 db,
                 limit=10,
                 sort_column='username',
@@ -1905,21 +2060,24 @@ class FastCRUD(
 
         Examples:
             Update a user's email based on their ID:
+
             ```python
             await user_crud.update(db, {'email': 'new_email@example.com'}, id=1)
             ```
 
-            Update users' statuses to `"inactive"` where age is greater than 30 and allow updates to multiple records:
+            Update users to be inactive where age is greater than 30 and allow updates to multiple records:
+
             ```python
             await user_crud.update(
                 db,
-                {'status': 'inactive'},
+                {'is_active': False},
                 allow_multiple=True,
                 age__gt=30,
             )
             ```
 
             Update a user's username excluding specific user ID and prevent multiple updates:
+
             ```python
             await user_crud.update(
                 db,
@@ -1930,11 +2088,12 @@ class FastCRUD(
             ```
 
             Update a user's email and return the updated record as a Pydantic model instance:
+
             ```python
-            await user_crud.update(
+            user = await user_crud.update(
                 db,
                 {'email': 'new_email@example.com'},
-                schema_to_select=UserSchema,
+                schema_to_select=ReadUserSchema,
                 return_as_model=True,
                 id=1,
             )
@@ -1942,7 +2101,7 @@ class FastCRUD(
 
             Update a user's email and return the updated record as a dictionary:
             ```python
-            await user_crud.update(
+            user = await user_crud.update(
                 db,
                 {'email': 'new_email@example.com'},
                 return_columns=['id', 'email'],
@@ -2067,11 +2226,13 @@ class FastCRUD(
 
         Examples:
             Delete a user based on their ID:
+
             ```python
             await user_crud.db_delete(db, id=1)
             ```
 
             Delete users older than 30 years and allow deletion of multiple records:
+
             ```python
             await user_crud.db_delete(
                 db,
@@ -2081,6 +2242,7 @@ class FastCRUD(
             ```
 
             Delete a user with a specific username, ensuring only one record is deleted:
+
             ```python
             await user_crud.db_delete(
                 db,
@@ -2129,11 +2291,13 @@ class FastCRUD(
 
         Examples:
             Soft delete a specific user by ID:
+
             ```python
             await user_crud.delete(db, id=1)
             ```
 
-            Hard delete users with account creation dates before 2020, allowing deletion of multiple records:
+            Soft delete users with account registration dates before 2020, allowing deletion of multiple records:
+
             ```python
             await user_crud.delete(
                 db,
@@ -2143,6 +2307,7 @@ class FastCRUD(
             ```
 
             Soft delete a user with a specific email, ensuring only one record is deleted:
+
             ```python
             await user_crud.delete(
                 db,

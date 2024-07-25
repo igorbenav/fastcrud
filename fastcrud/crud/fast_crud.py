@@ -252,6 +252,62 @@ class FastCRUD(
                 --8<--
                 ```
 
+            ---
+
+            ??? example "`profile/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/profile/model.py:imports
+                fastcrud/examples/profile/model.py:model
+                --8<--
+                ```
+
+            ??? example "`profile/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/profile/schemas.py:imports
+                fastcrud/examples/profile/schemas.py:readschema
+                --8<--
+                ```
+
+            ??? example "`author/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/author/model.py:imports
+                fastcrud/examples/author/model.py:model
+                --8<--
+                ```
+
+            ??? example "`author/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/author/schemas.py:imports
+                fastcrud/examples/author/schemas.py:readschema
+                --8<--
+                ```
+
+            ??? example "`article/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/article/model.py:imports
+                fastcrud/examples/article/model.py:model
+                --8<--
+                ```
+
+            ??? example "`article/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/article/schemas.py:imports
+                fastcrud/examples/article/schemas.py:readschema
+                --8<--
+                ```
+
         Example 1: Basic Usage
         ----------------------
 
@@ -1422,28 +1478,32 @@ class FastCRUD(
             ```
 
             Example using one-to-one relationship:
+
             ```python
-            result = await crud_user.get_joined(
+            author_crud = FastCRUD(Author)
+            result = await author_crud.get_joined(
                 db=session,
-                schema_to_select=UserSchema,
+                schema_to_select=ReadAuthorSchema,
                 join_model=Profile,
-                join_on=User.profile_id == Profile.id,
-                join_schema_to_select=ProfileSchema,
+                join_on=Author.profile_id == Profile.id,
+                join_schema_to_select=ReadProfileSchema,
+                nest_joins=True,
                 relationship_type='one-to-one', # note that this is the default behavior
             )
             # Expect 'result' to have 'profile' as a nested dictionary
             ```
 
             Example using one-to-many relationship:
+
             ```python
-            result = await crud_user.get_joined(
+            result = await author_crud.get_joined(
                 db=session,
-                schema_to_select=UserSchema,
-                join_model=Post,
-                join_on=User.id == Post.user_id,
-                join_schema_to_select=PostSchema,
-                relationship_type='one-to-many',
+                schema_to_select=ReadAuthorSchema,
+                join_model=Article,
+                join_on=Author.id == Article.author_id,
+                join_schema_to_select=ReadArticleSchema,
                 nest_joins=True,
+                relationship_type='one-to-many',
             )
             # Expect 'result' to have 'posts' as a nested list of dictionaries
             ```
@@ -1768,36 +1828,40 @@ class FastCRUD(
             )
             ```
 
-        Example using one-to-one relationship:
-        ```python
-        users = await crud_user.get_multi_joined(
-            db=session,
-            schema_to_select=UserSchema,
-            join_model=Profile,
-            join_on=User.profile_id == Profile.id,
-            join_schema_to_select=ProfileSchema,
-            offset=0,
-            limit=10,
-            relationship_type='one-to-one', # note that this is the default behavior
-        )
-        # Expect 'profile' to be nested as a dictionary under each user
-        ```
+            Example using one-to-one relationship:
 
-        Example using one-to-many relationship:
-        ```python
-        users = await crud_user.get_multi_joined(
-            db=session,
-            schema_to_select=UserSchema,
-            join_model=Post,
-            join_on=User.id == Post.user_id,
-            join_schema_to_select=PostSchema,
-            nest_joins=True,
-            offset=0,
-            limit=10,
-            relationship_type='one-to-many',
-        )
-        # Expect 'posts' to be nested as a list of dictionaries under each user
-        ```
+            ```python
+            author_crud = FastCRUD(Author)
+            results = await author_crud.get_multi_joined(
+                db=session,
+                schema_to_select=ReadAuthorSchema,
+                join_model=Profile,
+                join_on=Author.profile_id == Profile.id,
+                join_schema_to_select=ReadProfileSchema,
+                nest_joins=True,
+                offset=0,
+                limit=10,
+                relationship_type='one-to-one', # note that this is the default behavior
+            )
+            # Expect 'profile' to be nested as a dictionary under each user
+            ```
+
+            Example using one-to-many relationship:
+
+            ```python
+            results = await author_crud.get_multi_joined(
+                db=session,
+                schema_to_select=ReadAuthorSchema,
+                join_model=Article,
+                join_on=Author.id == Article.author_id,
+                join_schema_to_select=ReadArticleSchema,
+                nest_joins=True,
+                offset=0,
+                limit=10,
+                relationship_type='one-to-many',
+            )
+            # Expect 'posts' to be nested as a list of dictionaries under each user
+            ```
         """
         if joins_config and (
             join_model

@@ -104,6 +104,51 @@ class FastCRUD(
             Soft deletes a record if it has an `"is_deleted"` attribute (or other attribute as defined by `is_deleted_column`); otherwise, performs a hard delete.
 
     Examples:
+            ??? example "`customer/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/customer/model.py:imports
+                fastcrud/examples/customer/model.py:model
+                --8<--
+                ```
+
+            ??? example "`product/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/product/model.py:imports
+                fastcrud/examples/product/model.py:model
+                --8<--
+                ```
+
+            ??? example "`product/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/product/schemas.py:imports
+                fastcrud/examples/product/schemas.py:readschema
+                --8<--
+                ```
+
+            ??? example "`order/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/order/model.py:imports
+                fastcrud/examples/order/model.py:model
+                --8<--
+                ```
+
+            ??? example "`order/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/order/schemas.py:imports
+                fastcrud/examples/order/schemas.py:readschema
+                --8<--
+                ```
+
         Example 1: Basic Usage
         ----------------------
         Create a FastCRUD instance for a `User` model and perform basic CRUD operations.
@@ -129,7 +174,9 @@ class FastCRUD(
 
         Example 2: Advanced Filtering and Pagination
         --------------------------------------------
+
         Use advanced filtering, sorting, and pagination for fetching records.
+
         ```python
         product_crud = FastCRUD(Product)
         products = await product_crud.get_multi(
@@ -143,15 +190,17 @@ class FastCRUD(
 
         Example 3: Join Operations with Custom Schemas
         ----------------------------------------------
+
         Perform join operations between two models using custom schemas for selection.
+
         ```python
         order_crud = FastCRUD(Order)
         orders = await order_crud.get_multi_joined(
             db,
-            schema_to_select=OrderReadSchema,
+            schema_to_select=ReadOrderSchema,
             join_model=Product,
             join_prefix="product_",
-            join_schema_to_select=ProductReadSchema,
+            join_schema_to_select=ReadProductSchema,
             offset=0,
             limit=5,
         )

@@ -106,6 +106,71 @@ def crud_router(
                 --8<--
                 ```
 
+            ---
+
+            ??? example "`customer/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/customer/model.py:imports
+                fastcrud/examples/customer/model.py:model
+                --8<--
+                ```
+
+            ??? example "`customer/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/customer/schemas.py:imports
+                fastcrud/examples/customer/schemas.py:createschema
+                fastcrud/examples/customer/schemas.py:readschema
+                fastcrud/examples/customer/schemas.py:updateschema
+                fastcrud/examples/customer/schemas.py:deleteschema
+                --8<--
+                ```
+
+            ??? example "`product/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/product/model.py:imports
+                fastcrud/examples/product/model.py:model
+                --8<--
+                ```
+
+            ??? example "`product/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/product/schemas.py:imports
+                fastcrud/examples/product/schemas.py:createschema
+                fastcrud/examples/product/schemas.py:readschema
+                fastcrud/examples/product/schemas.py:updateschema
+                fastcrud/examples/product/schemas.py:deleteschema
+                --8<--
+                ```
+
+            ??? example "`order/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/order/model.py:imports
+                fastcrud/examples/order/model.py:model
+                --8<--
+                ```
+
+            ??? example "`order/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/order/schemas.py:imports
+                fastcrud/examples/order/schemas.py:createschema
+                fastcrud/examples/order/schemas.py:readschema
+                fastcrud/examples/order/schemas.py:updateschema
+                fastcrud/examples/order/schemas.py:deleteschema
+                --8<--
+                ```
+
         ```python
         mymodel_router = crud_router(
             session=async_session,
@@ -137,9 +202,9 @@ def crud_router(
 
         Adding Delete Endpoints:
         ```python
-        router = crud_router(
+        product_router = crud_router(
             session=async_session,
-            model=ProductModel,
+            model=Product,
             create_schema=CreateProductSchema,
             update_schema=UpdateProductSchema,
             delete_schema=DeleteProductSchema,
@@ -150,12 +215,19 @@ def crud_router(
 
         Customizing Path and Tags:
         ```python
-        router = crud_router(
+        OrderCRUD = FastCRUD[
+            Order,
+            CreateOrderSchema,
+            UpdateOrderSchema,
+            UpdateOrderSchema,
+            DeleteOrderSchema,
+        ]
+        order_router = crud_router(
             session=async_session,
-            model=OrderModel,
+            model=Order,
             create_schema=CreateOrderSchema,
             update_schema=UpdateOrderSchema,
-            crud=CRUDOrderModel(OrderModel),
+            crud=OrderCRUD(Order),
             path="/orders",
             tags=["Orders", "Sales"],
         )
@@ -163,22 +235,36 @@ def crud_router(
 
         Integrating Multiple Models:
         ```python
+        ProductCRUD = FastCRUD[
+            Product,
+            CreateProductSchema,
+            UpdateProductSchema,
+            UpdateProductSchema,
+            DeleteProductSchema,
+        ]
         product_router = crud_router(
             session=async_session,
-            model=ProductModel,
+            model=Product,
             create_schema=CreateProductSchema,
             update_schema=UpdateProductSchema,
-            crud=CRUDProductModel(ProductModel),
+            crud=ProductCRUD(Product),
             path="/products",
             tags=["Inventory"],
         )
 
+        CustomerCRUD = FastCRUD[
+            Customer,
+            CreateCustomerSchema,
+            UpdateCustomerSchema,
+            UpdateCustomerSchema,
+            DeleteCustomerSchema,
+        ]
         customer_router = crud_router(
             session=async_session,
-            model=CustomerModel,
+            model=Customer,
             create_schema=CreateCustomerSchema,
             update_schema=UpdateCustomerSchema,
-            crud=CRUDCustomerModel(CustomerModel),
+            crud=CustomerCRUD(Customer),
             path="/customers",
             tags=["CRM"],
         )

@@ -82,8 +82,6 @@ def crud_router(
         ValueError: If both `included_methods` and `deleted_methods` are provided.
 
     Examples:
-        Basic Setup:
-
         ??? example "Models and Schemas Used Below"
 
             ??? example "`mymodel/model.py`"
@@ -170,6 +168,8 @@ def crud_router(
                 fastcrud/examples/order/schemas.py:deleteschema
                 --8<--
                 ```
+
+        Basic Setup:
 
         ```python
         mymodel_router = crud_router(

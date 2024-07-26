@@ -101,6 +101,7 @@ class EndpointCreator:
         ```
 
         With Custom Dependencies:
+
         ```python
         from fastapi.security import OAuth2PasswordBearer
 
@@ -116,6 +117,7 @@ class EndpointCreator:
         ```
 
         Selective Endpoint Creation (inclusion):
+
         ```python
         # Only create 'create' and 'read' endpoints
         endpoint_creator.add_routes_to_router(
@@ -124,6 +126,7 @@ class EndpointCreator:
         ```
 
         Selective Endpoint Creation (deletion):
+
         ```python
         # Create all but 'update' and 'delete' endpoints
         endpoint_creator.add_routes_to_router(
@@ -132,10 +135,11 @@ class EndpointCreator:
         ```
 
         Integrating with Multiple Models:
-        ```python
-        # Assuming definitions for OtherModel, CRUDOtherModel, etc.
 
-        other_model_crud = CRUDOtherModel(OtherModel)
+        ```python
+        # Assuming definitions for OtherModel, OtherModelCRUD, etc.
+
+        other_model_crud = OtherModelCRUD(OtherModel)
         other_endpoint_creator = EndpointCreator(
             session=async_session,
             model=OtherModel,
@@ -148,6 +152,7 @@ class EndpointCreator:
         ```
 
         Customizing Endpoint Names:
+
         ```python
         endpoint_creator = EndpointCreator(
             session=async_session,
@@ -167,6 +172,7 @@ class EndpointCreator:
         ```
 
         Using `filter_config` with `dict`:
+
         ```python
         from fastapi import FastAPI
         from fastcrud import EndpointCreator, FilterConfig
@@ -196,6 +202,7 @@ class EndpointCreator:
         ```
 
         Using `filter_config` with keyword arguments:
+
         ```python
         from fastapi import FastAPI
         from fastcrud import EndpointCreator, FilterConfig
@@ -485,6 +492,7 @@ class EndpointCreator:
 
         Examples:
             Selective Endpoint Creation:
+
             ```python
             # Only create 'create' and 'read' endpoints
             endpoint_creator.add_routes_to_router(
@@ -493,6 +501,7 @@ class EndpointCreator:
             ```
 
             Excluding Specific Endpoints:
+
             ```python
             # Create all endpoints except 'delete' and 'db_delete'
             endpoint_creator.add_routes_to_router(
@@ -501,6 +510,7 @@ class EndpointCreator:
             ```
 
             With Custom Dependencies and Selective Endpoints:
+
             ```python
             def get_current_user(...):
                 ...

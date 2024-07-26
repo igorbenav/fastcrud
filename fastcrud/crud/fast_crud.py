@@ -208,7 +208,9 @@ class FastCRUD(
 
         Example 4: Cursor Pagination
         ----------------------------
+
         Implement cursor-based pagination for efficient data retrieval in large datasets.
+
         ```python
         class Comment(Base):
             id = Column(Integer, primary_key=True)

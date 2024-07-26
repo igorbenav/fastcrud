@@ -473,7 +473,7 @@ class FastCRUD(
         schema_to_select: Optional[type[BaseModel]] = None,
         sort_columns: Optional[Union[str, list[str]]] = None,
         sort_orders: Optional[Union[str, list[str]]] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> Select:
         """
         Constructs a SQL Alchemy `Select` statement with optional column selection, filtering, and sorting.

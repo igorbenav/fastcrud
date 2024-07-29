@@ -6,10 +6,6 @@ This section of the documentation explains how to use the `crud_router` utility 
 
 Before proceeding, ensure you have FastAPI and FastCRUD installed in your environment. FastCRUD streamlines interactions with the database using SQLAlchemy models and Pydantic schemas.
 
-!!! WARNING
-
-    For now, your primary column in the database model must be named `id`.
-
 ---
 
 ## Using `crud_router`

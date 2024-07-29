@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#contributing-to-fastapi-boilerplate" class="md-skip">
+        <a href="#contributing-to-fastcrud" class="md-skip">
           Skip to content
         </a>
       
@@ -1135,24 +1135,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#using-pre-commit-for-better-code-quality" class="md-nav__link">
-    <span class="md-ellipsis">
-      Using pre-commit for Better Code Quality
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#additional-notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Additional Notes
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1383,24 +1365,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#using-pre-commit-for-better-code-quality" class="md-nav__link">
-    <span class="md-ellipsis">
-      Using pre-commit for Better Code Quality
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#additional-notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Additional Notes
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1466,26 +1430,22 @@
   
 
 
-<h1 id="contributing-to-fastapi-boilerplate">Contributing to FastAPI-boilerplate<a class="headerlink" href="#contributing-to-fastapi-boilerplate" title="Permanent link">&para;</a></h1>
-<p>Thank you for your interest in contributing to FastAPI-boilerplate! This guide is meant to make it easy for you to get started.
-Contributions are appreciated, even if just reporting bugs, documenting stuff or answering questions. To contribute with a feature:</p>
+<h1 id="contributing-to-fastcrud">Contributing to FastCRUD<a class="headerlink" href="#contributing-to-fastcrud" title="Permanent link">&para;</a></h1>
+<p>Thank you for your interest in contributing to FastCRUD! This guide is meant to make it easy for you to get started.</p>
 <h2 id="setting-up-your-development-environment">Setting Up Your Development Environment<a class="headerlink" href="#setting-up-your-development-environment" title="Permanent link">&para;</a></h2>
 <h3 id="cloning-the-repository">Cloning the Repository<a class="headerlink" href="#cloning-the-repository" title="Permanent link">&para;</a></h3>
-<p>Start by forking and cloning the FastAPI-boilerplate repository:</p>
-<ol>
-<li><strong>Fork the Repository</strong>: Begin by forking the project repository. You can do this by visiting https://github.com/igormagalhaesr/FastAPI-boilerplate and clicking the "Fork" button.</li>
-<li><strong>Create a Feature Branch</strong>: Once you've forked the repo, create a branch for your feature by running <code>git checkout -b feature/fooBar</code>.</li>
-<li><strong>Testing Changes</strong>: Ensure that your changes do not break existing functionality by running tests. In the root folder, execute poetry run <code>python -m pytest</code> to run the tests.</li>
-</ol>
+<p>Start by forking and cloning the FastCRUD repository:</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/YOUR-GITHUB-USERNAME/fastcrud.git
+</span></code></pre></div>
 <h3 id="using-poetry-for-dependency-management">Using Poetry for Dependency Management<a class="headerlink" href="#using-poetry-for-dependency-management" title="Permanent link">&para;</a></h3>
-<p>FastAPI-boilerplate uses Poetry for managing dependencies. If you don't have Poetry installed, follow the instructions on the <a href="https://python-poetry.org/docs/">official Poetry website</a>.</p>
+<p>FastCRUD uses Poetry for managing dependencies. If you don't have Poetry installed, follow the instructions on the <a href="https://python-poetry.org/docs/">official Poetry website</a>.</p>
 <p>Once Poetry is installed, navigate to the cloned repository and install the dependencies:
-<div class="language-sh highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">cd</span><span class="w"> </span>FastAPI-boilerplate
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>poetry<span class="w"> </span>install
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>fastcrud
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>poetry<span class="w"> </span>install
 </span></code></pre></div></p>
 <h3 id="activating-the-virtual-environment">Activating the Virtual Environment<a class="headerlink" href="#activating-the-virtual-environment" title="Permanent link">&para;</a></h3>
 <p>Poetry creates a virtual environment for your project. Activate it using:</p>
-<div class="language-sh highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>poetry<span class="w"> </span>shell
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>poetry<span class="w"> </span>shell
 </span></code></pre></div>
 <h2 id="making-contributions">Making Contributions<a class="headerlink" href="#making-contributions" title="Permanent link">&para;</a></h2>
 <h3 id="coding-standards">Coding Standards<a class="headerlink" href="#coding-standards" title="Permanent link">&para;</a></h3>
@@ -1494,35 +1454,18 @@ Contributions are appreciated, even if just reporting bugs, documenting stuff or
 <li>Write meaningful tests for new features or bug fixes.</li>
 </ul>
 <h3 id="testing-with-pytest">Testing with Pytest<a class="headerlink" href="#testing-with-pytest" title="Permanent link">&para;</a></h3>
-<p>FastAPI-boilerplate uses pytest for testing. Run tests using:
-<div class="language-sh highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>poetry<span class="w"> </span>run<span class="w"> </span>pytest
+<p>FastCRUD uses pytest for testing. Run tests using:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>poetry<span class="w"> </span>run<span class="w"> </span>pytest
 </span></code></pre></div></p>
 <h3 id="linting">Linting<a class="headerlink" href="#linting" title="Permanent link">&para;</a></h3>
 <p>Use mypy for type checking:
-<div class="language-sh highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>mypy<span class="w"> </span>src
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mypy<span class="w"> </span>fastcrud
 </span></code></pre></div></p>
 <p>Use ruff for style:
-<div class="language-sh highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>ruff<span class="w"> </span>check<span class="w"> </span>--fix
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>ruff<span class="w"> </span>format
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>ruff<span class="w"> </span>check<span class="w"> </span>--fix
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>ruff<span class="w"> </span>format
 </span></code></pre></div></p>
 <p>Ensure your code passes linting before submitting.</p>
-<h3 id="using-pre-commit-for-better-code-quality">Using pre-commit for Better Code Quality<a class="headerlink" href="#using-pre-commit-for-better-code-quality" title="Permanent link">&para;</a></h3>
-<p>It helps in identifying simple issues before submission to code review. By running automated checks, pre-commit can ensure code quality and consistency.</p>
-<ol>
-<li><strong>Install Pre-commit</strong>:</li>
-<li><strong>Installation</strong>: Install pre-commit in your development environment. Use the command <code>pip install pre-commit</code>.</li>
-<li><strong>Setting Up Hooks</strong>: After installing pre-commit, set up the hooks with <code>pre-commit install</code>. This command will install hooks into your .git/ directory which will automatically check your commits for issues.</li>
-<li><strong>Committing Your Changes</strong>:
-   After making your changes, use <code>git commit -am 'Add some fooBar'</code> to commit them. Pre-commit will run automatically on your files when you commit, ensuring that they meet the required standards.
-   Note: If pre-commit identifies issues, it may block your commit. Fix these issues and commit again. This ensures that all contributions are of high quality.</li>
-<li><strong>Pushing Changes and Creating Pull Request</strong>:
-   Push your changes to the branch using <code>git push origin feature/fooBar</code>.
-   Visit your fork on GitHub and create a new Pull Request to the main repository.</li>
-</ol>
-<h3 id="additional-notes">Additional Notes<a class="headerlink" href="#additional-notes" title="Permanent link">&para;</a></h3>
-<p><strong>Stay Updated</strong>: Keep your fork updated with the main repository to avoid merge conflicts. Regularly fetch and merge changes from the upstream repository.
-<strong>Adhere to Project Conventions</strong>: Follow the coding style, conventions, and commit message guidelines of the project.
-<strong>Open Communication</strong>: Feel free to ask questions or discuss your ideas by opening an issue or in discussions.</p>
 <h2 id="submitting-your-contributions">Submitting Your Contributions<a class="headerlink" href="#submitting-your-contributions" title="Permanent link">&para;</a></h2>
 <h3 id="creating-a-pull-request">Creating a Pull Request<a class="headerlink" href="#creating-a-pull-request" title="Permanent link">&para;</a></h3>
 <p>After making your changes:</p>
@@ -1538,7 +1481,7 @@ Contributions are appreciated, even if just reporting bugs, documenting stuff or
 </ul>
 <h2 id="code-of-conduct">Code of Conduct<a class="headerlink" href="#code-of-conduct" title="Permanent link">&para;</a></h2>
 <p>Please adhere to our <a href="../CODE_OF_CONDUCT/">Code of Conduct</a> to maintain a welcoming and inclusive environment.</p>
-<p>Thank you for contributing to FastAPI-boilerplate🚀</p>
+<p>Thank you for contributing to FastCRUD🚀</p>
 
 
 

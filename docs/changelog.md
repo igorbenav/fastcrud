@@ -106,6 +106,7 @@ items = await item_crud.get_multi(
 )
 ```
 
+___
 ##### Returning Clauses in Update Operations
 
 ###### Description
@@ -157,6 +158,48 @@ updated_item_schema = await crud_items.update(
 # This returns the updated item data formatted as an ItemSchema model.
 ```
 
+___
+##### Bulk Upsert Operations with `upsert_multi`
+
+The `upsert_multi` method provides the ability to perform bulk upsert operations, which are optimized for different SQL dialects.
+
+###### Changes
+- **Dialect-Optimized SQL**: Uses the most efficient SQL commands based on the database's SQL dialect.
+- **Support for Multiple Dialects**: Includes custom implementations for PostgreSQL, SQLite, and MySQL, with appropriate handling for each's capabilities and limitations.
+
+###### Usage Example
+
+###### Upserting Multiple Records
+
+```python
+from fastcrud import FastCRUD
+from .models.item import Item
+from .schemas.item import ItemCreateSchema, ItemSchema
+from .database import session as db
+
+crud_items = FastCRUD(Item)
+items = await crud_items.upsert_multi(
+    db=db,
+    instances=[
+        ItemCreateSchema(price=9.99),
+    ],
+    schema_to_select=ItemSchema,
+    return_as_model=True,
+)
+# This will return the upserted data in the form of ItemSchema.
+```
+
+###### Implementation Details
+
+`upsert_multi` handles different database dialects:
+- **PostgreSQL**: Uses `ON CONFLICT DO UPDATE`.
+- **SQLite**: Utilizes `ON CONFLICT DO UPDATE`.
+- **MySQL**: Implements `ON DUPLICATE KEY UPDATE`.
+
+###### Notes
+- MySQL and MariaDB do not support certain advanced features used in other dialects, such as returning values directly after an insert or update operation. This limitation is clearly documented to prevent misuse.
+
+___
 
 
 #### New Contributors

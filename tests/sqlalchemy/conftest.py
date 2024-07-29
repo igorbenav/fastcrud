@@ -285,7 +285,7 @@ class TaskRead(TaskReadSub):
     client: Optional[ClientRead]
 
 
-def is_docker_running() -> bool:
+def is_docker_running() -> bool:  # pragma: no cover
     try:
         DockerClient()
         return True
@@ -316,7 +316,7 @@ async def async_session(request: pytest.FixtureRequest) -> AsyncGenerator[AsyncS
     dialect_marker = request.node.get_closest_marker("dialect")
     dialect = dialect_marker.args[0] if dialect_marker else "sqlite"
     if dialect == "postgresql":
-        if not is_docker_running():
+        if not is_docker_running():  # pragma: no cover
             pytest.skip("Docker is required, but not running")
         with PostgresContainer(driver="psycopg") as pg:
             async with _async_session(
@@ -327,7 +327,7 @@ async def async_session(request: pytest.FixtureRequest) -> AsyncGenerator[AsyncS
         async with _async_session(url="sqlite+aiosqlite:///:memory:") as session:
             yield session
     elif dialect == "mysql":
-        if not is_docker_running():
+        if not is_docker_running():  # pragma: no cover
             pytest.skip("Docker is required, but not running")
         with MySqlContainer() as mysql:
             async with _async_session(
@@ -336,8 +336,8 @@ async def async_session(request: pytest.FixtureRequest) -> AsyncGenerator[AsyncS
                 )
             ) as session:
                 yield session
-    else:
-        raise ValueError(f"Unsupported dialect: {dialect}")
+    else:  # pragma: no cover
+        raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
 
 @pytest.fixture(scope="function")

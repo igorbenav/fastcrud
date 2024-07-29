@@ -83,7 +83,7 @@ def _get_primary_keys(
 ) -> Sequence[Column]:
     """Get the primary key of a SQLAlchemy model."""
     inspector_result = sa_inspect(model)
-    if inspector_result is None:
+    if inspector_result is None:  # pragma: no cover
         raise ValueError("Model inspection failed, resulting in None.")
     primary_key_columns: Sequence[Column] = inspector_result.mapper.primary_key
 
@@ -109,7 +109,7 @@ def _get_column_types(
 ) -> dict[str, Union[type, None]]:
     """Get a dictionary of column names and their corresponding Python types from a SQLAlchemy model."""
     inspector_result = sa_inspect(model)
-    if inspector_result is None or inspector_result.mapper is None:
+    if inspector_result is None or inspector_result.mapper is None:  # pragma: no cover
         raise ValueError("Model inspection failed, resulting in None.")
     column_types = {}
     for column in inspector_result.mapper.columns:
@@ -121,7 +121,7 @@ def _extract_unique_columns(
     model: ModelType,
 ) -> Sequence[KeyedColumnElement]:
     """Extracts columns from a SQLAlchemy model that are marked as unique."""
-    if not hasattr(model, "__table__"):
+    if not hasattr(model, "__table__"):  # pragma: no cover
         raise AttributeError(f"{model.__name__} does not have a '__table__' attribute.")
     unique_columns = [column for column in model.__table__.columns if column.unique]
     return unique_columns

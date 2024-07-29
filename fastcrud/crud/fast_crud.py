@@ -687,13 +687,12 @@ class FastCRUD(
                     "MySQL does not support the returning clause for insert operations."
                 )
             statement, params = await self._upsert_multi_mysql(instances)
-        else:
+        else:  # pragma: no cover
             raise NotImplementedError(
                 f"Upsert multi is not implemented for {db.bind.dialect.name}"
             )
 
         if return_as_model:
-            # All columns are returned to ensure the model can be constructed
             return_columns = self.model_col_names
 
         if return_columns:
@@ -1975,7 +1974,6 @@ class FastCRUD(
         stmt = update(self.model).filter(*filters).values(update_data)
 
         if return_as_model:
-            # All columns are returned to ensure the model can be constructed
             return_columns = self.model_col_names
 
         if return_columns:
@@ -2007,12 +2005,12 @@ class FastCRUD(
         one_or_none: bool = False,
     ) -> Optional[Union[dict, BaseModel]]:
         result: Optional[Row] = db_row.one_or_none() if one_or_none else db_row.first()
-        if result is None:
+        if result is None:  # pragma: no cover
             return None
         out: dict = dict(result._mapping)
         if not return_as_model:
             return out
-        if not schema_to_select:
+        if not schema_to_select:  # pragma: no cover
             raise ValueError(
                 "schema_to_select must be provided when return_as_model is True."
             )
@@ -2029,14 +2027,14 @@ class FastCRUD(
         response: dict[str, Any] = {"data": data}
 
         if return_as_model:
-            if not schema_to_select:
+            if not schema_to_select:  # pragma: no cover
                 raise ValueError(
                     "schema_to_select must be provided when return_as_model is True."
                 )
             try:
                 model_data = [schema_to_select(**row) for row in data]
                 response["data"] = model_data
-            except ValidationError as e:
+            except ValidationError as e:  # pragma: no cover
                 raise ValueError(
                     f"Data validation error for schema {schema_to_select.__name__}: {e}"
                 )

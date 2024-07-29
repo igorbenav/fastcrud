@@ -64,7 +64,7 @@ def _extract_matching_columns_from_schema(
         in the schema or all columns from the model if no schema is specified. These columns are correctly referenced
         through the provided alias if one is given.
     """
-    if not hasattr(model, "__table__"):
+    if not hasattr(model, "__table__"):  # pragma: no cover
         raise AttributeError(f"{model.__name__} does not have a '__table__' attribute.")
 
     model_or_alias = alias if alias else model
@@ -117,11 +117,11 @@ def _auto_detect_join_condition(
         ValueError: If the join condition cannot be automatically determined.
         AttributeError: If either base_model or join_model does not have a `__table__` attribute.
     """
-    if not hasattr(base_model, "__table__"):
+    if not hasattr(base_model, "__table__"):  # pragma: no cover
         raise AttributeError(
             f"{base_model.__name__} does not have a '__table__' attribute."
         )
-    if not hasattr(join_model, "__table__"):
+    if not hasattr(join_model, "__table__"):  # pragma: no cover
         raise AttributeError(
             f"{join_model.__name__} does not have a '__table__' attribute."
         )

@@ -76,12 +76,12 @@ curl -X 'GET' \
   -H 'accept: application/json'
 ```
 
-##### Warnings
+###### Warnings
 
 - **Deprecation Warning**: The `_read_paginated` endpoint is slated for deprecation. Developers should transition to using `_read_items` with the relevant pagination parameters.
 - **Configuration Change Alert**: In a future major release, default endpoint names in `EndpointCreator` will be empty strings by default, as discussed in [Issue #67](https://github.com/igorbenav/fastcrud/issues/67).
 
-##### Advanced Filters Documentation Update
+###### Advanced Filters Documentation Update
 
 Documentation for advanced filters has been expanded to include comprehensive examples of AND and OR clauses, enhancing the utility and accessibility of complex query constructions.
 
@@ -104,6 +104,57 @@ items = await item_crud.get_multi(
     price__lt=20,
     warranty_years__gt=2,
 )
+```
+
+##### Returning Clauses in Update Operations
+
+###### Description
+Users can now retrieve updated records immediately following an update operation. This feature streamlines the process, reducing the need for subsequent retrieval calls and increasing efficiency.
+
+###### Changes
+- **Return Columns**: Specify the columns to be returned after the update via the `return_columns` argument.
+- **Schema Selection**: Optionally select a Pydantic schema to format the returned data using the `schema_to_select` argument.
+- **Return as Model**: Decide if the returned data should be converted into a model using the `return_as_model` argument.
+- **Single or None**: Utilize the `one_or_none` argument to ensure that either a single record is returned or none, in case the conditions do not match any records.
+
+These additions are aligned with existing CRUD API functions, enhancing consistency across the library and making the new features intuitive for users.
+
+###### Usage Example
+
+###### Returning Updated Fields
+
+```python
+from fastcrud import FastCRUD
+from .models.item import Item
+from .database import session as db
+
+crud_items = FastCRUD(Item)
+updated_item = await crud_items.update(
+    db=db,
+    object={"price": 9.99},
+    price__lt=10,
+    return_columns=["price"]
+)
+# This returns the updated price of the item directly.
+```
+
+###### Returning Data as a Model
+
+```python
+from fastcrud import FastCRUD
+from .models.item import Item
+from .schemas.item import ItemSchema
+from .database import session as db
+
+crud_items = FastCRUD(Item)
+updated_item_schema = await crud_items.update(
+    db=db,
+    object={"price": 9.99},
+    price__lt=10,
+    schema_to_select=ItemSchema,
+    return_as_model=True
+)
+# This returns the updated item data formatted as an ItemSchema model.
 ```
 
 

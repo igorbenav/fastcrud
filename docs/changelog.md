@@ -5,6 +5,119 @@
 The Changelog documents all notable changes made to FastCRUD. This includes new features, bug fixes, and improvements. It's organized by version and date, providing a clear history of the library's development.
 
 ___
+## [0.14.0] - [Release Date]
+
+#### Added
+- Type-checking support for SQLModel types by @kdcokenny 🚀
+- Returning clause to update operations by @feluelle
+- Upsert_multi functionality by @feluelle
+- Simplified endpoint configurations by @JakNowy, streamlining path generation and merging pagination functionalities into a unified `_read_items` endpoint, promoting more efficient API structure and usage. Details in https://github.com/igorbenav/fastcrud/pull/105
+
+#### Improved
+- Comprehensive tests for paginated retrieval of items, maintaining 100% coverage
+- Docker client check before running tests that require Docker by @feluelle
+
+#### Fixed
+- Vulnerability associated with an outdated cryptography package
+- Return type inconsistency in async session fixtures by @slaarti
+
+#### Documentation Updates
+- Cleanup of documentation formatting by @slaarti
+- Replacement of the Contributing section in docs with an include to file in repo root by @slaarti
+- Correction of links to advanced filters in docstrings by @slaarti
+- Backfill of docstring fixes across various modules by @slaarti
+- Enhanced filter documentation with new AND and OR clause examples, making complex queries more accessible and understandable.
+
+#### Models and Schemas Enhancements
+- Introduction of simple and one-off models (Batch 1) by @slaarti
+- Expansion to include models and schemas for Customers, Products, and Orders (Batch 2) by @slaarti
+
+#### Code Refinements
+- Resolution of missing type specifications in kwargs by @slaarti
+- Collapsed space adjustments for models/schemas in `fast_crud.py` by @slaarti
+
+#### Warnings
+- **Deprecation Notice**: `_read_paginated` endpoint is set to be deprecated and merged into `_read_items`. Users are encouraged to transition to the latter, utilizing optional pagination parameters. Full details and usage instructions provided to ensure a smooth transition.
+- **Future Changes Alert**: Default endpoint names in `EndpointCreator` are anticipated to be set to empty strings in a forthcoming major release, aligning with simplification efforts. Refer to https://github.com/igorbenav/fastcrud/issues/67 for more information.
+
+#### Detailed Changes
+___
+##### Simplified Endpoint Configurations
+
+In an effort to streamline FastCRUD’s API, we have reconfigured endpoint paths to avoid redundancy (great work by @JakNowy). This change allows developers to specify empty strings for endpoint names in the `crud_router` setup, which prevents the generation of unnecessary `//` in the paths. The following configurations illustrate how endpoints can now be defined more succinctly:
+
+```python
+endpoint_names = {
+    "create": "",
+    "read": "",
+    "update": "",
+    "delete": "",
+    "db_delete": "",
+    "read_multi": "",
+    "read_paginated": "get_paginated",
+}
+```
+
+Moreover, the `_read_paginated` logic has been integrated into the `_read_items` endpoint. This integration means that pagination can now be controlled via `page` and `items_per_page` query parameters, offering a unified method for both paginated and non-paginated reads:
+
+- **Paginated read example**:
+
+```bash
+curl -X 'GET' \
+  'http://localhost:8000/users/get_multi?page=2&itemsPerPage=10' \
+  -H 'accept: application/json'
+```
+
+- **Non-paginated read example**:
+
+```bash
+curl -X 'GET' \
+  'http://localhost:8000/users/get_multi?offset=0&limit=100' \
+  -H 'accept: application/json'
+```
+
+##### Warnings
+
+- **Deprecation Warning**: The `_read_paginated` endpoint is slated for deprecation. Developers should transition to using `_read_items` with the relevant pagination parameters.
+- **Configuration Change Alert**: In a future major release, default endpoint names in `EndpointCreator` will be empty strings by default, as discussed in [Issue #67](https://github.com/igorbenav/fastcrud/issues/67).
+
+##### Advanced Filters Documentation Update
+
+Documentation for advanced filters has been expanded to include comprehensive examples of AND and OR clauses, enhancing the utility and accessibility of complex query constructions.
+
+- **OR clause example**:
+
+```python
+# Fetch items priced under $5 or above $20
+items = await item_crud.get_multi(
+    db=db,
+    price__or={'lt': 5, 'gt': 20},
+)
+```
+
+- **AND clause example**:
+
+```python
+# Fetch items priced under $20 and over 2 years of warranty
+items = await item_crud.get_multi(
+    db=db,
+    price__lt=20,
+    warranty_years__gt=2,
+)
+```
+
+
+
+#### New Contributors
+- @kdcokenny made their first contribution 🌟
+- @feluelle made their first contribution 🌟
+
+**Full Changelog**: [View the full changelog](https://github.com/igorbenav/fastcrud/compare/v0.13.1...v0.14.0)
+
+
+
+
+___
 ## [0.13.1] - Jun 22, 2024
 
 #### Added

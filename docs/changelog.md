@@ -5,7 +5,7 @@
 The Changelog documents all notable changes made to FastCRUD. This includes new features, bug fixes, and improvements. It's organized by version and date, providing a clear history of the library's development.
 
 ___
-## [0.14.0] - [Release Date]
+## [0.14.0] - Jul 29, 2024
 
 #### Added
 - Type-checking support for SQLModel types by @kdcokenny 🚀
@@ -199,9 +199,6 @@ items = await crud_items.upsert_multi(
 ###### Notes
 - MySQL and MariaDB do not support certain advanced features used in other dialects, such as returning values directly after an insert or update operation. This limitation is clearly documented to prevent misuse.
 
-___
-
-
 #### New Contributors
 - @kdcokenny made their first contribution 🌟
 - @feluelle made their first contribution 🌟
@@ -209,9 +206,6 @@ ___
 **Full Changelog**: [View the full changelog](https://github.com/igorbenav/fastcrud/compare/v0.13.1...v0.14.0)
 
 
-
-
-___
 ## [0.13.1] - Jun 22, 2024
 
 #### Added

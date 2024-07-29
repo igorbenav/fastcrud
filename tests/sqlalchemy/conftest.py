@@ -22,6 +22,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.sql import func
 from testcontainers.postgres import PostgresContainer
 from testcontainers.mysql import MySqlContainer
+from testcontainers.core.docker_client import DockerClient
 
 from fastcrud.crud.fast_crud import FastCRUD
 from fastcrud.endpoint.crud_router import crud_router
@@ -284,6 +285,14 @@ class TaskRead(TaskReadSub):
     client: Optional[ClientRead]
 
 
+def is_docker_running() -> bool:
+    try:
+        DockerClient()
+        return True
+    except Exception:
+        return False
+
+
 @asynccontextmanager
 async def _async_session(url: str) -> AsyncGenerator[AsyncSession]:
     async_engine = create_async_engine(url, echo=True, future=True)
@@ -307,6 +316,8 @@ async def async_session(request: pytest.FixtureRequest) -> AsyncGenerator[AsyncS
     dialect_marker = request.node.get_closest_marker("dialect")
     dialect = dialect_marker.args[0] if dialect_marker else "sqlite"
     if dialect == "postgresql":
+        if not is_docker_running():
+            pytest.skip("Docker is required, but not running")
         with PostgresContainer(driver="psycopg") as pg:
             async with _async_session(
                 url=pg.get_connection_url(host=pg.get_container_host_ip())
@@ -316,6 +327,8 @@ async def async_session(request: pytest.FixtureRequest) -> AsyncGenerator[AsyncS
         async with _async_session(url="sqlite+aiosqlite:///:memory:") as session:
             yield session
     elif dialect == "mysql":
+        if not is_docker_running():
+            pytest.skip("Docker is required, but not running")
         with MySqlContainer() as mysql:
             async with _async_session(
                 url=make_url(name_or_url=mysql.get_connection_url())._replace(

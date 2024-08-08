@@ -2152,14 +2152,17 @@ class FastCRUD(
             ```
         """
         filters = self._parse_filters(**kwargs)
+        has_deleted_at_col = hasattr(db_row, self.deleted_at_column)
         if db_row:
-            if hasattr(db_row, self.is_deleted_column) and hasattr(
-                db_row, self.deleted_at_column
-            ):
+            has_any_col_updated = False
+            if hasattr(db_row, self.is_deleted_column):
                 setattr(db_row, self.is_deleted_column, True)
+                has_any_col_updated = True
+            if has_deleted_at_col:
                 setattr(db_row, self.deleted_at_column, datetime.now(timezone.utc))
-                if commit:
-                    await db.commit()
+                has_any_col_updated = True
+            if commit and has_any_col_updated:
+                await db.commit()
             else:
                 await db.delete(db_row)
             if commit:
@@ -2178,7 +2181,10 @@ class FastCRUD(
             update_stmt = (
                 update(self.model)
                 .filter(*filters)
-                .values(is_deleted=True, deleted_at=datetime.now(timezone.utc))
+                .values(
+                    is_deleted=True,
+                    **({self.deleted_at_column: datetime.now(timezone.utc)} if has_deleted_at_col else {}),
+                )
             )
             await db.execute(update_stmt)
         else:

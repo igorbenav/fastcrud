@@ -318,7 +318,7 @@ class FastCRUD(
                         for or_key, or_value in value.items()
                         if (
                             sqlalchemy_filter := self._get_sqlalchemy_filter(
-                                or_key, value
+                                or_key, or_value
                             )
                         )
                         is not None
@@ -327,7 +327,11 @@ class FastCRUD(
                 else:
                     sqlalchemy_filter = self._get_sqlalchemy_filter(op, value)
                     if sqlalchemy_filter:
-                        filters.append(sqlalchemy_filter(column)(value))
+                        filters.append(
+                            sqlalchemy_filter(column)(value)
+                            if op != "between"
+                            else sqlalchemy_filter(column)(*value)
+                        )
             else:
                 column = getattr(model, key, None)
                 if column is not None:

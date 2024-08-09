@@ -169,6 +169,107 @@ def crud_router(
                 --8<--
                 ```
 
+            ---
+
+            ??? example "`tier/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/tier/model.py:imports
+                fastcrud/examples/tier/model.py:model
+                --8<--
+                ```
+
+            ??? example "`tier/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/tier/schemas.py:imports
+                fastcrud/examples/tier/schemas.py:readschema
+                --8<--
+                ```
+
+            ??? example "`department/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/department/model.py:imports
+                fastcrud/examples/department/model.py:model
+                --8<--
+                ```
+
+            ??? example "`department/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/department/schemas.py:imports
+                fastcrud/examples/department/schemas.py:readschema
+                --8<--
+                ```
+
+            ??? example "`user/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/user/model.py:imports
+                fastcrud/examples/user/model.py:model
+                --8<--
+                ```
+
+            ??? example "`user/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/user/schemas.py:imports
+                fastcrud/examples/user/schemas.py:createschema
+                fastcrud/examples/user/schemas.py:readschema
+                fastcrud/examples/user/schemas.py:updateschema
+                fastcrud/examples/user/schemas.py:deleteschema
+                --8<--
+                ```
+
+            ??? example "`story/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/story/model.py:imports
+                fastcrud/examples/story/model.py:model
+                --8<--
+                ```
+
+            ??? example "`story/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/story/schemas.py:imports
+                fastcrud/examples/story/schemas.py:createschema
+                fastcrud/examples/story/schemas.py:readschema
+                fastcrud/examples/story/schemas.py:updateschema
+                fastcrud/examples/story/schemas.py:deleteschema
+                --8<--
+                ```
+
+            ??? example "`task/model.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/task/model.py:imports
+                fastcrud/examples/task/model.py:model
+                --8<--
+                ```
+
+            ??? example "`task/schemas.py`"
+
+                ```python
+                --8<--
+                fastcrud/examples/task/schemas.py:imports
+                fastcrud/examples/task/schemas.py:createschema
+                fastcrud/examples/task/schemas.py:readschema
+                fastcrud/examples/task/schemas.py:updateschema
+                fastcrud/examples/task/schemas.py:deleteschema
+                --8<--
+                ```
+
         Basic Setup:
 
         ```python
@@ -183,14 +284,15 @@ def crud_router(
         ```
 
         With Custom Dependencies:
+
         ```python
         def get_current_user(token: str = Depends(oauth2_scheme)):
             # Implement user retrieval logic
             return ...
 
-        router = crud_router(
+        user_router = crud_router(
             session=async_session,
-            model=UserModel,
+            model=User,
             create_schema=CreateUserSchema,
             update_schema=UpdateUserSchema,
             read_deps=[get_current_user],
@@ -339,10 +441,11 @@ def crud_router(
         ```
 
         Customizing Endpoint Names:
+
         ```python
-        router = crud_router(
+        task_router = crud_router(
             session=async_session,
-            model=TaskModel,
+            model=Task,
             create_schema=CreateTaskSchema,
             update_schema=UpdateTaskSchema,
             path="/tasks",

@@ -6,20 +6,14 @@ FastCRUD offers a flexible and powerful approach to handling CRUD operations in 
 
 Note that when initializing `FastCRUD`, assuming you have a model like:
 
-```python
-from sqlalchemy import Boolean, Column, DateTime, Integer, String
-from sqlalchemy.orm import DeclarativeBase
+???+ example "Simplified `user/model.py`"
 
-class Base(DeclarativeBase):
-    pass
-
-class User(Base):
-    __tablename__ = "user"
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    archived = Column(Boolean, default=False)
-    archived_at = Column(DateTime)
-```
+    ```python
+    --8<--
+    fastcrud/examples/user/model.py:imports
+    fastcrud/examples/user/model.py:model_common
+    --8<--
+    ```
 
 !!! WARNING
 
@@ -32,25 +26,43 @@ You could just pass it to `FastCRUD`:
 ```python
 from fastcrud import FastCRUD
 
-crud_user = FastCRUD(User)
+user_crud = FastCRUD(User)
 ```
 
 But you also may want a more robust typing, for that purpose, you may also pass the relevant pydantic schemas in the following way:
 
+??? example "Simplified `user/schemas.py`"
+
+    ```python
+    --8<--
+    fastcrud/examples/user/schemas.py:imports
+    fastcrud/examples/user/schemas.py:createschema_common
+
+
+    fastcrud/examples/user/schemas.py:readschema_common
+
+
+    fastcrud/examples/user/schemas.py:updateschema_common
+
+
+    fastcrud/examples/user/schemas.py:deleteschema
+    --8<--
+    ```
+
 ```python
-from .models.user import User
-from .schemas.user import UserCreate, UserUpdate, UserUpdateInternal, UserDelete
+from .user.model import User
+from .user.schemas import CreateUserSchema, ReadUserSchema, UpdateUserSchema, DeleteUserSchema
 
 # Just pass None if you don't have one of the schemas
-CRUDUser = FastCRUD[User, UserCreate, UserUpdate, UserUpdateInternal, UserDelete]
+UserCRUD = FastCRUD[User, CreateUserSchema, UpdateUserSchema, None, DeleteUserSchema]
 ```
 
-Then you can initialize `CRUDUser` like you would any `FastCRUD` instance, but with the relevant types:
+Then you can initialize `UserCRUD` like you would any `FastCRUD` instance, but with the relevant types:
 
 ```python
-from .models.user import User
+from .user.model import User
 
-crud_user = CRUDUser(User)
+user_crud = UserCRUD(User)
 ```
 
 ## Allow Multiple Updates and Deletes
@@ -284,7 +296,108 @@ items = await item_crud.upsert_multi(
 
 Consider a scenario where you want to retrieve users along with their associated tier and department information. Here's how you can achieve this using `get_multi_joined`.
 
-Start by creating a list of the multiple models to be joined:
+Start by creating the models and schemas, followed by a description of how they're to be joined:
+
+??? example "Models and Schemas"
+
+    ??? example "`tier/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/tier/model.py:imports
+        fastcrud/examples/tier/model.py:model
+        --8<--
+        ```
+
+    ??? example "`tier/schemas.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/tier/schemas.py:imports
+        fastcrud/examples/tier/schemas.py:readschema
+        --8<--
+        ```
+
+    ??? example "`department/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/department/model.py:imports
+        fastcrud/examples/department/model.py:model
+        --8<--
+        ```
+
+    ??? example "`department/schemas.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/department/schemas.py:imports
+        fastcrud/examples/department/schemas.py:readschema
+        --8<--
+        ```
+
+    ??? example "`user/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/user/model.py:imports
+        fastcrud/examples/user/model.py:model
+        --8<--
+        ```
+
+    ??? example "`user/schemas.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/user/schemas.py:imports
+        fastcrud/examples/user/schemas.py:createschema
+        fastcrud/examples/user/schemas.py:readschema
+        fastcrud/examples/user/schemas.py:updateschema
+        fastcrud/examples/user/schemas.py:deleteschema
+        --8<--
+        ```
+
+    ??? example "`story/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/story/model.py:imports
+        fastcrud/examples/story/model.py:model
+        --8<--
+        ```
+
+    ??? example "`story/schemas.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/story/schemas.py:imports
+        fastcrud/examples/story/schemas.py:createschema
+        fastcrud/examples/story/schemas.py:readschema
+        fastcrud/examples/story/schemas.py:updateschema
+        fastcrud/examples/story/schemas.py:deleteschema
+        --8<--
+        ```
+
+    ??? example "`task/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/task/model.py:imports
+        fastcrud/examples/task/model.py:model
+        --8<--
+        ```
+
+    ??? example "`task/schemas.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/task/schemas.py:imports
+        fastcrud/examples/task/schemas.py:createschema
+        fastcrud/examples/task/schemas.py:readschema
+        fastcrud/examples/task/schemas.py:updateschema
+        fastcrud/examples/task/schemas.py:deleteschema
+        --8<--
+        ```
 
 ```python hl_lines="1 3-10 12-19" title="Join Configurations"
 from fastcrud import JoinConfig
@@ -294,7 +407,7 @@ joins_config = [
         model=Tier,
         join_on=User.tier_id == Tier.id,
         join_prefix="tier_",
-        schema_to_select=TierSchema,
+        schema_to_select=ReadTierSchema,
         join_type="left",
     ),
 
@@ -302,14 +415,14 @@ joins_config = [
         model=Department,
         join_on=User.department_id == Department.id,
         join_prefix="dept_",
-        schema_to_select=DepartmentSchema,
+        schema_to_select=ReadDepartmentSchema,
         join_type="inner",
     ),
 ]
 
 users = await user_crud.get_multi_joined(
     db=session,
-    schema_to_select=UserSchema,
+    schema_to_select=ReadUserSchema,
     offset=0,
     limit=10,
     sort_columns='username',
@@ -329,7 +442,7 @@ joins_config = [
 
 users = await user_crud.get_multi_joined(
     db=session,
-    schema_to_select=UserSchema,
+    schema_to_select=ReadUserSchema,
     offset=0,
     limit=10,
     sort_columns='username',
@@ -380,44 +493,44 @@ For both `get_joined` and `get_multi_joined` methods, when you need to join the 
 
 #### Example: Joining the Same Model Multiple Times
 
-Consider a task management application where tasks have both an owner and an assigned user, represented by the same `UserModel`. To fetch tasks with details of both users, we use aliases to join the `UserModel` twice, distinguishing between owners and assigned users.
+Consider a task management application where tasks have both an owner and an assigned user, represented by the same `User` model. To fetch tasks with details of both users, we use aliases to join the `User` model twice, distinguishing between owners and assigned users.
 
 Let's start by creating the aliases and passing them to the join configuration. Don't forget to use the alias for `join_on`:
 
 ```python hl_lines="4-5 11 15 19 23" title="Join Configurations with Aliases"
 from fastcrud import FastCRUD, JoinConfig, aliased
 
-# Create aliases for UserModel to distinguish between the owner and the assigned user
-owner_alias = aliased(UserModel, name="owner")
-assigned_user_alias = aliased(UserModel, name="assigned_user")
+# Create aliases for User to distinguish between the owner and the assigned user
+owner_alias = aliased(User, name="owner")
+assigned_user_alias = aliased(User, name="assigned_user")
 
 # Configure joins with aliases
 joins_config = [
     JoinConfig(
-        model=UserModel,
+        model=User,
         join_on=Task.owner_id == owner_alias.id,
         join_prefix="owner_",
-        schema_to_select=UserSchema,
+        schema_to_select=ReadUserSchema,
         join_type="inner",
         alias=owner_alias,  # Pass the aliased class instance
     ),
     JoinConfig(
-        model=UserModel,
+        model=User,
         join_on=Task.assigned_user_id == assigned_user_alias.id,
         join_prefix="assigned_",
-        schema_to_select=UserSchema,
+        schema_to_select=ReadUserSchema,
         join_type="inner",
         alias=assigned_user_alias,  # Pass the aliased class instance
     ),
 ]
 
-# Initialize your FastCRUD instance for TaskModel
-task_crud = FastCRUD(TaskModel)
+# Initialize your FastCRUD instance for Task
+task_crud = FastCRUD(Task)
 
 # Fetch tasks with joined user details
 tasks = await task_crud.get_multi_joined(
     db=session,
-    schema_to_select=TaskSchema,
+    schema_to_select=ReadTaskSchema,
     offset=0,
     limit=10,
     joins_config=joins_config,
@@ -436,20 +549,20 @@ joins_config = [
     ...
 ]
 
-# Initialize your FastCRUD instance for TaskModel
-task_crud = FastCRUD(TaskModel)
+# Initialize your FastCRUD instance for Task
+task_crud = FastCRUD(Task)
 
 # Fetch tasks with joined user details
 tasks = await task_crud.get_multi_joined(
     db=session,
-    schema_to_select=TaskSchema,
+    schema_to_select=ReadTaskSchema,
     offset=0,
     limit=10,
     joins_config=joins_config,
 )
 ```
 
-In this example, `owner_alias` and `assigned_user_alias` are created from `UserModel` to distinguish between the task's owner and the assigned user within the task management system. By using aliases, you can join the same model multiple times for different purposes in your queries, enhancing expressiveness and eliminating ambiguity.
+In this example, `owner_alias` and `assigned_user_alias` are created from `User` to distinguish between the task's owner and the assigned user within the task management system. By using aliases, you can join the same model multiple times for different purposes in your queries, enhancing expressiveness and eliminating ambiguity.
 
 ### Many-to-Many Relationships with `get_multi_joined`
 

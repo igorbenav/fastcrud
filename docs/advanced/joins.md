@@ -21,6 +21,53 @@ FastCRUD simplifies CRUD operations while offering capabilities for handling com
 
 ## Applying Joins in FastCRUD Methods
 
+??? example "Models - `Tier`, `Department`, `User`, `Story`, `Task`"
+
+    ??? example "`tier/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/tier/model.py:imports
+        fastcrud/examples/tier/model.py:model
+        --8<--
+        ```
+
+    ??? example "`department/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/department/model.py:imports
+        fastcrud/examples/department/model.py:model
+        --8<--
+        ```
+
+    ??? example "`user/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/user/model.py:imports
+        fastcrud/examples/user/model.py:model
+        --8<--
+        ```
+
+    ??? example "`story/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/story/model.py:imports
+        fastcrud/examples/story/model.py:model
+        --8<--
+        ```
+
+    ??? example "`task/model.py`"
+
+        ```python
+        --8<--
+        fastcrud/examples/task/model.py:imports
+        fastcrud/examples/task/model.py:model
+        --8<--
+        ```
+
 ### The `count` Method with Joins
 
 The `count` method can be enhanced with join operations to perform complex aggregate queries. While `count` primarily returns the number of records matching a given condition, introducing joins allows for counting records across related models based on specific relationships and conditions.
@@ -31,6 +78,9 @@ For join requirements, the `count` method can be invoked with join parameters pa
 
 ```python
 from fastcrud import JoinConfig
+
+task_crud = FastCRUD(Task)
+
 # Count the number of tasks assigned to users in a specific department
 task_count = await task_crud.count(
     db=db,
@@ -67,11 +117,11 @@ For simpler join requirements, FastCRUD allows specifying join parameters direct
 #### Examples of Simple Joining
 
 ```python
-# Fetch tasks with user details, specifying a left join
+# Fetch tasks with assigned user details, specifying a left join
 tasks_with_users = await task_crud.get_joined(
     db=db,
     join_model=User,
-    join_on=Task.user_id == User.id,
+    join_on=Task.assigned_user_id == User.id,
     join_type="left",
 )
 ```
@@ -80,25 +130,10 @@ tasks_with_users = await task_crud.get_joined(
 
 Note that by default, `FastCRUD` joins all the data and returns it in a single dictionary.
 
-Let's define two tables:
+Let's take two of the tables from above and join them with `FastCRUD`:
 
 ```python
-class User(Base):
-    __tablename__ = "user"
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    tier_id = Column(Integer, ForeignKey("tier.id"))
-
-
-class Tier(Base):
-    __tablename__ = "tier"
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True)
-```
-
-And join them with `FastCRUD`:
-
-```python
+user_crud = FastCRUD(User)
 user_tier = await user_crud.get_joined(
     db=db,
     join_model=Tier,
@@ -111,12 +146,12 @@ user_tier = await user_crud.get_joined(
 
 We'll get:
 
-```javascript
+```json
 {
     "id": 1,
     "name": "Example",
     "tier_id": 1,
-    "tier_name": "Free",
+    "tier_name": "Free"
 }
 ```
 
@@ -136,13 +171,13 @@ user_tier = await user_crud.get_joined(
 
 And you will get:
 
-```javascript
+```json
 {
     "id": 1,
     "name": "Example",
     "tier": {
         "id": 1,
-        "name": "Free",
+        "name": "Free"
     }
 }
 ```
@@ -159,14 +194,23 @@ When dealing with more complex join conditions, such as multiple joins, self-ref
 
 Example:
 
+??? example "`user/schemas.py` Excerpt"
+
+    ```python
+    --8<--
+    fastcrud/examples/user/schemas.py:readschema
+    --8<--
+    ```
+
 ```python
-# Fetch users with details from related departments and roles, using aliases for self-referential joins
+# Fetch users with details from related departments and tiers, using aliases for self-referential joins
 from fastcrud import aliased
+
 manager_alias = aliased(User)
 
 users = await user_crud.get_multi_joined(
     db=db,
-    schema_to_select=UserSchema,
+    schema_to_select=ReadUserSchema,
     joins_config=[
         JoinConfig(
             model=Department, 
@@ -174,9 +218,9 @@ users = await user_crud.get_multi_joined(
             join_prefix="dept_",
         ),
         JoinConfig(
-            model=Role, 
-            join_on=User.role_id == Role.id, 
-            join_prefix="role_",
+            model=Tier, 
+            join_on=User.tier_id == Tier.id, 
+            join_prefix="tier_",
         ),
         JoinConfig(
             model=User, 
@@ -187,7 +231,6 @@ users = await user_crud.get_multi_joined(
     ],
 )
 ```
-
 
 ### Handling One-to-One and One-to-Many Joins in FastCRUD
 
@@ -200,24 +243,10 @@ FastCRUD provides flexibility in handling one-to-one and one-to-many relationshi
 
 ##### Example
 
-Let's define two tables:
+Let's take two of the tables from above and join them with `FastCRUD`:
 
 ```python
-class User(Base):
-    __tablename__ = "user"
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    tier_id = Column(Integer, ForeignKey("tier.id"))
-
-class Tier(Base):
-    __tablename__ = "tier"
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True)
-```
-
-Fetch a user and their tier:
-
-```python
+user_crud = FastCRUD(User)
 user_tier = await user_crud.get_joined(
     db=db,
     join_model=Tier,

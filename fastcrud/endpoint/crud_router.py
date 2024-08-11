@@ -533,10 +533,10 @@ def crud_router(
         session=session,
         model=model,
         crud=crud,
-        create_schema=create_schema,
-        update_schema=update_schema,
+        create_schema=create_schema,  # type: ignore
+        update_schema=update_schema,  # type: ignore
         include_in_schema=include_in_schema,
-        delete_schema=delete_schema,
+        delete_schema=delete_schema,  # type: ignore
         path=path,
         tags=tags,
         is_deleted_column=is_deleted_column,

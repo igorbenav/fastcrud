@@ -49,6 +49,16 @@ async def test_parse_filters_not_contained_in(test_model):
 
 
 @pytest.mark.asyncio
+async def test_parse_filters_between_condition(test_model):
+    fast_crud = FastCRUD(test_model)
+    filters = fast_crud._parse_filters(category_id__between=[1, 5])
+    assert len(filters) == 1
+    assert (
+        str(filters[0]) == "test.category_id BETWEEN :category_id_1 AND :category_id_2"
+    )
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("operator", ("in", "not_in", "between"))
 async def test_parse_filters_raises_exception(test_model, operator: str):
     fast_crud = FastCRUD(test_model)

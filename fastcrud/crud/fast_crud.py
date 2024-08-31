@@ -2343,7 +2343,7 @@ class FastCRUD(
                 f"Expected exactly one record to delete, found {total_count}."
             )
 
-        update_values = {}
+        update_values: dict[str, Union[bool, datetime]] = {}
         if self.deleted_at_column in self.model_col_names:
             update_values[self.deleted_at_column] = datetime.now(timezone.utc)
         if self.is_deleted_column in self.model_col_names:

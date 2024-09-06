@@ -2359,16 +2359,22 @@ class FastCRUD(
                 f"Expected exactly one record to delete, found {total_count}."
             )
 
+        update_values: dict[str, Union[bool, datetime]] = {}
+        if self.deleted_at_column in self.model_col_names:
+            update_values[self.deleted_at_column] = datetime.now(timezone.utc)
         if self.is_deleted_column in self.model_col_names:
+            update_values[self.is_deleted_column] = True
+
+        if update_values:
             update_stmt = (
                 update(self.model)
                 .filter(*filters)
-                .values(is_deleted=True, deleted_at=datetime.now(timezone.utc))
+                .values(**update_values)
             )
             await db.execute(update_stmt)
-        else:
-            delete_stmt = delete(self.model).filter(*filters)
-            await db.execute(delete_stmt)
 
+        else:
+            delete_stmt = self.model.__table__.delete().where(*filters)
+            await db.execute(delete_stmt)
         if commit:
             await db.commit()

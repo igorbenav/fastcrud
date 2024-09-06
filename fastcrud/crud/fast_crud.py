@@ -834,6 +834,7 @@ class FastCRUD(
         return_columns: Optional[list[str]] = None,
         schema_to_select: Optional[type[BaseModel]] = None,
         return_as_model: bool = False,
+        update_override: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> Optional[Dict[str, Any]]:
         """
@@ -845,6 +846,7 @@ class FastCRUD(
             return_columns: Optional list of column names to return after the upsert operation.
             schema_to_select: Optional Pydantic schema for selecting specific columns. Required if return_as_model is True.
             return_as_model: If True, returns data as instances of the specified Pydantic model.
+            update_override: Optional dictionary to override the update values for the upsert operation.
             **kwargs: Filters to identify the record(s) to update on conflict, supporting advanced comparison operators for refined querying.
 
         Returns:
@@ -854,12 +856,18 @@ class FastCRUD(
             ValueError: If the MySQL dialect is used with filters, return_columns, schema_to_select, or return_as_model.
             NotImplementedError: If the database dialect is not supported for upsert multi.
         """
+        if update_override is None:
+            update_override = {}
         filters = self._parse_filters(**kwargs)
 
         if db.bind.dialect.name == "postgresql":
-            statement, params = await self._upsert_multi_postgresql(instances, filters)
+            statement, params = await self._upsert_multi_postgresql(
+                instances, filters, update_override
+            )
         elif db.bind.dialect.name == "sqlite":
-            statement, params = await self._upsert_multi_sqlite(instances, filters)
+            statement, params = await self._upsert_multi_sqlite(
+                instances, filters, update_override
+            )
         elif db.bind.dialect.name in ["mysql", "mariadb"]:
             if filters:
                 raise ValueError(
@@ -869,7 +877,9 @@ class FastCRUD(
                 raise ValueError(
                     "MySQL does not support the returning clause for insert operations."
                 )
-            statement, params = await self._upsert_multi_mysql(instances)
+            statement, params = await self._upsert_multi_mysql(
+                instances, update_override
+            )
         else:  # pragma: no cover
             raise NotImplementedError(
                 f"Upsert multi is not implemented for {db.bind.dialect.name}"
@@ -894,6 +904,7 @@ class FastCRUD(
         self,
         instances: list[Union[UpdateSchemaType, CreateSchemaType]],
         filters: list[ColumnElement],
+        update_set_override: dict[str, Any],
     ) -> tuple[Insert, list[dict]]:
         statement = postgresql.insert(self.model)
         statement = statement.on_conflict_do_update(
@@ -902,7 +913,8 @@ class FastCRUD(
                 column.name: getattr(statement.excluded, column.name)
                 for column in self.model.__table__.columns
                 if not column.primary_key and not column.unique
-            },
+            }
+            | update_set_override,
             where=and_(*filters) if filters else None,
         )
         params = [
@@ -914,6 +926,7 @@ class FastCRUD(
         self,
         instances: list[Union[UpdateSchemaType, CreateSchemaType]],
         filters: list[ColumnElement],
+        update_set_override: dict[str, Any],
     ) -> tuple[Insert, list[dict]]:
         statement = sqlite.insert(self.model)
         statement = statement.on_conflict_do_update(
@@ -922,7 +935,8 @@ class FastCRUD(
                 column.name: getattr(statement.excluded, column.name)
                 for column in self.model.__table__.columns
                 if not column.primary_key and not column.unique
-            },
+            }
+            | update_set_override,
             where=and_(*filters) if filters else None,
         )
         params = [
@@ -933,6 +947,7 @@ class FastCRUD(
     async def _upsert_multi_mysql(
         self,
         instances: list[Union[UpdateSchemaType, CreateSchemaType]],
+        update_set_override: dict[str, Any],
     ) -> tuple[Insert, list[dict]]:
         statement = mysql.insert(self.model)
         statement = statement.on_duplicate_key_update(
@@ -943,6 +958,7 @@ class FastCRUD(
                 and not column.unique
                 and column.name != self.deleted_at_column
             }
+            | update_set_override,
         )
         params = [
             self.model(**instance.model_dump()).__dict__ for instance in instances
@@ -2407,16 +2423,22 @@ class FastCRUD(
                 f"Expected exactly one record to delete, found {total_count}."
             )
 
+        update_values: dict[str, Union[bool, datetime]] = {}
+        if self.deleted_at_column in self.model_col_names:
+            update_values[self.deleted_at_column] = datetime.now(timezone.utc)
         if self.is_deleted_column in self.model_col_names:
+            update_values[self.is_deleted_column] = True
+
+        if update_values:
             update_stmt = (
                 update(self.model)
                 .filter(*filters)
-                .values(is_deleted=True, deleted_at=datetime.now(timezone.utc))
+                .values(**update_values)
             )
             await db.execute(update_stmt)
-        else:
-            delete_stmt = delete(self.model).filter(*filters)
-            await db.execute(delete_stmt)
 
+        else:
+            delete_stmt = self.model.__table__.delete().where(*filters)
+            await db.execute(delete_stmt)
         if commit:
             await db.commit()

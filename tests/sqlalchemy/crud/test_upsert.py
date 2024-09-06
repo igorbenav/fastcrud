@@ -73,6 +73,35 @@ async def test_upsert_successful(async_session, test_model, read_schema):
             {
                 "kwargs": {
                     "return_columns": ["id", "name"],
+                    "update_override": {"name": "New"},
+                },
+                "expected_result": {
+                    "data": [
+                        {
+                            "id": 1,
+                            "name": "New",
+                        }
+                    ]
+                },
+            },
+            marks=pytest.mark.dialect("postgresql"),
+            id="postgresql-dict-update-override",
+        ),
+        pytest.param(
+            {
+                "kwargs": {"return_columns": ["id", "name"]},
+                "expected_result": {
+                    "data": [
+                        {
+                            "id": 1,
+                            "name": "New Record",
+                        }
+                    ]
+                },
+            },
+            {
+                "kwargs": {
+                    "return_columns": ["id", "name"],
                     "name__match": "NewRecord",
                 },
                 "expected_result": {"data": []},
@@ -161,6 +190,35 @@ async def test_upsert_successful(async_session, test_model, read_schema):
             {
                 "kwargs": {
                     "return_columns": ["id", "name"],
+                    "update_override": {"name": "New"},
+                },
+                "expected_result": {
+                    "data": [
+                        {
+                            "id": 1,
+                            "name": "New",
+                        }
+                    ]
+                },
+            },
+            marks=pytest.mark.dialect("sqlite"),
+            id="sqlite-dict-update-override",
+        ),
+        pytest.param(
+            {
+                "kwargs": {"return_columns": ["id", "name"]},
+                "expected_result": {
+                    "data": [
+                        {
+                            "id": 1,
+                            "name": "New Record",
+                        }
+                    ]
+                },
+            },
+            {
+                "kwargs": {
+                    "return_columns": ["id", "name"],
                     "name__like": "NewRecord",
                 },
                 "expected_result": {"data": []},
@@ -207,6 +265,18 @@ async def test_upsert_successful(async_session, test_model, read_schema):
             },
             marks=pytest.mark.dialect("mysql"),
             id="mysql-none",
+        ),
+        pytest.param(
+            {
+                "kwargs": {},
+                "expected_result": None,
+            },
+            {
+                "kwargs": {"update_override": {"name": "New"}},
+                "expected_result": None,
+            },
+            marks=pytest.mark.dialect("mysql"),
+            id="mysql-dict-update-override",
         ),
     ],
 )

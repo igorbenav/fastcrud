@@ -308,29 +308,24 @@ The result will be:
 
 ##### Example
 
-To demonstrate a one-to-many relationship, let's assume `User` and `Post` tables:
+To demonstrate a one-to-many relationship, let's assume `Author` and `Article` tables:
 
 ```python
-class User(Base):
-    __tablename__ = "user"
-    id = Column(Integer, primary key=True)
-    name = Column(String)
-
-class Post(Base):
-    __tablename__ = "post"
-    id = Column(Integer, primary key=True)
-    user_id = Column(Integer, ForeignKey("user.id"))
-    content = Column(String)
+--8<--
+fastcrud/examples/author/model.py:model
+fastcrud/examples/article/model.py:model
+--8<--
 ```
 
 Fetch a user and all their posts:
 
 ```python
-user_posts = await user_crud.get_joined(
+author_crud = FastCRUD(Author)
+author_articles = await author_crud.get_joined(
     db=db,
-    join_model=Post,
-    join_on=User.id == Post.user_id,
-    join_prefix="post_",
+    join_model=Article,
+    join_on=Author.id == Article.author_id,
+    join_prefix="article_",
     join_type="left",
     nest_joins=True,
     id=1,
@@ -342,17 +337,19 @@ The result will be:
 ```json
 {
     "id": 1,
-    "name": "Example User",
-    "posts": [
+    "name": "Example Author",
+    "articles": [
         {
             "id": 101,
-            "user_id": 1,
-            "content": "First post content"
+            "author_id": 1,
+            "title": "First Article!",
+            "content": "First article content"
         },
         {
             "id": 102,
-            "user_id": 1,
-            "content": "Second post content"
+            "author_id": 1,
+            "title": "Second Article?",
+            "content": "Second article content"
         }
     ]
 }

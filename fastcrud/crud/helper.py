@@ -166,23 +166,30 @@ def _handle_one_to_one(nested_data, nested_key, nested_field, value):
         dict[str, Any]: The updated nested data dictionary.
 
     Examples:
+
         Input:
+
+        ```python
         nested_data = {
             'id': 1,
-            'name': 'Test User'
+            'name': 'Test Author',
         }
         nested_key = 'profile'
         nested_field = 'bio'
         value = 'This is a bio.'
+        ```
 
         Output:
+
+        ```json
         {
             'id': 1,
-            'name': 'Test User',
+            'name': 'Test Author',
             'profile': {
                 'bio': 'This is a bio.'
             }
         }
+        ```
     """
     if nested_key not in nested_data or not isinstance(nested_data[nested_key], dict):
         nested_data[nested_key] = {}
@@ -204,56 +211,69 @@ def _handle_one_to_many(nested_data, nested_key, nested_field, value):
         dict[str, Any]: The updated nested data dictionary.
 
     Examples:
+
         Input:
+
+        ```python
         nested_data = {
             'id': 1,
-            'name': 'Test User',
-            'posts': [
+            'name': 'Test Author',
+            'articles': [
                 {
-                    'title': 'First Post',
-                    'content': 'Content of the first post'
+                    'title': 'First Article',
+                    'content': 'Content of the first article!',
                 }
-            ]
+            ],
         }
-        nested_key = 'posts'
+        nested_key = 'articles'
         nested_field = 'title'
-        value = 'Second Post'
+        value = 'Second Article'
+        ```
 
         Output:
+
+        ```json
         {
             'id': 1,
-            'name': 'Test User',
-            'posts': [
+            'name': 'Test Author',
+            'articles': [
                 {
-                    'title': 'First Post',
-                    'content': 'Content of the first post'
+                    'title': 'First Article',
+                    'content': 'Content of the first article!'
                 },
                 {
-                    'title': 'Second Post'
+                    'title': 'Second Article'
                 }
             ]
         }
+        ```
 
         Input:
+
+        ```python
         nested_data = {
             'id': 1,
-            'name': 'Test User',
-            'posts': []
+            'name': 'Test Author',
+            'articles': [],
         }
-        nested_key = 'posts'
+        nested_key = 'articles'
         nested_field = 'title'
-        value = 'First Post'
+        value = 'First Article'
+        ```
 
         Output:
+
+        ```json
         {
             'id': 1,
-            'name': 'Test User',
-            'posts': [
+            'name': 'Test Author',
+            'articles': [
                 {
-                    'title': 'First Post'
+                    'title': 'First Article'
                 }
             ]
         }
+        ```
     """
     if nested_key not in nested_data or not isinstance(nested_data[nested_key], list):
         nested_data[nested_key] = []
@@ -286,13 +306,16 @@ def _nest_join_data(
         dict[str, Any]: A dictionary with nested structures for joined table data.
 
     Examples:
+
         Input:
+
+        ```python
         data = {
             'id': 1,
-            'title': 'Test Card',
+            'title': 'Test Author',
             'joined__articles_id': 1,
             'joined__articles_title': 'Article 1',
-            'joined__articles_card_id': 1
+            'joined__articles_author_id': 1
         }
 
         join_definitions = [
@@ -302,24 +325,30 @@ def _nest_join_data(
                 relationship_type='one-to-many',
             ),
         ]
+        ```
 
         Output:
+
+        ```json
         {
             'id': 1,
-            'title': 'Test Card',
+            'title': 'Test Author',
             'articles': [
                 {
                     'id': 1,
                     'title': 'Article 1',
-                    'card_id': 1
+                    'author_id': 1
                 }
             ]
         }
+        ```
 
         Input:
+
+        ```python
         data = {
             'id': 1,
-            'title': 'Test Card',
+            'title': 'Test Article',
             'joined__author_id': 1,
             'joined__author_name': 'Author 1'
         }
@@ -331,16 +360,20 @@ def _nest_join_data(
                 relationship_type='one-to-one',
             ),
         ]
+        ```
 
         Output:
+
+        ```json
         {
             'id': 1,
-            'title': 'Test Card',
+            'title': 'Test Article',
             'author': {
                 'id': 1,
                 'name': 'Author 1'
             }
         }
+        ```
     """
     if nested_data is None:
         nested_data = {}
@@ -434,53 +467,60 @@ def _nest_multi_join_data(
         Sequence[Union[dict, BaseModel]]: A list of dictionaries with nested structures for joined table data or Pydantic models.
 
     Example:
+
         Input:
+
+        ```python
         data = [
-            {'id': 1, 'title': 'Test Card', 'articles': [{'id': 1, 'title': 'Article 1', 'card_id': 1}]},
-            {'id': 2, 'title': 'Test Card 2', 'articles': [{'id': 2, 'title': 'Article 2', 'card_id': 2}]},
-            {'id': 2, 'title': 'Test Card 2', 'articles': [{'id': 3, 'title': 'Article 3', 'card_id': 2}]},
-            {'id': 3, 'title': 'Test Card 3', 'articles': [{'id': None, 'title': None, 'card_id': None}]}
+            {'id': 1, 'title': 'Test Author', 'articles': [{'id': 1, 'title': 'Article 1', 'author_id': 1}]},
+            {'id': 2, 'title': 'Test Author 2', 'articles': [{'id': 2, 'title': 'Article 2', 'author_id': 2}]},
+            {'id': 2, 'title': 'Test Author 2', 'articles': [{'id': 3, 'title': 'Article 3', 'author_id': 2}]},
+            {'id': 3, 'title': 'Test Author 3', 'articles': [{'id': None, 'title': None, 'author_id': None}]},
         ]
 
         joins_config = [
             JoinConfig(model=Article, join_prefix='articles_', relationship_type='one-to-many')
         ]
+        ```
 
         Output:
+
+        ```json
         [
             {
                 'id': 1,
-                'title': 'Test Card',
+                'title': 'Test Author',
                 'articles': [
                     {
                         'id': 1,
                         'title': 'Article 1',
-                        'card_id': 1
+                        'author_id': 1
                     }
                 ]
             },
             {
                 'id': 2,
-                'title': 'Test Card 2',
+                'title': 'Test Author 2',
                 'articles': [
                     {
                         'id': 2,
                         'title': 'Article 2',
-                        'card_id': 2
+                        'author_id': 2
                     },
                     {
                         'id': 3,
                         'title': 'Article 3',
-                        'card_id': 2
+                        'author_id': 2
                     }
                 ]
             },
             {
                 'id': 3,
-                'title': 'Test Card 3',
+                'title': 'Test Author 3',
                 'articles': []
             }
         ]
+        ```
     """
     pre_nested_data = {}
 

@@ -47,7 +47,7 @@ coverage = "^7.4.4"
 testcontainers = "^4.7.1"
 psycopg = "^3.2.1"
 aiomysql = "^0.2.0"
-cryptography = "^42.0.8"
+cryptography = "^43.0.1"
 
 [build-system]
 requires = ["poetry-core"]

@@ -2208,7 +2208,7 @@ class FastCRUD(
             update_data[self.updated_at_column] = datetime.now(timezone.utc)
 
         update_data_keys = set(update_data.keys())
-        model_columns = {column.name for column in inspect(self.model).c}
+        model_columns = {_column.name for _column in inspect(self.model).c}
         extra_fields = update_data_keys - model_columns
         if extra_fields:
             raise ValueError(f"Extra fields provided: {extra_fields}")
@@ -2430,11 +2430,7 @@ class FastCRUD(
             update_values[self.is_deleted_column] = True
 
         if update_values:
-            update_stmt = (
-                update(self.model)
-                .filter(*filters)
-                .values(**update_values)
-            )
+            update_stmt = update(self.model).filter(*filters).values(**update_values)
             await db.execute(update_stmt)
 
         else:

@@ -23,7 +23,6 @@ async def test_deleted_methods(
             "delete": "delete",
             "db_delete": "db_delete",
             "read_multi": "get_multi",
-            "read_paginated": "get_paginated",
         },
     )
 

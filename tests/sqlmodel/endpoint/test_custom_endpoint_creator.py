@@ -19,7 +19,6 @@ class CustomEndpointCreator(EndpointCreator):
         create_deps: list[Callable] = [],
         read_deps: list[Callable] = [],
         read_multi_deps: list[Callable] = [],
-        read_paginated_deps: list[Callable] = [],
         update_deps: list[Callable] = [],
         delete_deps: list[Callable] = [],
         db_delete_deps: list[Callable] = [],
@@ -30,7 +29,6 @@ class CustomEndpointCreator(EndpointCreator):
             create_deps,
             read_deps,
             read_multi_deps,
-            read_paginated_deps,
             update_deps,
             delete_deps,
             db_delete_deps,
@@ -66,7 +64,6 @@ async def test_custom_endpoint_creator(
             "delete": "delete",
             "db_delete": "db_delete",
             "read_multi": "get_multi",
-            "read_paginated": "get_paginated",
         },
     )
 

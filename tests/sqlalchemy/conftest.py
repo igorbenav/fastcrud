@@ -488,7 +488,6 @@ def client(
                 "delete": "delete",
                 "db_delete": "db_delete",
                 "read_multi": "get_multi",
-                "read_paginated": "get_paginated",
             },
         )
     )
@@ -510,7 +509,6 @@ def client(
                 "delete": "delete",
                 "db_delete": "db_delete",
                 "read_multi": "get_multi",
-                "read_paginated": "get_paginated",
             },
         )
     )
@@ -533,7 +531,6 @@ def client(
                 "delete": "delete",
                 "db_delete": "db_delete",
                 "read_multi": "get_multi",
-                "read_paginated": "get_paginated",
             },
         )
     )
@@ -565,7 +562,6 @@ def filtered_client(
                 "delete": "delete",
                 "db_delete": "db_delete",
                 "read_multi": "get_multi",
-                "read_paginated": "get_paginated",
             },
         )
     )
@@ -597,7 +593,6 @@ def dict_filtered_client(
                 "delete": "delete",
                 "db_delete": "db_delete",
                 "read_multi": "get_multi",
-                "read_paginated": "get_paginated",
             },
         )
     )
@@ -630,7 +625,6 @@ def invalid_filtered_client(
                 "delete": "delete",
                 "db_delete": "db_delete",
                 "read_multi": "get_multi",
-                "read_paginated": "get_paginated",
             },
         )
 
@@ -654,6 +648,5 @@ def endpoint_creator(test_model, async_session) -> EndpointCreator:
             "delete": "delete",
             "db_delete": "db_delete",
             "read_multi": "get_multi",
-            "read_paginated": "get_paginated",
         },
     )

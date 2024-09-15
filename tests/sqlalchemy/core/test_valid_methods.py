@@ -22,7 +22,6 @@ def test_crud_methods_default_methods():
         "create",
         "read",
         "read_multi",
-        "read_paginated",
         "update",
         "delete",
         "db_delete",

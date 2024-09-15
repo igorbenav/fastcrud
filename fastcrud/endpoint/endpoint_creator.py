@@ -1,6 +1,5 @@
 from typing import Type, Optional, Callable, Sequence, Union
 from enum import Enum
-import warnings
 
 from fastapi import Depends, Body, Query, APIRouter
 from pydantic import ValidationError
@@ -52,9 +51,9 @@ class EndpointCreator:
         deleted_at_column: Optional column name to use for storing the timestamp of a soft delete. Defaults to `"deleted_at"`.
         updated_at_column: Optional column name to use for storing the timestamp of an update. Defaults to `"updated_at"`.
         endpoint_names: Optional dictionary to customize endpoint names for CRUD operations. Keys are operation types
-                        (`"create"`, `"read"`, `"update"`, `"delete"`, `"db_delete"`, `"read_multi"`, `"read_paginated"`), and
+                        (`"create"`, `"read"`, `"update"`, `"delete"`, `"db_delete"`, `"read_multi"`), and
                         values are the custom names to use. Unspecified operations will use default names.
-        filter_config: Optional `FilterConfig` instance or dictionary to configure filters for the `read_multi` and `read_paginated` endpoints.
+        filter_config: Optional `FilterConfig` instance or dictionary to configure filters for the `read_multi` endpoint.
 
     Raises:
         ValueError: If both `included_methods` and `deleted_methods` are provided.
@@ -279,7 +278,6 @@ class EndpointCreator:
             "delete": "",
             "db_delete": "",
             "read_multi": "",
-            "read_paginated": "get_paginated",
         }
         self.endpoint_names = {**self.default_endpoint_names, **(endpoint_names or {})}
         if filter_config:
@@ -358,42 +356,6 @@ class EndpointCreator:
 
         return endpoint
 
-    def _read_paginated(self):
-        """Creates an endpoint for reading multiple items from the database with pagination."""
-        dynamic_filters = _create_dynamic_filters(self.filter_config, self.column_types)
-        warnings.warn(
-            "_read_paginated endpoint is getting deprecated and mixed "
-            "into _read_items in the next major release. "
-            "Please use _read_items with optional page and items_per_page "
-            "query params instead, to achieve pagination as before."
-            "Simple _read_items behaviour persists with no breaking changes.",
-            DeprecationWarning,
-        )
-
-        async def endpoint(
-            db: AsyncSession = Depends(self.session),
-            page: int = Query(
-                1, alias="page", description="Page number, starting from 1"
-            ),
-            items_per_page: int = Query(
-                10, alias="itemsPerPage", description="Number of items per page"
-            ),
-            filters: dict = Depends(dynamic_filters),
-        ):
-            if not (page and items_per_page):  # pragma: no cover
-                return await self.crud.get_multi(db, offset=0, limit=100, **filters)
-
-            offset = compute_offset(page=page, items_per_page=items_per_page)
-            crud_data = await self.crud.get_multi(
-                db, offset=offset, limit=items_per_page, **filters
-            )
-
-            return paginated_response(
-                crud_data=crud_data, page=page, items_per_page=items_per_page
-            )  # pragma: no cover
-
-        return endpoint
-
     def _update_item(self):
         """Creates an endpoint for updating an existing item in the database."""
 
@@ -454,7 +416,6 @@ class EndpointCreator:
         create_deps: Sequence[Callable] = [],
         read_deps: Sequence[Callable] = [],
         read_multi_deps: Sequence[Callable] = [],
-        read_paginated_deps: Sequence[Callable] = [],
         update_deps: Sequence[Callable] = [],
         delete_deps: Sequence[Callable] = [],
         db_delete_deps: Sequence[Callable] = [],
@@ -471,7 +432,6 @@ class EndpointCreator:
             create_deps: List of functions to be injected as dependencies for the create endpoint.
             read_deps: List of functions to be injected as dependencies for the read endpoint.
             read_multi_deps: List of functions to be injected as dependencies for the read multiple items endpoint.
-            read_paginated_deps: List of functions to be injected as dependencies for the read paginated endpoint.
             update_deps: List of functions to be injected as dependencies for the update endpoint.
             delete_deps: List of functions to be injected as dependencies for the delete endpoint.
             db_delete_deps: List of functions to be injected as dependencies for the hard delete endpoint.
@@ -529,7 +489,6 @@ class EndpointCreator:
                 "create",
                 "read",
                 "read_multi",
-                "read_paginated",
                 "update",
                 "delete",
                 "db_delete",
@@ -587,19 +546,6 @@ class EndpointCreator:
                 tags=self.tags,
                 dependencies=_inject_dependencies(read_multi_deps),
                 description=f"Read multiple {self.model.__name__} rows from the database with a limit and an offset.",
-            )
-
-        if ("read_paginated" in included_methods) and (
-            "read_paginated" not in deleted_methods
-        ):
-            self.router.add_api_route(
-                self._get_endpoint_path(operation="read_paginated"),
-                self._read_paginated(),
-                methods=["GET"],
-                include_in_schema=self.include_in_schema,
-                tags=self.tags,
-                dependencies=_inject_dependencies(read_paginated_deps),
-                description=f"Read multiple {self.model.__name__} rows from the database with pagination.",
             )
 
         if ("update" in included_methods) and ("update" not in deleted_methods):

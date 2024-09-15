@@ -273,24 +273,15 @@ class EndpointCreator:
         self.deleted_at_column = deleted_at_column
         self.updated_at_column = updated_at_column
         self.default_endpoint_names = {
-            "create": "create",
-            "read": "get",
-            "update": "update",
-            "delete": "delete",
-            "db_delete": "db_delete",
-            "read_multi": "get_multi",
+            "create": "",
+            "read": "",
+            "update": "",
+            "delete": "",
+            "db_delete": "",
+            "read_multi": "",
             "read_paginated": "get_paginated",
         }
         self.endpoint_names = {**self.default_endpoint_names, **(endpoint_names or {})}
-        if self.endpoint_names == self.default_endpoint_names:
-            warnings.warn(
-                "Old default_endpoint_names are getting deprecated. "
-                "Default values are going to be replaced by empty strings, "
-                "resulting in plain endpoint names. "
-                "For details see:"
-                " https://github.com/igorbenav/fastcrud/issues/67",
-                DeprecationWarning,
-            )
         if filter_config:
             if isinstance(filter_config, dict):
                 filter_config = FilterConfig(**filter_config)

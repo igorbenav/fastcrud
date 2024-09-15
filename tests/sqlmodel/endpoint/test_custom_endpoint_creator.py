@@ -59,6 +59,15 @@ async def test_custom_endpoint_creator(
         endpoint_creator=CustomEndpointCreator,
         path="/custom",
         tags=["Test"],
+        endpoint_names={
+            "create": "create",
+            "read": "get",
+            "update": "update",
+            "delete": "delete",
+            "db_delete": "db_delete",
+            "read_multi": "get_multi",
+            "read_paginated": "get_paginated",
+        },
     )
 
     client.app.include_router(custom_router)

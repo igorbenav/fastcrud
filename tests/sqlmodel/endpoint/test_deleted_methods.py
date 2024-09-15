@@ -16,6 +16,15 @@ async def test_deleted_methods(
         deleted_methods=["delete"],
         path="/test_custom",
         tags=["Test"],
+        endpoint_names={
+            "create": "create",
+            "read": "get",
+            "update": "update",
+            "delete": "delete",
+            "db_delete": "db_delete",
+            "read_multi": "get_multi",
+            "read_paginated": "get_paginated",
+        },
     )
 
     client.app.include_router(custom_router)

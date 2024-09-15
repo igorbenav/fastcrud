@@ -132,11 +132,13 @@ def _inject_dependencies(
     """Wraps a list of functions in FastAPI's Depends."""
     if funcs is None:
         return None
-    
+
     for func in funcs:
         if not callable(func):
-            raise TypeError(f"All dependencies must be callable. Got {type(func)} instead.")
-    
+            raise TypeError(
+                f"All dependencies must be callable. Got {type(func)} instead."
+            )
+
     return [Depends(func) for func in funcs]
 
 

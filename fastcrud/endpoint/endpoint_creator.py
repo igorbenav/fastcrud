@@ -12,7 +12,11 @@ from fastcrud.types import (
     ModelType,
     UpdateSchemaType,
 )
-from ..exceptions.http_exceptions import DuplicateValueException, NotFoundException
+from ..exceptions.http_exceptions import (
+    DuplicateValueException,
+    NotFoundException,
+    BadRequestException,
+)
 from ..paginated.helper import compute_offset
 from ..paginated.response import paginated_response
 from .helper import (
@@ -276,7 +280,7 @@ class EndpointCreator:
             "read": "",
             "update": "",
             "delete": "",
-            "db_delete": "",
+            "db_delete": "db_delete",
             "read_multi": "",
         }
         self.endpoint_names = {**self.default_endpoint_names, **(endpoint_names or {})}
@@ -336,23 +340,49 @@ class EndpointCreator:
 
         async def endpoint(
             db: AsyncSession = Depends(self.session),
+            offset: Optional[int] = Query(
+                None, description="Offset for unpaginated queries"
+            ),
+            limit: Optional[int] = Query(
+                None, description="Limit for unpaginated queries"
+            ),
             page: Optional[int] = Query(None, alias="page", description="Page number"),
             items_per_page: Optional[int] = Query(
                 None, alias="itemsPerPage", description="Number of items per page"
             ),
             filters: dict = Depends(dynamic_filters),
         ):
-            if not (page and items_per_page):
-                return await self.crud.get_multi(db, offset=0, limit=100, **filters)
+            is_paginated = (page is not None) and (items_per_page is not None)
+            has_offset_limit = (offset is not None) and (limit is not None)
 
-            offset = compute_offset(page=page, items_per_page=items_per_page)
+            if is_paginated and has_offset_limit:
+                raise BadRequestException(
+                    detail="Conflicting parameters: Use either 'page' and 'itemsPerPage' for paginated results or 'offset' and 'limit' for specific range queries."
+                )
+
+            if is_paginated:
+                offset = compute_offset(page=page, items_per_page=items_per_page)  # type: ignore
+                limit = items_per_page
+                crud_data = await self.crud.get_multi(
+                    db, offset=offset, limit=limit, **filters
+                )
+                return paginated_response(
+                    crud_data=crud_data,
+                    page=page,
+                    items_per_page=items_per_page,  # type: ignore
+                )
+
+            if not has_offset_limit:
+                offset = 0
+                limit = 100
+
             crud_data = await self.crud.get_multi(
-                db, offset=offset, limit=items_per_page, **filters
+                db,
+                offset=offset,
+                limit=limit,
+                **filters,  # type: ignore
             )
-
-            return paginated_response(
-                crud_data=crud_data, page=page, items_per_page=items_per_page
-            )  # pragma: no cover
+            return crud_data  # pragma: no cover
 
         return endpoint
 

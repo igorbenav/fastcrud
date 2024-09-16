@@ -292,6 +292,33 @@ items = await item_crud.upsert_multi(
 # this will return the upserted data in the form of ItemSchema
 ```
 
+### Customizing the Update Logic
+
+To allow more granular control over the SQL `UPDATE` operation during an upsert, `upsert_multi` can accept an `update_override` argument. This allows for the specification of custom update logic using SQL expressions, like the `case` statement, to handle complex conditions.
+
+```python
+from sqlalchemy.sql import case
+
+update_override = {
+    "name": case(
+        (Item.name.is_(None), stmt.excluded.name),
+        else_=Item.name
+    )
+}
+
+items = await item_crud.upsert_multi(
+    db=db,
+    instances=[
+        CreateItemSchema(name="Gadget", price=15.99),
+    ],
+    update_override=update_override,
+    schema_to_select=ItemSchema,
+    return_as_model=True,
+)
+```
+
+In the example above, the `name` field of the `Item` model will be updated to the new value only if the existing `name` field is `None`. Otherwise, it retains the existing `name`.
+
 #### Example: Joining `User`, `Tier`, and `Department` Models
 
 Consider a scenario where you want to retrieve users along with their associated tier and department information. Here's how you can achieve this using `get_multi_joined`.

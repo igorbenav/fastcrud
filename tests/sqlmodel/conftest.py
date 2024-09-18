@@ -469,6 +469,14 @@ def client(
             delete_schema=delete_schema,
             path="/test",
             tags=["test"],
+            endpoint_names={
+                "create": "create",
+                "read": "get",
+                "update": "update",
+                "delete": "delete",
+                "db_delete": "db_delete",
+                "read_multi": "get_multi",
+            },
         )
     )
 
@@ -482,6 +490,14 @@ def client(
             delete_schema=tier_delete_schema,
             path="/tier",
             tags=["tier"],
+            endpoint_names={
+                "create": "create",
+                "read": "get",
+                "update": "update",
+                "delete": "delete",
+                "db_delete": "db_delete",
+                "read_multi": "get_multi",
+            },
         )
     )
 
@@ -496,6 +512,14 @@ def client(
             delete_schema=multi_pk_test_schema,
             path="/multi_pk",
             tags=["multi_pk"],
+            endpoint_names={
+                "create": "create",
+                "read": "get",
+                "update": "update",
+                "delete": "delete",
+                "db_delete": "db_delete",
+                "read_multi": "get_multi",
+            },
         )
     )
 
@@ -523,6 +547,14 @@ def filtered_client(
             filter_config=FilterConfig(tier_id=None, name=None),
             path="/test",
             tags=["test"],
+            endpoint_names={
+                "create": "create",
+                "read": "get",
+                "update": "update",
+                "delete": "delete",
+                "db_delete": "db_delete",
+                "read_multi": "get_multi",
+            },
         )
     )
 
@@ -550,6 +582,14 @@ def dict_filtered_client(
             filter_config={"tier_id": None, "name": None},
             path="/test",
             tags=["test"],
+            endpoint_names={
+                "create": "create",
+                "read": "get",
+                "update": "update",
+                "delete": "delete",
+                "db_delete": "db_delete",
+                "read_multi": "get_multi",
+            },
         )
     )
 
@@ -578,6 +618,14 @@ def invalid_filtered_client(
             filter_config=filter_config,
             path="/test",
             tags=["test"],
+            endpoint_names={
+                "create": "create",
+                "read": "get",
+                "update": "update",
+                "delete": "delete",
+                "db_delete": "db_delete",
+                "read_multi": "get_multi",
+            },
         )
 
 
@@ -593,4 +641,12 @@ def endpoint_creator(test_model, async_session) -> EndpointCreator:
         delete_schema=DeleteSchemaTest,
         path="/custom_test",
         tags=["custom_test"],
+        endpoint_names={
+            "create": "create",
+            "read": "get",
+            "update": "update",
+            "delete": "delete",
+            "db_delete": "db_delete",
+            "read_multi": "get_multi",
+        },
     )

@@ -16,6 +16,14 @@ async def test_included_methods(
         included_methods=["create", "read"],
         path="/test_custom",
         tags=["Test"],
+        endpoint_names={
+            "create": "create",
+            "read": "get",
+            "update": "update",
+            "delete": "delete",
+            "db_delete": "db_delete",
+            "read_multi": "get_multi",
+        },
     )
 
     client.app.include_router(custom_router)

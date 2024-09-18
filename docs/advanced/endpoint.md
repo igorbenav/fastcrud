@@ -5,19 +5,19 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 
 ### Create
 
-- **Endpoint**: `/create`
+- **Endpoint**: `/{model}`
 - **Method**: `POST`
 - **Description**: Creates a new item in the database.
 - **Request Body**: JSON object based on the `create_schema`.
-- **Example Request**: `POST /items/create` with JSON body.
+- **Example Request**: `POST /items` with JSON body.
 
 ### Read
 
-- **Endpoint**: `/get/{id}`
+- **Endpoint**: `/{model}/{id}`
 - **Method**: `GET`
 - **Description**: Retrieves a single item by its ID.
 - **Path Parameters**: `id` - The ID of the item to retrieve.
-- **Example Request**: `GET /items/get/1`.
+- **Example Request**: `GET /items/1`.
 - **Example Return**:
 ```javascript
 {
@@ -33,13 +33,15 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 
 ### Read Multiple
 
-- **Endpoint**: `/get_multi`
+- **Endpoint**: `/{model}`
 - **Method**: `GET`
 - **Description**: Retrieves multiple items with optional pagination.
 - **Query Parameters**:
     - `offset` (optional): The offset from where to start fetching items.
     - `limit` (optional): The maximum number of items to return.
-- **Example Request**: `GET /items/get_multi?offset=3&limit=4`.
+    - `page` (optional): The page number, starting from 1.
+    - `itemsPerPage` (optional): The number of items per page.
+- **Example Request**: `GET /items?offset=3&limit=4`.
 - **Example Return**:
 ```javascript
 {
@@ -83,19 +85,9 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
   ],
   "total_count": 50
 }
-
 ```
-
-### Read Paginated
-
-- **Endpoint**: `/get_paginated`
-- **Method**: `GET`
-- **Description**: Retrieves multiple items with pagination.
-- **Query Parameters**:
-    - `page`: The page number, starting from 1.
-    - `itemsPerPage`: The number of items per page.
-- **Example Request**: `GET /items/get_paginated?page=1&itemsPerPage=3`.
-- **Example Return**:
+- **Example Paginated Request**: `GET /items?page=1&itemsPerPage=3`.
+- **Example Paginated Return**:
 ```javascript
 {
   "data": [
@@ -134,48 +126,48 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 }
 ```
 
-!!! WARNING
+!!! NOTE
 
-    `_read_paginated` endpoint is getting deprecated and mixed into `_read_items` in the next major release.
-    Please use `_read_items` with optional `page` and `items_per_page` query params instead, to achieve pagination as before.
+    `_read_paginated` endpoint was deprecated and mixed into `_read_items` in the release `0.15.0`.
     Simple `_read_items` behaviour persists with no breaking changes.
 
     Read items paginated:
     ```sh
     $ curl -X 'GET' \
-      'http://localhost:8000/users/get_multi?page=2&itemsPerPage=10' \
+      'http://localhost:8000/users?page=2&itemsPerPage=10' \
       -H 'accept: application/json'
     ```
 
     Read items unpaginated:
     ```sh
     $ curl -X 'GET' \
-      'http://localhost:8000/users/get_multi?offset=0&limit=100' \
+      'http://localhost:8000/users?offset=0&limit=100' \
       -H 'accept: application/json'
     ```
 
+
 ### Update
 
-- **Endpoint**: `/update/{id}`
+- **Endpoint**: `/{model}/{id}`
 - **Method**: `PATCH`
 - **Description**: Updates an existing item by its ID.
 - **Path Parameters**: `id` - The ID of the item to update.
 - **Request Body**: JSON object based on the `update_schema`.
-- **Example Request**: `PATCH /items/update/1` with JSON body.
+- **Example Request**: `PATCH /items/1` with JSON body.
 - **Example Return**: `None`
 
 ### Delete
 
-- **Endpoint**: `/delete/{id}`
+- **Endpoint**: `/{model}/{id}`
 - **Method**: `DELETE`
 - **Description**: Deletes (soft delete if configured) an item by its ID.
 - **Path Parameters**: `id` - The ID of the item to delete.
-- **Example Request**: `DELETE /items/delete/1`.
+- **Example Request**: `DELETE /items/1`.
 - **Example Return**: `None`
 
 ### DB Delete (Hard Delete)
 
-- **Endpoint**: `/db_delete/{id}` (Available if a `delete_schema` is provided)
+- **Endpoint**: `/{model}/db_delete/{id}` (Available if a `delete_schema` is provided)
 - **Method**: `DELETE`
 - **Description**: Permanently deletes an item by its ID, bypassing the soft delete mechanism.
 - **Path Parameters**: `id` - The ID of the item to hard delete.
@@ -251,7 +243,7 @@ app.include_router(my_router)
 
 ## Customizing Endpoint Names
 
-You can customize the names of the auto generated endpoints by passing an `endpoint_names` dictionary when initializing the `EndpointCreator` or calling the `crud_router` function. This dictionary should map the CRUD operation names (`create`, `read`, `update`, `delete`, `db_delete`, `read_multi`, `read_paginated`) to your desired endpoint names.
+You can customize the names of the auto generated endpoints by passing an `endpoint_names` dictionary when initializing the `EndpointCreator` or calling the `crud_router` function. This dictionary should map the CRUD operation names (`create`, `read`, `update`, `delete`, `db_delete`, `read_multi`) to your desired endpoint names.
 
 ### Example: Using `crud_router`
 
@@ -274,7 +266,6 @@ custom_endpoint_names = {
     "update": "modify",
     "delete": "remove",
     "read_multi": "list",
-    "read_paginated": "paginate",
 }
 
 # Setup CRUD router with custom endpoint names
@@ -326,9 +317,9 @@ app.include_router(endpoint_creator.router)
 
     You only need to pass the names of the endpoints you want to change in the `endpoint_names` `dict`.
 
-!!! WARNING
+!!! NOTE
 
-    `default_endpoint_names` for `EndpointCreator` are going to be changed to empty strings in the next major release.
+    `default_endpoint_names` for `EndpointCreator` were changed to empty strings in `0.15.0`.
     See [this issue](https://github.com/igorbenav/fastcrud/issues/67) for more details.
 
 ## Extending `EndpointCreator`
@@ -551,7 +542,7 @@ app.include_router(endpoint_creator(
 
 ## Using Filters in FastCRUD
 
-FastCRUD provides filtering capabilities, allowing you to filter query results based on various conditions. Filters can be applied to `read_multi` and `read_paginated` endpoints. This section explains how to configure and use filters in FastCRUD.
+FastCRUD provides filtering capabilities, allowing you to filter query results based on various conditions. Filters can be applied to `read_multi` endpoint. This section explains how to configure and use filters in FastCRUD.
 
 ### Defining Filters
 
@@ -607,7 +598,7 @@ app.include_router(
 Once filters are configured, you can use them in your API requests. Filters are passed as query parameters. Here's an example of how to use filters in a request to a paginated endpoint:
 
 ```http
-GET /yourmodel/get_paginated?page=1&itemsPerPage=3&tier_id=1&name=Alice
+GET /yourmodel?page=1&itemsPerPage=3&tier_id=1&name=Alice
 ```
 
 ### Custom Filter Validation

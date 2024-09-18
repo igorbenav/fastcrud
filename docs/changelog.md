@@ -3,7 +3,129 @@
 ## Introduction
 
 The Changelog documents all notable changes made to FastCRUD. This includes new features, bug fixes, and improvements. It's organized by version and date, providing a clear history of the library's development.
+___
+## [0.15.0] - Sep 18, 2024
 
+#### Added
+- **Models and Schemas for Task Management (Batch 3)** by [@slaarti](https://github.com/slaarti)
+- **Models and Schemas for Articles, Authors, and Profiles (Batch 4)** by [@slaarti](https://github.com/slaarti)
+- **`update_override` Argument to `upsert_multi` Method** by [@feluelle](https://github.com/feluelle)
+- **Configurable `is_deleted` Field in Soft Delete Logic** by [@gal-dahan](https://github.com/gal-dahan)
+
+#### Improved
+- **Fixed Complex Parameter Filter with `between` Operator** by [@wu-clan](https://github.com/wu-clan)
+- **Fixed Cryptography Package Vulnerability**
+- **Resolved Update Column Name Collision in Update Method**
+
+#### Fixed
+- **Vulnerability in `cryptography` Package** updated to `cryptography = "^43.0.1"`
+- **Update Column Name Collision** in the `update` method
+
+#### Documentation Updates
+- **Added Documentation for New Models and Schemas** by [@slaarti](https://github.com/slaarti)
+- **Updated `upsert_multi` Method Documentation with `update_override` Usage** by [@feluelle](https://github.com/feluelle)
+- **Clarified Endpoint Simplification and Deprecation Notices**
+
+#### Warnings
+- **Deprecation Notice**: The `_read_paginated` endpoint has been removed. Please transition to using `_read_items` with pagination parameters. [Docs here](https://igorbenav.github.io/fastcrud/advanced/endpoint/#read-multiple).
+- **Deprecation Notice**: Handling of `Depends` is now only callable within `_inject_depend`. Update your code accordingly.
+- **Configuration Change Alert**: Endpoints are simplified by default. Adjust your configurations to align with the new defaults. [Docs here](https://igorbenav.github.io/fastcrud/advanced/endpoint/#available-automatic-endpoints).
+
+___
+#### Detailed Changes
+
+##### Endpoint Simplification and Deprecation of `_read_paginated`
+
+###### Description
+
+To streamline API endpoint configurations, endpoints with empty strings as names are now the standard. Additionally, the `_read_paginated` endpoint has been removed, with its functionality merged into `_read_items`.
+
+###### Changes
+
+- **Simplified Endpoint Configuration**: Endpoints can now be defined with empty strings to create cleaner paths.
+- **Removed `_read_paginated` Endpoint**: Pagination is now handled via optional parameters in `_read_items`.
+
+###### Usage Examples
+
+**Paginated Read Example:**
+
+```bash
+curl -X 'GET' \
+  'http://localhost:8000/items?page=2&itemsPerPage=10' \
+  -H 'accept: application/json'
+```
+
+**Non-Paginated Read Example:**
+
+```bash
+curl -X 'GET' \
+  'http://localhost:8000/items?offset=0&limit=100' \
+  -H 'accept: application/json'
+
+```
+
+##### Warnings
+
+!!! WARNING
+    The `_read_paginated` endpoint is deprecated. Use `_read_items` with pagination parameters instead.
+
+!!! WARNING
+    Default endpoint names are now empty strings. Adjust your configurations to match the new defaults.
+
+___
+
+##### `update_override` Argument in `upsert_multi` Method
+
+###### Description
+
+The `upsert_multi` method now includes an `update_override` argument, giving developers the ability to override the default update logic during upsert operations. This enhancement provides greater flexibility for custom update scenarios, such as utilizing SQL `CASE` statements or other complex expressions.
+
+###### Changes
+
+- **`update_override` Argument**: Allows custom update logic in `upsert_multi`.
+- **Dialect Support**: Implemented for PostgreSQL, SQLite, and MySQL.
+- **Tests**: Added comprehensive tests to ensure functionality across different SQL dialects.
+
+###### Usage Example
+
+```python
+from fastcrud import FastCRUD
+from sqlalchemy import case
+from .models.item import Item
+from .database import session as db
+
+crud_items = FastCRUD(Item)
+
+await crud_items.upsert_multi(
+    db=db,
+    instances=[
+        ItemCreateSchema(id=1, name="Item A", price=10),
+        ItemCreateSchema(id=2, name="Item B", price=20),
+    ],
+    update_override={
+        "price": case(
+            (Item.price.is_(None), db.excluded.price),
+            else_=Item.price,
+        )
+    }
+)
+```
+
+___
+
+##### Configurable `is_deleted` Field in Soft Delete Logic
+
+###### Description
+
+The `is_deleted` field in the soft delete logic is now optional and configurable. This change allows developers to customize the soft delete behavior per model, providing flexibility in how deletion states are handled.
+
+___
+
+#### New Contributors
+- [@wu-clan](https://github.com/wu-clan) made their first contribution 🌟
+- [@gal-dahan](https://github.com/gal-dahan) made their first contribution 🌟
+
+**Full Changelog**: [View the full changelog](https://github.com/igorbenav/fastcrud/compare/v0.14.0...v0.15.0)
 ___
 ## [0.14.0] - Jul 29, 2024
 
@@ -40,8 +162,9 @@ ___
 - **Deprecation Notice**: `_read_paginated` endpoint is set to be deprecated and merged into `_read_items`. Users are encouraged to transition to the latter, utilizing optional pagination parameters. Full details and usage instructions provided to ensure a smooth transition.
 - **Future Changes Alert**: Default endpoint names in `EndpointCreator` are anticipated to be set to empty strings in a forthcoming major release, aligning with simplification efforts. Refer to https://github.com/igorbenav/fastcrud/issues/67 for more information.
 
-#### Detailed Changes
 ___
+#### Detailed Changes
+
 ##### Simplified Endpoint Configurations
 
 In an effort to streamline FastCRUD’s API, we have reconfigured endpoint paths to avoid redundancy (great work by @JakNowy). This change allows developers to specify empty strings for endpoint names in the `crud_router` setup, which prevents the generation of unnecessary `//` in the paths. The following configurations illustrate how endpoints can now be defined more succinctly:
@@ -214,8 +337,8 @@ items = await crud_items.upsert_multi(
 #### Fixed
 - Bug where objects with null primary key are returned with all fields set to None in nested joins #102 
 
-#### Detailed Changes
 ___
+#### Detailed Changes
 
 ### Advanced Filters
 
@@ -290,7 +413,9 @@ items = await item_crud.get_multi(
 - One-to-many support in joins
 - Upsert method in FastCRUD class by @dubusster 
 
+___
 #### Detailed Changes
+
 ##### Using Filters in FastCRUD
 
 FastCRUD provides filtering capabilities, allowing you to filter query results based on various conditions. Filters can be applied to `read_multi` and `read_paginated` endpoints. This section explains how to configure and use filters in FastCRUD.
@@ -472,8 +597,8 @@ The result will be:
 - **`get_joined`** (with `nest_joins=True`): Retrieve a single record with all its related records nested within it (e.g., a user and all their blog posts).
 - **`get_multi_joined`** (with `nest_joins=True`): Fetch multiple primary records, each with their related records nested (e.g., multiple users and all their blog posts).
 
-> [!WARNING]
-> When using `nest_joins=True`, the performance will always be a bit worse than when using `nest_joins=False`. For cases where more performance is necessary, consider using `nest_joins=False` and remodeling your database.
+!!! WARNING
+    When using `nest_joins=True`, the performance will always be a bit worse than when using `nest_joins=False`. For cases where more performance is necessary, consider using `nest_joins=False` and remodeling your database.
 
 
 **Example**
@@ -545,7 +670,9 @@ The result will be:
 #### Added
 - Deprecation Warning for dependency handling.
 
+___
 #### Detailed Changes
+
 If you pass a sequence of `params.Depends` type variables to any `*_deps` parameter in `EndpointCreator` and `crud_router`, you'll get a warning. Support will be completely removed in 0.15.0.
 
 **Full Changelog**: https://github.com/igorbenav/fastcrud/compare/v0.12.0...v0.12.1
@@ -562,7 +689,9 @@ If you pass a sequence of `params.Depends` type variables to any `*_deps` parame
 - `__in` and `__not_in` filters by @JakNowy 🎉
 - Fastapi 0.111.0 support
 
+___
 #### Detailed Changes
+
 ##### Unpaginated versions of multi-row get methods
 Now, if you pass `None` to `limit` in `get_multi` and `get_multi_joined`, you get the whole unpaginated set of data that matches the filters. Use this with caution.
 
@@ -648,7 +777,9 @@ You may now pass `__in` and `__not_in` to methods that accept advanced queries:
 - `one_or_none` parameter to FastCRUD `get` method (default `False`)
 - `nest_joins` parameter to FastCRUD `get_joined` and `get_multi_joined` (default `False`)
 
+___
 #### Detailed Changes
+
 ##### `get`
 By default, the `get` method in `FastCRUD` returns the `first` object matching all the filters it finds.
 
@@ -758,6 +889,7 @@ This works for both `get_joined` and `get_multi_joined`.
 - Achievement of 100% test coverage, with the addition of a workflow and badge to showcase this milestone.
 - Inclusion of the changelog within the project documentation, providing a comprehensive history of changes directly to users.
 
+___
 #### Detailed Changes
 
 ##### Multiple Primary Keys Support
@@ -795,6 +927,7 @@ The `get_multi` and `get_multi_joined` methods now feature an `return_total_coun
 - Type checking workflow integrated with `mypy` alongside fixes for typing issues.
 - Linting workflow established with `ruff`.
 
+___
 #### Detailed Changes
 
 ##### Select
@@ -831,6 +964,7 @@ ___
 #### Added
 - Enhanced `get_joined` and `get_multi_joined` methods to support aliases, enabling multiple joins on the same model. This improvement addresses issue #27.
 
+___
 #### Detailed Changes
 
 ##### Alias Support for Complex Joins
@@ -851,6 +985,7 @@ ___
 #### Added
 - Enhanced `get_joined` and `get_multi_joined` methods now support handling joins with multiple models.
 
+___
 #### Detailed Changes
 
 ##### Multi-Model Join Capabilities
@@ -878,6 +1013,7 @@ ___
 #### Added
 - Feature to customize names of auto-generated endpoints using the `endpoint_names` parameter, applicable in both `crud_router` function and `EndpointCreator`.
 
+___
 #### Detailed Changes
 
 ##### Custom Endpoint Naming
@@ -905,6 +1041,7 @@ ___
 - The `get_paginated` endpoint for retrieving items with pagination support.
 - The `paginated` module to offer utility functions for pagination.
 
+___
 #### Detailed Changes
 
 ##### `get_paginated` Endpoint
@@ -959,6 +1096,7 @@ ___
 - Custom soft delete mechanisms integrated into `FastCRUD`, `EndpointCreator`, and `crud_router`.
 - Comprehensive test suite for the newly introduced features.
 
+___
 #### Detailed Changes
 
 ##### Advanced Filters
@@ -992,15 +1130,15 @@ ___
 
 ## [0.4.0] - Jan 31, 2024
 
-### Added 
+#### Added 
 - Documentation and tests for SQLModel support.
 - `py.typed` file for better typing support.
 
-### Detailed
+#### Detailed
 
 Check the [docs for SQLModel support](https://igorbenav.github.io/fastcrud/sqlmodel/).
 
-### What's Changed
+#### What's Changed
 - SQLModel support.
 
 **Full Changelog**: [View the full changelog](https://github.com/igorbenav/fastcrud/compare/v0.3.0...v0.4.0)
@@ -1009,33 +1147,34 @@ ___
 
 ## [0.3.0] - Jan 28, 2024
 
-### Added
+#### Added
 - The `CustomEndpointCreator` for advanced route creation and customization.
 - The ability to selectively include or exclude CRUD operations in the `crud_router` using `included_methods` and `deleted_methods`.
 - Comprehensive tests for the new features.
 - Detailed documentation on utilizing the `CustomEndpointCreator` and selectively including or excluding endpoints.
 
-### CustomEndpointCreator
+#### CustomEndpointCreator
 This feature introduces the capability to extend the `EndpointCreator` class, enabling developers to define custom routes and incorporate complex logic into API endpoints. The documentation has been updated to include detailed examples and guidelines on implementing and using `CustomEndpointCreator` in projects. [Docs here](https://igorbenav.github.io/fastcrud/advanced/endpoint/#creating-a-custom-endpointcreator).
 
-### Selective CRUD Operations
+#### Selective CRUD Operations
 The `crud_router` function has been enhanced with `included_methods` and `deleted_methods` parameters, offering developers precise control over which CRUD methods are included or excluded when configuring routers. This addition provides flexibility in API design, allowing for the creation of tailored endpoint setups that meet specific project requirements. [Docs here](https://igorbenav.github.io/fastcrud/advanced/endpoint/#selective-crud-operations).
 
-## Detailed Changes
+___
+#### Detailed Changes
 
-### Extending EndpointCreator
+#### Extending EndpointCreator
 Developers can now create a subclass of `EndpointCreator` to define custom routes or override existing methods, adding a layer of flexibility and customization to FastCRUD's routing capabilities.
 
-#### Creating a Custom EndpointCreator
+##### Creating a Custom EndpointCreator
 An example demonstrates how to subclass `EndpointCreator` and add custom routes or override existing methods, further illustrating how to incorporate custom endpoint logic and route configurations into the FastAPI application.
 
-### Adding Custom Routes
+##### Adding Custom Routes
 The process involves overriding the `add_routes_to_router` method to include both standard CRUD routes and custom routes, showcasing how developers can extend FastCRUD's functionality to suit their application's unique needs.
 
-### Using the Custom EndpointCreator
+##### Using the Custom EndpointCreator
 An example highlights how to use the custom `EndpointCreator` with `crud_router`, specifying selective methods to be included in the router setup, thereby demonstrating the practical application of custom endpoint creation and selective method inclusion.
 
-### Selective CRUD Operations
+##### Selective CRUD Operations
 Examples for using `included_methods` and `deleted_methods` illustrate how to specify exactly which CRUD methods should be included or excluded when setting up the router, offering developers precise control over their API's exposed functionality.
 
 !!! WARNING

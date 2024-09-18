@@ -789,15 +789,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#read-paginated" class="md-nav__link">
-    <span class="md-ellipsis">
-      Read Paginated
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#update" class="md-nav__link">
     <span class="md-ellipsis">
       Update
@@ -1495,15 +1486,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#read-paginated" class="md-nav__link">
-    <span class="md-ellipsis">
-      Read Paginated
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#update" class="md-nav__link">
     <span class="md-ellipsis">
       Update
@@ -1777,19 +1759,19 @@
 <p>FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints for your FastAPI application. Here's an overview of the available automatic endpoints and how they work, based on <a href="../../usage/endpoint/#step-3-use-crud_router-to-create-endpoints">the automatic endpoints we've generated before</a>:</p>
 <h3 id="create">Create<a class="headerlink" href="#create" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Endpoint</strong>: <code>/create</code></li>
+<li><strong>Endpoint</strong>: <code>/{model}</code></li>
 <li><strong>Method</strong>: <code>POST</code></li>
 <li><strong>Description</strong>: Creates a new item in the database.</li>
 <li><strong>Request Body</strong>: JSON object based on the <code>create_schema</code>.</li>
-<li><strong>Example Request</strong>: <code>POST /items/create</code> with JSON body.</li>
+<li><strong>Example Request</strong>: <code>POST /items</code> with JSON body.</li>
 </ul>
 <h3 id="read">Read<a class="headerlink" href="#read" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Endpoint</strong>: <code>/get/{id}</code></li>
+<li><strong>Endpoint</strong>: <code>/{model}/{id}</code></li>
 <li><strong>Method</strong>: <code>GET</code></li>
 <li><strong>Description</strong>: Retrieves a single item by its ID.</li>
 <li><strong>Path Parameters</strong>: <code>id</code> - The ID of the item to retrieve.</li>
-<li><strong>Example Request</strong>: <code>GET /items/get/1</code>.</li>
+<li><strong>Example Request</strong>: <code>GET /items/1</code>.</li>
 <li><strong>Example Return</strong>:
 <div class="language-javascript highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="s2">&quot;id&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
@@ -1804,15 +1786,17 @@
 </ul>
 <h3 id="read-multiple">Read Multiple<a class="headerlink" href="#read-multiple" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Endpoint</strong>: <code>/get_multi</code></li>
+<li><strong>Endpoint</strong>: <code>/{model}</code></li>
 <li><strong>Method</strong>: <code>GET</code></li>
 <li><strong>Description</strong>: Retrieves multiple items with optional pagination.</li>
 <li><strong>Query Parameters</strong>:<ul>
 <li><code>offset</code> (optional): The offset from where to start fetching items.</li>
 <li><code>limit</code> (optional): The maximum number of items to return.</li>
+<li><code>page</code> (optional): The page number, starting from 1.</li>
+<li><code>itemsPerPage</code> (optional): The number of items per page.</li>
 </ul>
 </li>
-<li><strong>Example Request</strong>: <code>GET /items/get_multi?offset=3&amp;limit=4</code>.</li>
+<li><strong>Example Request</strong>: <code>GET /items?offset=3&amp;limit=4</code>.</li>
 <li><strong>Example Return</strong>:
 <div class="language-javascript highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="s2">&quot;data&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
@@ -1856,19 +1840,8 @@
 </span><span id="__span-1-40"><a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">  </span><span class="s2">&quot;total_count&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">50</span>
 </span><span id="__span-1-41"><a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="p">}</span>
 </span></code></pre></div></li>
-</ul>
-<h3 id="read-paginated">Read Paginated<a class="headerlink" href="#read-paginated" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Endpoint</strong>: <code>/get_paginated</code></li>
-<li><strong>Method</strong>: <code>GET</code></li>
-<li><strong>Description</strong>: Retrieves multiple items with pagination.</li>
-<li><strong>Query Parameters</strong>:<ul>
-<li><code>page</code>: The page number, starting from 1.</li>
-<li><code>itemsPerPage</code>: The number of items per page.</li>
-</ul>
-</li>
-<li><strong>Example Request</strong>: <code>GET /items/get_paginated?page=1&amp;itemsPerPage=3</code>.</li>
-<li><strong>Example Return</strong>:
+<li><strong>Example Paginated Request</strong>: <code>GET /items?page=1&amp;itemsPerPage=3</code>.</li>
+<li><strong>Example Paginated Return</strong>:
 <div class="language-javascript highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="s2">&quot;data&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="p">{</span>
@@ -1906,44 +1879,43 @@
 </span><span id="__span-2-35"><a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a><span class="p">}</span>
 </span></code></pre></div></li>
 </ul>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p><code>_read_paginated</code> endpoint is getting deprecated and mixed into <code>_read_items</code> in the next major release.
-Please use <code>_read_items</code> with optional <code>page</code> and <code>items_per_page</code> query params instead, to achieve pagination as before.
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>_read_paginated</code> endpoint was deprecated and mixed into <code>_read_items</code> in the release <code>0.15.0</code>.
 Simple <code>_read_items</code> behaviour persists with no breaking changes.</p>
 <p>Read items paginated:
 <div class="language-sh highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$<span class="w"> </span>curl<span class="w"> </span>-X<span class="w"> </span><span class="s1">&#39;GET&#39;</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="s1">&#39;http://localhost:8000/users/get_multi?page=2&amp;itemsPerPage=10&#39;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="s1">&#39;http://localhost:8000/users?page=2&amp;itemsPerPage=10&#39;</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;accept: application/json&#39;</span>
 </span></code></pre></div></p>
 <p>Read items unpaginated:
 <div class="language-sh highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>$<span class="w"> </span>curl<span class="w"> </span>-X<span class="w"> </span><span class="s1">&#39;GET&#39;</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="s1">&#39;http://localhost:8000/users/get_multi?offset=0&amp;limit=100&#39;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="s1">&#39;http://localhost:8000/users?offset=0&amp;limit=100&#39;</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;accept: application/json&#39;</span>
 </span></code></pre></div></p>
 </div>
 <h3 id="update">Update<a class="headerlink" href="#update" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Endpoint</strong>: <code>/update/{id}</code></li>
+<li><strong>Endpoint</strong>: <code>/{model}/{id}</code></li>
 <li><strong>Method</strong>: <code>PATCH</code></li>
 <li><strong>Description</strong>: Updates an existing item by its ID.</li>
 <li><strong>Path Parameters</strong>: <code>id</code> - The ID of the item to update.</li>
 <li><strong>Request Body</strong>: JSON object based on the <code>update_schema</code>.</li>
-<li><strong>Example Request</strong>: <code>PATCH /items/update/1</code> with JSON body.</li>
+<li><strong>Example Request</strong>: <code>PATCH /items/1</code> with JSON body.</li>
 <li><strong>Example Return</strong>: <code>None</code></li>
 </ul>
 <h3 id="delete">Delete<a class="headerlink" href="#delete" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Endpoint</strong>: <code>/delete/{id}</code></li>
+<li><strong>Endpoint</strong>: <code>/{model}/{id}</code></li>
 <li><strong>Method</strong>: <code>DELETE</code></li>
 <li><strong>Description</strong>: Deletes (soft delete if configured) an item by its ID.</li>
 <li><strong>Path Parameters</strong>: <code>id</code> - The ID of the item to delete.</li>
-<li><strong>Example Request</strong>: <code>DELETE /items/delete/1</code>.</li>
+<li><strong>Example Request</strong>: <code>DELETE /items/1</code>.</li>
 <li><strong>Example Return</strong>: <code>None</code></li>
 </ul>
 <h3 id="db-delete-hard-delete">DB Delete (Hard Delete)<a class="headerlink" href="#db-delete-hard-delete" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Endpoint</strong>: <code>/db_delete/{id}</code> (Available if a <code>delete_schema</code> is provided)</li>
+<li><strong>Endpoint</strong>: <code>/{model}/db_delete/{id}</code> (Available if a <code>delete_schema</code> is provided)</li>
 <li><strong>Method</strong>: <code>DELETE</code></li>
 <li><strong>Description</strong>: Permanently deletes an item by its ID, bypassing the soft delete mechanism.</li>
 <li><strong>Path Parameters</strong>: <code>id</code> - The ID of the item to hard delete.</li>
@@ -2020,7 +1992,7 @@ Simple <code>_read_items</code> behaviour persists with no breaking changes.</p>
 <p>If <code>included_methods</code> and <code>deleted_methods</code> are both provided, a <code>ValueError</code> will be raised.</p>
 </div>
 <h2 id="customizing-endpoint-names">Customizing Endpoint Names<a class="headerlink" href="#customizing-endpoint-names" title="Permanent link">&para;</a></h2>
-<p>You can customize the names of the auto generated endpoints by passing an <code>endpoint_names</code> dictionary when initializing the <code>EndpointCreator</code> or calling the <code>crud_router</code> function. This dictionary should map the CRUD operation names (<code>create</code>, <code>read</code>, <code>update</code>, <code>delete</code>, <code>db_delete</code>, <code>read_multi</code>, <code>read_paginated</code>) to your desired endpoint names.</p>
+<p>You can customize the names of the auto generated endpoints by passing an <code>endpoint_names</code> dictionary when initializing the <code>EndpointCreator</code> or calling the <code>crud_router</code> function. This dictionary should map the CRUD operation names (<code>create</code>, <code>read</code>, <code>update</code>, <code>delete</code>, <code>db_delete</code>, <code>read_multi</code>) to your desired endpoint names.</p>
 <h3 id="example-using-crud_router">Example: Using <code>crud_router</code><a class="headerlink" href="#example-using-crud_router" title="Permanent link">&para;</a></h3>
 <p>Here's how you can customize endpoint names using the <code>crud_router</code> function:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span>
@@ -2039,19 +2011,18 @@ Simple <code>_read_items</code> behaviour persists with no breaking changes.</p>
 </span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>    <span class="s2">&quot;update&quot;</span><span class="p">:</span> <span class="s2">&quot;modify&quot;</span><span class="p">,</span>
 </span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>    <span class="s2">&quot;delete&quot;</span><span class="p">:</span> <span class="s2">&quot;remove&quot;</span><span class="p">,</span>
 </span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>    <span class="s2">&quot;read_multi&quot;</span><span class="p">:</span> <span class="s2">&quot;list&quot;</span><span class="p">,</span>
-</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>    <span class="s2">&quot;read_paginated&quot;</span><span class="p">:</span> <span class="s2">&quot;paginate&quot;</span><span class="p">,</span>
-</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="p">}</span>
-</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>
-</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="c1"># Setup CRUD router with custom endpoint names</span>
-</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">crud_router</span><span class="p">(</span>
-</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>    <span class="n">session</span><span class="o">=</span><span class="n">async_session</span><span class="p">,</span>
-</span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>    <span class="n">model</span><span class="o">=</span><span class="n">MyModel</span><span class="p">,</span>
-</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a>    <span class="n">create_schema</span><span class="o">=</span><span class="n">CreateMyModelSchema</span><span class="p">,</span>
-</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a>    <span class="n">update_schema</span><span class="o">=</span><span class="n">UpdateMyModelSchema</span><span class="p">,</span>
-</span><span id="__span-9-26"><a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a>    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/mymodel&quot;</span><span class="p">,</span>
-</span><span id="__span-9-27"><a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a>    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;MyModel&quot;</span><span class="p">],</span>
-</span><span id="__span-9-28"><a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a>    <span class="n">endpoint_names</span><span class="o">=</span><span class="n">custom_endpoint_names</span><span class="p">,</span>
-</span><span id="__span-9-29"><a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a><span class="p">))</span>
+</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="p">}</span>
+</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>
+</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="c1"># Setup CRUD router with custom endpoint names</span>
+</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">crud_router</span><span class="p">(</span>
+</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>    <span class="n">session</span><span class="o">=</span><span class="n">async_session</span><span class="p">,</span>
+</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>    <span class="n">model</span><span class="o">=</span><span class="n">MyModel</span><span class="p">,</span>
+</span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>    <span class="n">create_schema</span><span class="o">=</span><span class="n">CreateMyModelSchema</span><span class="p">,</span>
+</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a>    <span class="n">update_schema</span><span class="o">=</span><span class="n">UpdateMyModelSchema</span><span class="p">,</span>
+</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a>    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/mymodel&quot;</span><span class="p">,</span>
+</span><span id="__span-9-26"><a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a>    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;MyModel&quot;</span><span class="p">],</span>
+</span><span id="__span-9-27"><a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a>    <span class="n">endpoint_names</span><span class="o">=</span><span class="n">custom_endpoint_names</span><span class="p">,</span>
+</span><span id="__span-9-28"><a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a><span class="p">))</span>
 </span></code></pre></div>
 <p>In this example, the standard CRUD endpoints will be replaced with <code>/add</code>, <code>/fetch/{id}</code>, <code>/modify/{id}</code>, <code>/remove/{id}</code>, <code>/list</code>, and <code>/paginate</code>.</p>
 <h3 id="example-using-endpointcreator">Example: Using <code>EndpointCreator</code><a class="headerlink" href="#example-using-endpointcreator" title="Permanent link">&para;</a></h3>
@@ -2085,9 +2056,9 @@ Simple <code>_read_items</code> behaviour persists with no breaking changes.</p>
 <p class="admonition-title">Tip</p>
 <p>You only need to pass the names of the endpoints you want to change in the <code>endpoint_names</code> <code>dict</code>.</p>
 </div>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p><code>default_endpoint_names</code> for <code>EndpointCreator</code> are going to be changed to empty strings in the next major release.
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>default_endpoint_names</code> for <code>EndpointCreator</code> were changed to empty strings in <code>0.15.0</code>.
 See <a href="https://github.com/igorbenav/fastcrud/issues/67">this issue</a> for more details.</p>
 </div>
 <h2 id="extending-endpointcreator">Extending <code>EndpointCreator</code><a class="headerlink" href="#extending-endpointcreator" title="Permanent link">&para;</a></h2>
@@ -2287,7 +2258,7 @@ See <a href="https://github.com/igorbenav/fastcrud/issues/67">this issue</a> for
 </span></span><span id="__span-19-21"><a id="__codelineno-19-21" name="__codelineno-19-21" href="#__codelineno-19-21"></a><span class="p">))</span>
 </span></code></pre></div>
 <h2 id="using-filters-in-fastcrud">Using Filters in FastCRUD<a class="headerlink" href="#using-filters-in-fastcrud" title="Permanent link">&para;</a></h2>
-<p>FastCRUD provides filtering capabilities, allowing you to filter query results based on various conditions. Filters can be applied to <code>read_multi</code> and <code>read_paginated</code> endpoints. This section explains how to configure and use filters in FastCRUD.</p>
+<p>FastCRUD provides filtering capabilities, allowing you to filter query results based on various conditions. Filters can be applied to <code>read_multi</code> endpoint. This section explains how to configure and use filters in FastCRUD.</p>
 <h3 id="defining-filters">Defining Filters<a class="headerlink" href="#defining-filters" title="Permanent link">&para;</a></h3>
 <p>Filters are either defined using the <code>FilterConfig</code> class or just passed as a dictionary. This class allows you to specify default filter values and validate filter types. Here's an example of how to define filters for a model:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">from</span> <span class="nn">fastcrud</span> <span class="kn">import</span> <span class="n">FilterConfig</span>
@@ -2328,7 +2299,7 @@ See <a href="https://github.com/igorbenav/fastcrud/issues/67">this issue</a> for
 </span></code></pre></div>
 <h3 id="using-filters-in-requests">Using Filters in Requests<a class="headerlink" href="#using-filters-in-requests" title="Permanent link">&para;</a></h3>
 <p>Once filters are configured, you can use them in your API requests. Filters are passed as query parameters. Here's an example of how to use filters in a request to a paginated endpoint:</p>
-<div class="language-http highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="err">GET /yourmodel/get_paginated?page=1&amp;itemsPerPage=3&amp;tier_id=1&amp;name=Alice</span>
+<div class="language-http highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="err">GET /yourmodel?page=1&amp;itemsPerPage=3&amp;tier_id=1&amp;name=Alice</span>
 </span></code></pre></div>
 <h3 id="custom-filter-validation">Custom Filter Validation<a class="headerlink" href="#custom-filter-validation" title="Permanent link">&para;</a></h3>
 <p>The <code>FilterConfig</code> class includes a validator to check filter types. If an invalid filter type is provided, a <code>ValueError</code> is raised. You can customize the validation logic by extending the <code>FilterConfig</code> class:</p>

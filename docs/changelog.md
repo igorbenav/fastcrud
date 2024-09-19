@@ -4,6 +4,16 @@
 
 The Changelog documents all notable changes made to FastCRUD. This includes new features, bug fixes, and improvements. It's organized by version and date, providing a clear history of the library's development.
 ___
+## [0.15.1] - Sep 18, 2024
+
+#### Added
+- **Support for fastapi >=0.100**
+
+#### What's Changed
+* now supporting fastapi >= 0.100.0 by @igorbenav in https://github.com/igorbenav/fastcrud/pull/166
+
+**Full Changelog**: https://github.com/igorbenav/fastcrud/compare/v0.15.0...v0.15.1
+___
 ## [0.15.0] - Sep 18, 2024
 
 #### Added

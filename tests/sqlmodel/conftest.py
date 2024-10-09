@@ -650,3 +650,36 @@ def endpoint_creator(test_model, async_session) -> EndpointCreator:
             "read_multi": "get_multi",
         },
     )
+
+
+@pytest.fixture
+def client_with_select_schema(
+    test_model,
+    create_schema,
+    update_schema,
+    read_schema,
+    async_session,
+):
+    app = FastAPI()
+
+    app.include_router(
+        crud_router(
+            session=lambda: async_session,
+            model=test_model,
+            select_schema=read_schema,
+            create_schema=create_schema,
+            update_schema=update_schema,
+            path="/test",
+            tags=["test"],
+            endpoint_names={
+                "create": "create",
+                "read": "get",
+                "update": "update",
+                "delete": "delete",
+                "db_delete": "db_delete",
+                "read_multi": "get_multi",
+            },
+        )
+    )
+
+    return TestClient(app)

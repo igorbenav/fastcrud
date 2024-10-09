@@ -1969,7 +1969,7 @@ class FastCRUD(
             join.relationship_type == "one-to-many" for join in join_definitions
         ):
             nested_data = _nest_multi_join_data(
-                base_primary_key=self._primary_keys[0].name,
+                base_primary_key=self._primary_keys[0].name,  # type: ignore[misc]
                 data=data,
                 joins_config=join_definitions,
                 return_as_model=return_as_model,

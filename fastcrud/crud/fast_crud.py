@@ -831,6 +831,7 @@ class FastCRUD(
         self,
         db: AsyncSession,
         instances: list[Union[UpdateSchemaType, CreateSchemaType]],
+        commit: bool = False,
         return_columns: Optional[list[str]] = None,
         schema_to_select: Optional[type[BaseModel]] = None,
         return_as_model: bool = False,
@@ -843,6 +844,7 @@ class FastCRUD(
         Args:
             db: The database session to use for the operation.
             instances: A list of Pydantic schemas representing the instances to upsert.
+            commit: If True, commits the transaction immediately. Default is False.
             return_columns: Optional list of column names to return after the upsert operation.
             schema_to_select: Optional Pydantic schema for selecting specific columns. Required if return_as_model is True.
             return_as_model: If True, returns data as instances of the specified Pydantic model.
@@ -891,6 +893,8 @@ class FastCRUD(
         if return_columns:
             statement = statement.returning(*[column(name) for name in return_columns])
             db_row = await db.execute(statement, params)
+            if commit:
+                await db.commit()
             return self._as_multi_response(
                 db_row,
                 schema_to_select=schema_to_select,
@@ -898,6 +902,8 @@ class FastCRUD(
             )
 
         await db.execute(statement, params)
+        if commit:
+            await db.commit()
         return None
 
     async def _upsert_multi_postgresql(

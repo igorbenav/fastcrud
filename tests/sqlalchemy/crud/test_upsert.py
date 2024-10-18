@@ -299,16 +299,16 @@ async def test_upsert_multi_successful(
     crud = FastCRUD(test_model)
     new_data = read_schema(id=1, name="New Record", tier_id=1, category_id=1)
     fetched_records = await crud.upsert_multi(
-        async_session, [new_data], **insert["kwargs"]
+        async_session, [new_data], commit=True, **insert["kwargs"]
     )
-
+    assert not async_session.in_transaction()
     assert fetched_records == insert["expected_result"]
 
     updated_new_data = new_data.model_copy(update={"name": "New name"})
     updated_fetched_records = await crud.upsert_multi(
-        async_session, [updated_new_data], **update["kwargs"]
+        async_session, [updated_new_data], commit=True, **update["kwargs"]
     )
-
+    assert not async_session.in_transaction()
     assert updated_fetched_records == update["expected_result"]
 
 

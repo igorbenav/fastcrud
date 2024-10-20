@@ -2228,6 +2228,8 @@ class FastCRUD(
         if return_columns:
             stmt = stmt.returning(*[column(name) for name in return_columns])
             db_row = await db.execute(stmt)
+            if commit:
+                await db.commit()
             if allow_multiple:
                 return self._as_multi_response(
                     db_row,

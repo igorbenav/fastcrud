@@ -276,3 +276,7 @@ async def test_update_with_returning(
     )
 
     assert updated_record == expected_result
+
+    # Rollback the current transaction to see if the record was actually committed
+    await async_session.rollback()
+    assert await crud.count(async_session, name="Updated Name") == 1

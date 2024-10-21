@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 import pytest
 
 from sqlalchemy import select
-from sqlalchemy.exc import MultipleResultsFound
+from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
 from fastcrud.crud.fast_crud import FastCRUD
 from ...sqlmodel.conftest import ModelTest, UpdateSchemaTest, ModelTestWithTimestamp
@@ -51,12 +51,11 @@ async def test_update_non_existent_record(async_session, test_data):
     crud = FastCRUD(ModelTest)
     non_existent_id = 99999
     updated_data = {"name": "New Name"}
-    await crud.update(db=async_session, object=updated_data, id=non_existent_id)
 
-    record = await async_session.execute(
-        select(ModelTest).where(ModelTest.id == non_existent_id)
-    )
-    assert record.scalar_one_or_none() is None
+    with pytest.raises(NoResultFound) as exc_info:
+        await crud.update(db=async_session, object=updated_data, id=non_existent_id)
+
+    assert "No record found to update" in str(exc_info.value)
 
 
 @pytest.mark.asyncio
@@ -69,14 +68,11 @@ async def test_update_invalid_filters(async_session, test_data):
     updated_data = {"name": "New Name"}
 
     non_matching_filter = {"name": "NonExistingName"}
-    await crud.update(db=async_session, object=updated_data, **non_matching_filter)
 
-    for item in test_data:
-        record = await async_session.execute(
-            select(ModelTest).where(ModelTest.id == item["id"])
-        )
-        fetched_record = record.scalar_one()
-        assert fetched_record.name != "New Name"
+    with pytest.raises(NoResultFound) as exc_info:
+        await crud.update(db=async_session, object=updated_data, **non_matching_filter)
+
+    assert "No record found to update" in str(exc_info.value)
 
 
 @pytest.mark.asyncio

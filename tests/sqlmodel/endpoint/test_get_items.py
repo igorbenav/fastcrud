@@ -92,3 +92,27 @@ async def test_read_items_with_dict_filter_config(
 @pytest.mark.asyncio
 async def test_invalid_filter_column(invalid_filtered_client):
     pass
+
+
+@pytest.mark.asyncio
+async def test_read_items_with_schema(
+    client_with_select_schema: TestClient,
+    async_session,
+    test_model,
+    test_data,
+    read_schema,
+):
+    for data in test_data:
+        new_item = test_model(**data)
+        async_session.add(new_item)
+    await async_session.commit()
+
+    response = client_with_select_schema.get("/test/get_multi")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "data" in data
+    assert len(data["data"]) > 0
+
+    assert all(read_schema.model_validate(item) for item in data["data"])

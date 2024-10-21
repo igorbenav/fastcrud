@@ -124,7 +124,7 @@ async def test_get_multi_by_cursor_pagination_integrity(async_session, test_data
         db=async_session,
         object={"name": "Updated Name"},
         allow_multiple=True,
-        name="SpecificName",
+        name=test_data[0]["name"],
     )
 
     second_batch = await crud.get_multi_by_cursor(

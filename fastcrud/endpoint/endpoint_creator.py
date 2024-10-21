@@ -352,7 +352,7 @@ class EndpointCreator:
             ),
             filters: dict = Depends(dynamic_filters),
         ):
-            is_paginated = (page is not None) and (items_per_page is not None)
+            is_paginated = (page is not None) or (items_per_page is not None)
             has_offset_limit = (offset is not None) and (limit is not None)
 
             if is_paginated and has_offset_limit:
@@ -361,6 +361,10 @@ class EndpointCreator:
                 )
 
             if is_paginated:
+                if not page:
+                    page = 1
+                if not items_per_page:
+                    items_per_page = 10
                 offset = compute_offset(page=page, items_per_page=items_per_page)  # type: ignore
                 limit = items_per_page
                 crud_data = await self.crud.get_multi(

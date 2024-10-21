@@ -2146,7 +2146,7 @@ class FastCRUD(
 
         Raises:
             MultipleResultsFound: If `allow_multiple` is `False` and more than one record matches the filters.
-            NoResultFound: If no record matches the filters.
+            NoResultFound: If no record matches the filters. (on version 0.15.3)
             ValueError: If extra fields not present in the model are provided in the update data.
             ValueError: If `return_as_model` is `True` but `schema_to_select` is not provided.
 

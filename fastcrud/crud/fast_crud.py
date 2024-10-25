@@ -1,5 +1,6 @@
 from typing import Any, Dict, Generic, Union, Optional, Callable
 from datetime import datetime, timezone
+import warnings
 
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import (
@@ -2145,6 +2146,7 @@ class FastCRUD(
 
         Raises:
             MultipleResultsFound: If `allow_multiple` is `False` and more than one record matches the filters.
+            NoResultFound: If no record matches the filters. (on version 0.15.3)
             ValueError: If extra fields not present in the model are provided in the update data.
             ValueError: If `return_as_model` is `True` but `schema_to_select` is not provided.
 
@@ -2199,7 +2201,15 @@ class FastCRUD(
             )
             ```
         """
-        if not allow_multiple and (total_count := await self.count(db, **kwargs)) > 1:
+        total_count = await self.count(db, **kwargs)
+        if total_count == 0:
+            warnings.warn(
+                "Passing non-existing records to `update` will raise NoResultFound on version 0.15.3.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            # raise NoResultFound("No record found to update.")
+        if not allow_multiple and total_count > 1:
             raise MultipleResultsFound(
                 f"Expected exactly one record to update, found {total_count}."
             )

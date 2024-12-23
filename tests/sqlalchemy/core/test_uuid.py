@@ -1,7 +1,7 @@
 import pytest
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, String, Text
+from sqlalchemy import Column, String
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.types import TypeDecorator
 from fastapi import FastAPI
@@ -12,10 +12,12 @@ from pydantic import BaseModel
 
 from ..conftest import Base
 
+
 class UUIDType(TypeDecorator):
     """Platform-independent UUID type.
     Uses PostgreSQL's UUID type, otherwise CHAR(36)
     """
+
     impl = String
     cache_ok = True
 
@@ -23,7 +25,7 @@ class UUIDType(TypeDecorator):
         super().__init__(36)
 
     def load_dialect_impl(self, dialect):
-        if dialect.name == 'postgresql':
+        if dialect.name == "postgresql":
             return dialect.type_descriptor(PostgresUUID(as_uuid=True))
         else:
             return dialect.type_descriptor(String(36))
@@ -31,7 +33,7 @@ class UUIDType(TypeDecorator):
     def process_bind_param(self, value, dialect):
         if value is None:
             return value
-        elif dialect.name == 'postgresql':
+        elif dialect.name == "postgresql":
             return value
         else:
             return str(value)
@@ -52,6 +54,7 @@ class UUIDModel(Base):
 
 class CustomUUID(TypeDecorator):
     """Custom UUID type for testing."""
+
     impl = String
     cache_ok = True
 

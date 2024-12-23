@@ -138,7 +138,10 @@ def _get_column_types(
     column_types = {}
     for column in inspector_result.mapper.columns:
         column_type = _get_python_type(column)
-        if hasattr(column.type, "__visit_name__") and column.type.__visit_name__ == "uuid":
+        if (
+            hasattr(column.type, "__visit_name__")
+            and column.type.__visit_name__ == "uuid"
+        ):
             column_type = UUID
         column_types[column.name] = column_type
     return column_types
@@ -189,16 +192,23 @@ def _apply_model_pk(**pkeys: dict[str, type]):
                 extra_positional_params.append(
                     inspect.Parameter(
                         name=k,
-                        annotation=Annotated[UUID, Path(title=k)],
-                        kind=inspect.Parameter.POSITIONAL_ONLY,
+                        annotation=Annotated[
+                            UUID, 
+                            Path(
+                                ...,
+                                description=f"The {k} must be a valid UUID",
+                                examples=['123e4567-e89b-12d3-a456-426614174000']
+                            )
+                        ],
+                        kind=inspect.Parameter.POSITIONAL_OR_KEYWORD
                     )
                 )
             else:
                 extra_positional_params.append(
                     inspect.Parameter(
                         name=k,
-                        annotation=Annotated[v, Path(title=k)],
-                        kind=inspect.Parameter.POSITIONAL_ONLY,
+                        annotation=Annotated[v, Path(...)],
+                        kind=inspect.Parameter.POSITIONAL_OR_KEYWORD
                     )
                 )
 

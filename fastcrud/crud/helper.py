@@ -524,61 +524,93 @@ def _nest_multi_join_data(
     """
     pre_nested_data = {}
 
+    for row in data:
+        if isinstance(row, BaseModel):
+            new_row = {
+                key: ([] if isinstance(value, list) else value)
+                for key, value in row.model_dump().items()
+            }
+        else:
+            new_row = {
+                key: ([] if isinstance(value, list) else value)
+                for key, value in row.items()
+            }
+
+        primary_key_value = new_row[base_primary_key]
+        if primary_key_value not in pre_nested_data:
+            pre_nested_data[primary_key_value] = new_row
+
     for join_config in joins_config:
         join_primary_key = _get_primary_key(join_config.model)
+        join_prefix = (
+            join_config.join_prefix.rstrip("_")
+            if join_config.join_prefix
+            else join_config.model.__tablename__
+        )
 
         for row in data:
-            if isinstance(row, BaseModel):
-                new_row = {
-                    key: (value[:] if isinstance(value, list) else value)
-                    for key, value in row.model_dump().items()
-                }
-            else:
-                new_row = {
-                    key: (value[:] if isinstance(value, list) else value)
-                    for key, value in row.items()
-                }
+            row_dict = row if isinstance(row, dict) else row.model_dump()
+            primary_key_value = row_dict[base_primary_key]
 
-            primary_key_value = new_row[base_primary_key]
-
-            if primary_key_value not in pre_nested_data:
-                for key, value in new_row.items():
-                    if isinstance(value, list) and any(
-                        item[join_primary_key] is None for item in value
-                    ):  # pragma: no cover
-                        new_row[key] = []
-                    elif (
-                        isinstance(value, dict) and value[join_primary_key] is None
-                    ):  # pragma: no cover
-                        new_row[key] = None
-
-                pre_nested_data[primary_key_value] = new_row
-            else:
-                existing_row = pre_nested_data[primary_key_value]
-                for key, value in new_row.items():
+            if join_config.relationship_type == "one-to-many":
+                if join_prefix in row_dict:
+                    value = row_dict[join_prefix]
                     if isinstance(value, list):
                         if any(
                             item[join_primary_key] is None for item in value
                         ):  # pragma: no cover
-                            existing_row[key] = []
+                            pre_nested_data[primary_key_value][join_prefix] = []
                         else:
-                            existing_row[key].extend(value)
+                            existing_items = {
+                                item[join_primary_key]
+                                for item in pre_nested_data[primary_key_value][
+                                    join_prefix
+                                ]
+                            }
+                            for item in value:
+                                if item[join_primary_key] not in existing_items:
+                                    pre_nested_data[primary_key_value][
+                                        join_prefix
+                                    ].append(item)
+                                    existing_items.add(item[join_primary_key])
+            else:
+                if join_prefix in row_dict:
+                    value = row_dict[join_prefix]
+                    if (
+                        isinstance(value, dict) and value.get(join_primary_key) is None
+                    ):  # pragma: no cover
+                        pre_nested_data[primary_key_value][join_prefix] = None
+                    elif isinstance(value, dict):
+                        pre_nested_data[primary_key_value][join_prefix] = value
 
     nested_data: list = list(pre_nested_data.values())
 
     if return_as_model:
-        for i, item in enumerate(nested_data):
+        if not schema_to_select:  # pragma: no cover
+            raise ValueError(
+                "schema_to_select must be provided when return_as_model is True."
+            )
+
+        converted_data = []
+        for item in nested_data:
             if nested_schema_to_select:
-                for prefix, schema in nested_schema_to_select.items():
-                    if prefix in item:
-                        if isinstance(item[prefix], list):
-                            item[prefix] = [
-                                schema(**nested_item) for nested_item in item[prefix]
+                for prefix, nested_schema in nested_schema_to_select.items():
+                    prefix_key = prefix.rstrip("_")
+                    if prefix_key in item:
+                        if isinstance(item[prefix_key], list):
+                            item[prefix_key] = [
+                                nested_schema(**nested_item)
+                                for nested_item in item[prefix_key]
                             ]
                         else:  # pragma: no cover
-                            item[prefix] = schema(**item[prefix])
-            if schema_to_select:
-                nested_data[i] = schema_to_select(**item)
+                            item[prefix_key] = (
+                                nested_schema(**item[prefix_key])
+                                if item[prefix_key] is not None
+                                else None
+                            )
+
+            converted_data.append(schema_to_select(**item))
+        return converted_data
 
     return nested_data
 

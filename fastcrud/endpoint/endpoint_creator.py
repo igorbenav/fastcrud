@@ -372,7 +372,7 @@ class EndpointCreator:
                 )
                 return paginated_response(
                     crud_data=crud_data,
-                    page=page, # type: ignore
+                    page=page,  # type: ignore
                     items_per_page=items_per_page,  # type: ignore
                 )
 
@@ -382,8 +382,8 @@ class EndpointCreator:
 
             crud_data = await self.crud.get_multi(
                 db,
-                offset=offset, # type: ignore
-                limit=limit, # type: ignore
+                offset=offset,  # type: ignore
+                limit=limit,  # type: ignore
                 **filters,
             )
             return crud_data  # pragma: no cover

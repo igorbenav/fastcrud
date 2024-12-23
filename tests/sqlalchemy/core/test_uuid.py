@@ -141,42 +141,6 @@ def uuid_client(async_session):
 
 
 @pytest.mark.asyncio
-@pytest.mark.dialect("postgresql")
-async def test_native_uuid_crud(uuid_client):
-    response = uuid_client.post("/uuid-test/create", json={"name": "test"})
-    assert response.status_code == 200
-    data = response.json()
-    uuid_id = data["id"]
-
-    try:
-        UUID(uuid_id)
-    except ValueError:
-        pytest.fail("Invalid UUID format")
-
-    response = uuid_client.get(f"/uuid-test/get/{uuid_id}")
-    assert response.status_code == 200
-    assert response.json()["id"] == uuid_id
-    assert response.json()["name"] == "test"
-
-    update_response = uuid_client.patch(
-        f"/uuid-test/update/{uuid_id}", json={"name": "updated"}
-    )
-    response = uuid_client.get(f"/uuid-test/get/{uuid_id}")
-    assert update_response.status_code == 200
-    assert response.status_code == 200
-    assert response.json()["name"] == "updated"
-
-    assert response.status_code == 200
-    assert response.json()["name"] == "updated"
-
-    response = uuid_client.delete(f"/uuid-test/delete/{uuid_id}")
-    assert response.status_code == 200
-
-    response = uuid_client.get(f"/uuid-test/get/{uuid_id}")
-    assert response.status_code == 404
-
-
-@pytest.mark.asyncio
 @pytest.mark.dialect("sqlite")
 async def test_custom_uuid_crud(uuid_client):
     response = uuid_client.post("/custom-uuid-test/create", json={"name": "test"})

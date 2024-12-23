@@ -4,7 +4,7 @@ from typing import Optional, Union, Annotated, Sequence, Callable, TypeVar, Any
 
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import field_validator
-from fastapi import Depends, Query, params
+from fastapi import Depends, Query, Path, params
 
 from sqlalchemy import Column, inspect as sa_inspect
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID

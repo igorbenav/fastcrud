@@ -24,25 +24,25 @@ class UUIDType(TypeDecorator):
         super().__init__(36)
 
     def load_dialect_impl(self, dialect):
-        if dialect.name == "postgresql":
+        if dialect.name == "postgresql":  # pragma: no cover
             return dialect.type_descriptor(PostgresUUID(as_uuid=True))
         else:
             return dialect.type_descriptor(String(36))
 
     def process_bind_param(self, value, dialect):
-        if value is None:
+        if value is None:  # pragma: no cover
             return value
-        elif dialect.name == "postgresql":
+        elif dialect.name == "postgresql":  # pragma: no cover
             return value
         else:
             return str(value)
 
     def process_result_value(self, value, dialect):
         if value is None:
-            return value
+            return value  # pragma: no cover
         if not isinstance(value, UUID):
             return UUID(value)
-        return value
+        return value  # pragma: no cover
 
 
 class UUIDModel(SQLModel, table=True):
@@ -64,12 +64,12 @@ class CustomUUID(TypeDecorator):
         self.__visit_name__ = "uuid"
 
     def process_bind_param(self, value, dialect):
-        if value is None:
+        if value is None:  # pragma: no cover
             return value
         return str(value)
 
     def process_result_value(self, value, dialect):
-        if value is None:
+        if value is None:  # pragma: no cover
             return value
         return UUID(value)
 
@@ -158,12 +158,12 @@ async def test_custom_uuid_crud(uuid_client):
         data = response.json()
         assert "id" in data, f"Response does not contain 'id': {data}"
         uuid_id = data["id"]
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         pytest.fail(f"Failed to process response: {response.text}. Error: {str(e)}")
 
     try:
         UUID(uuid_id)
-    except ValueError:
+    except ValueError:  # pragma: no cover
         pytest.fail("Invalid UUID format")
 
     response = uuid_client.get(f"/custom-uuid-test/get/{uuid_id}")
@@ -202,5 +202,5 @@ async def test_uuid_list_endpoint(uuid_client):
     for item in data:
         try:
             UUID(item["id"])
-        except ValueError:
+        except ValueError:  # pragma: no cover
             pytest.fail("Invalid UUID format in list response")

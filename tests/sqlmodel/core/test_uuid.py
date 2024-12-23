@@ -1,7 +1,7 @@
 import pytest
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.types import TypeDecorator
 from fastapi import FastAPI
@@ -11,19 +11,49 @@ from sqlmodel import Field, SQLModel
 from fastcrud import crud_router, FastCRUD
 from pydantic import ConfigDict
 
+class UUIDType(TypeDecorator):
+    """Platform-independent UUID type.
+    Uses PostgreSQL's UUID type, otherwise CHAR(36)
+    """
+    impl = String
+    cache_ok = True
+
+    def __init__(self):
+        super().__init__(36)
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(PostgresUUID(as_uuid=True))
+        else:
+            return dialect.type_descriptor(String(36))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        elif dialect.name == 'postgresql':
+            return value
+        else:
+            return str(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        if not isinstance(value, UUID):
+            return UUID(value)
+        return value
+
 
 class UUIDModel(SQLModel, table=True):
     __tablename__ = "uuid_test"
     id: UUID = Field(
         default_factory=uuid4,
-        sa_column=Column(PostgresUUID(as_uuid=True), primary_key=True),
+        sa_column=Column(UUIDType(), primary_key=True)
     )
     name: str = Field(sa_column=Column(String(255)))
 
 
 class CustomUUID(TypeDecorator):
     """Custom UUID type for testing."""
-
     impl = String
     cache_ok = True
 
@@ -45,7 +75,8 @@ class CustomUUID(TypeDecorator):
 class CustomUUIDModel(SQLModel, table=True):
     __tablename__ = "custom_uuid_test"
     id: UUID = Field(
-        default_factory=uuid4, sa_column=Column(CustomUUID(), primary_key=True)
+        default_factory=uuid4,
+        sa_column=Column(CustomUUID(), primary_key=True)
     )
     name: str = Field(sa_column=Column(String(255)))
 

@@ -8,7 +8,7 @@ from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import make_url
+from sqlalchemy import make_url, Column, String
 from pydantic import ConfigDict
 from sqlmodel import SQLModel, Field, Relationship
 from fastapi import FastAPI
@@ -176,6 +176,14 @@ class BookingModel(SQLModel, table=True):
     user: "ModelTest" = Relationship(
         sa_relationship_kwargs={"foreign_keys": "BookingModel.user_id"}
     )
+
+
+class ModelWithCustomColumns(SQLModel, table=True):
+    __tablename__ = "test_custom"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    meta: str = Field(sa_column=Column("metadata", String(32), nullable=False))
+    name: str = Field(sa_column=Column("display_name", String(32), nullable=False))
 
 
 class ReadSchemaTest(SQLModel):
@@ -437,6 +445,11 @@ def multi_pk_test_schema():
 @pytest.fixture
 def multi_pk_test_create_schema():
     return MultiPkCreate
+
+
+@pytest.fixture
+def test_model_custom_columns():
+    return ModelWithCustomColumns
 
 
 async def test_read_dep():

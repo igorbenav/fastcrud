@@ -1199,3 +1199,163 @@ async def test_get_multi_joined_nested_data_none_dict(async_session):
     assert task3["client"] is None, "Task 3 should have no client."
     assert task3["department"] is None, "Task 3 should have no department."
     assert task3["assignee"] is None, "Task 3 should have no assignee."
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_no_duplicate_entries_in_one_to_many(async_session):
+    """Test that one-to-many relationships don't produce duplicate entries when using multiple joins."""
+    dept = Department(name="Test Department")
+    async_session.add(dept)
+    await async_session.flush()
+
+    users = [
+        User(
+            name=f"User {i}",
+            username=f"user{i}",
+            email=f"user{i}@example.com",
+            phone=f"{i}11-111-1111",
+            department_id=dept.id,
+        )
+        for i in range(2)
+    ]
+    async_session.add_all(users)
+    await async_session.flush()
+
+    cards = []
+    for user in users:
+        for i in range(2):
+            card = Card(title=f"Card {i} for {user.username}")
+            cards.append(card)
+    async_session.add_all(cards)
+    await async_session.flush()
+
+    articles = []
+    for i, card in enumerate(cards):
+        article = Article(title=f"Article for card {card.title}", card_id=card.id)
+        articles.append(article)
+    async_session.add_all(articles)
+    await async_session.commit()
+
+    dept_crud = FastCRUD(Department)
+    result = await dept_crud.get_multi_joined(
+        db=async_session,
+        nest_joins=True,
+        schema_to_select=DepartmentRead,
+        joins_config=[
+            JoinConfig(
+                model=User,
+                join_on=Department.id == User.department_id,
+                join_prefix="users_",
+                schema_to_select=UserReadSub,
+                relationship_type="one-to-many",
+            )
+        ],
+    )
+
+    assert len(result["data"]) == 1, "Should return exactly one department"
+    department = result["data"][0]
+
+    assert len(department["users"]) == 2, "Should have exactly 2 users"
+
+
+@pytest.mark.asyncio
+async def test_get_multi_joined_explicit_join_preserves_condition(async_session):
+    """Test that explicitly provided join conditions are preserved and used correctly."""
+    dept = Department(name="Engineering")
+    async_session.add(dept)
+    await async_session.flush()
+
+    users = [
+        User(
+            name="John",
+            username="john",
+            email="john@test.com",
+            phone="123-456-7890",
+            department_id=dept.id,
+        ),
+        User(
+            name="Jane",
+            username="jane",
+            email="jane@test.com",
+            phone="098-765-4321",
+            department_id=dept.id,
+        ),
+    ]
+    async_session.add_all(users)
+    await async_session.flush()
+
+    tasks = [
+        Task(
+            name="Task 1",
+            description="First task",
+            assignee_id=users[0].id,
+            department_id=dept.id,
+        ),
+        Task(
+            name="Task 2",
+            description="Second task",
+            assignee_id=users[1].id,
+            department_id=dept.id,
+        ),
+        Task(
+            name="Task 3",
+            description="Unassigned task",
+            assignee_id=None,
+            department_id=dept.id,
+        ),
+    ]
+    async_session.add_all(tasks)
+    await async_session.commit()
+
+    task_crud = FastCRUD(Task)
+
+    result = await task_crud.get_multi_joined(
+        db=async_session,
+        nest_joins=True,
+        joins_config=[
+            JoinConfig(
+                model=User,
+                join_on=Task.assignee_id == User.id,
+                join_prefix="assignee_",
+                schema_to_select=UserReadSub,
+                join_type="left",
+            ),
+            JoinConfig(
+                model=Department,
+                join_on=Task.department_id == Department.id,
+                join_prefix="department_",
+                schema_to_select=DepartmentRead,
+                join_type="left",
+            ),
+        ],
+    )
+
+    tasks_data = result["data"]
+    assigned_tasks = [t for t in tasks_data if t.get("assignee") is not None]
+    unassigned_tasks = [t for t in tasks_data if t.get("assignee") is None]
+
+    assert len(tasks_data) == 3, "Should return all three tasks"
+    assert len(assigned_tasks) == 2, "Should have two assigned tasks"
+    assert len(unassigned_tasks) == 1, "Should have one unassigned task"
+
+    task1 = next((t for t in tasks_data if t["name"] == "Task 1"), None)
+    task2 = next((t for t in tasks_data if t["name"] == "Task 2"), None)
+    task3 = next((t for t in tasks_data if t["name"] == "Task 3"), None)
+
+    assert task1 is not None, "Task 1 should exist"
+    assert task2 is not None, "Task 2 should exist"
+    assert task3 is not None, "Task 3 should exist"
+
+    assert task1["assignee"]["username"] == "john", "Task 1 should be assigned to John"
+    assert task2["assignee"]["username"] == "jane", "Task 2 should be assigned to Jane"
+    assert task3["assignee"] is None, "Task 3 should have no assignee"
+
+    assert (
+        task1["department"]["name"] == "Engineering"
+    ), "Task 1 should be in Engineering department"
+    assert (
+        task2["department"]["name"] == "Engineering"
+    ), "Task 2 should be in Engineering department"
+    assert (
+        task3["department"]["name"] == "Engineering"
+    ), "Task 3 should be in Engineering department"

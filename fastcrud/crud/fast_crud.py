@@ -1913,19 +1913,23 @@ class FastCRUD(
 
         join_definitions = joins_config if joins_config else []
         if join_model:
-            join_definitions.append(
-                JoinConfig(
-                    model=join_model,
-                    join_on=join_on
-                    or _auto_detect_join_condition(self.model, join_model),
-                    join_prefix=join_prefix,
-                    schema_to_select=join_schema_to_select,
-                    join_type=join_type,
-                    alias=alias,
-                    filters=join_filters,
-                    relationship_type=relationship_type,
+            try:
+                join_definitions.append(
+                    JoinConfig(
+                        model=join_model,
+                        join_on=join_on
+                        if join_on is not None
+                        else _auto_detect_join_condition(self.model, join_model),
+                        join_prefix=join_prefix,
+                        schema_to_select=join_schema_to_select,
+                        join_type=join_type,
+                        alias=alias,
+                        filters=join_filters,
+                        relationship_type=relationship_type,
+                    )
                 )
-            )
+            except ValueError as e:  # pragma: no cover
+                raise ValueError(f"Could not configure join: {str(e)}")
 
         stmt = self._prepare_and_apply_joins(
             stmt=stmt, joins_config=join_definitions, use_temporary_prefix=nest_joins
@@ -1983,7 +1987,7 @@ class FastCRUD(
                     (
                         join.join_prefix.rstrip("_")
                         if join.join_prefix
-                        else join.model.__name__
+                        else join.model.__tablename__
                     ): join.schema_to_select
                     for join in join_definitions
                     if join.schema_to_select

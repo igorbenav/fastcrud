@@ -78,3 +78,23 @@ async def test_parse_filters_invalid_column(test_model):
 
     with pytest.raises(ValueError):
         fast_crud._parse_filters(invalid_column__="This does not exist")
+
+
+@pytest.mark.asyncio
+async def test_parse_filters_with_custom_column_names(test_model_custom_columns):
+    fast_crud = FastCRUD(test_model_custom_columns)
+
+    filters = fast_crud._parse_filters(meta={"key": "value"})
+    assert len(filters) == 1
+    assert "test_custom.metadata =" in str(filters[0])
+
+    filters = fast_crud._parse_filters(name__like="John%")
+    assert len(filters) == 1
+    assert "test_custom.display_name LIKE" in str(filters[0])
+
+    filters = fast_crud._parse_filters(meta__contains={"key": "value"}, name="John")
+    assert len(filters) == 2
+    filter_str = [str(f) for f in filters]
+    print(filter_str)
+    assert any("test_custom.metadata LIKE" in f for f in filter_str)
+    assert any("test_custom.display_name =" in f for f in filter_str)

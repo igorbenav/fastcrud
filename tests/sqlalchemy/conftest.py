@@ -185,6 +185,14 @@ class Task(Base):
     assignee = relationship("User", backref="tasks")
 
 
+class ModelWithCustomColumns(Base):
+    __tablename__ = "test_custom"
+
+    id = Column(Integer, primary_key=True)
+    meta = Column("metadata", String(32), nullable=False)
+    name = Column("display_name", String(32), nullable=False)
+
+
 class CreateSchemaTest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str
@@ -449,6 +457,11 @@ def multi_pk_test_schema():
 @pytest.fixture
 def multi_pk_test_create_schema():
     return MultiPkCreate
+
+
+@pytest.fixture
+def test_model_custom_columns():
+    return ModelWithCustomColumns
 
 
 async def test_read_dep():

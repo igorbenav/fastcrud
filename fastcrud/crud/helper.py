@@ -72,6 +72,9 @@ def _extract_matching_columns_from_schema(
     temp_prefix = (
         temp_prefix if use_temporary_prefix and temp_prefix is not None else ""
     )
+
+    mapper = inspect(model).mapper
+
     if schema:
         for field in schema.model_fields.keys():
             if hasattr(model_or_alias, field):
@@ -85,13 +88,13 @@ def _extract_matching_columns_from_schema(
                     column = column.label(column_label)
                 columns.append(column)
     else:
-        for column in model.__table__.c:
-            column = getattr(model_or_alias, column.key)
+        for prop in mapper.column_attrs:
+            column = getattr(model_or_alias, prop.key)
             if prefix is not None or use_temporary_prefix:
                 column_label = (
-                    f"{temp_prefix}{prefix}{column.key}"
+                    f"{temp_prefix}{prefix}{prop.key}"
                     if prefix
-                    else f"{temp_prefix}{column.key}"
+                    else f"{temp_prefix}{prop.key}"
                 )
                 column = column.label(column_label)
             columns.append(column)
@@ -576,9 +579,7 @@ def _nest_multi_join_data(
             else:  # pragma: no cover
                 if join_prefix in row_dict:
                     value = row_dict[join_prefix]
-                    if (
-                        isinstance(value, dict) and value.get(join_primary_key) is None
-                    ):
+                    if isinstance(value, dict) and value.get(join_primary_key) is None:
                         pre_nested_data[primary_key_value][join_prefix] = None
                     elif isinstance(value, dict):
                         pre_nested_data[primary_key_value][join_prefix] = value

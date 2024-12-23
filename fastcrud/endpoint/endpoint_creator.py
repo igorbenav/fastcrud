@@ -10,6 +10,7 @@ from fastcrud.types import (
     CreateSchemaType,
     DeleteSchemaType,
     ModelType,
+    SelectSchemaType,
     UpdateSchemaType,
 )
 from ..exceptions.http_exceptions import (
@@ -58,6 +59,7 @@ class EndpointCreator:
                         (`"create"`, `"read"`, `"update"`, `"delete"`, `"db_delete"`, `"read_multi"`), and
                         values are the custom names to use. Unspecified operations will use default names.
         filter_config: Optional `FilterConfig` instance or dictionary to configure filters for the `read_multi` endpoint.
+        select_schema: Optional Pydantic schema for selecting an item.
 
     Raises:
         ValueError: If both `included_methods` and `deleted_methods` are provided.
@@ -251,6 +253,7 @@ class EndpointCreator:
         updated_at_column: str = "updated_at",
         endpoint_names: Optional[dict[str, str]] = None,
         filter_config: Optional[Union[FilterConfig, dict]] = None,
+        select_schema: Optional[Type[SelectSchemaType]] = None,
     ) -> None:
         self._primary_keys = _get_primary_keys(model)
         self._primary_keys_types = {
@@ -268,6 +271,7 @@ class EndpointCreator:
         self.create_schema = create_schema
         self.update_schema = update_schema
         self.delete_schema = delete_schema
+        self.select_schema = select_schema
         self.include_in_schema = include_in_schema
         self.path = path
         self.tags = tags or []
@@ -327,7 +331,15 @@ class EndpointCreator:
 
         @_apply_model_pk(**self._primary_keys_types)
         async def endpoint(db: AsyncSession = Depends(self.session), **pkeys):
-            item = await self.crud.get(db, **pkeys)
+            if self.select_schema is not None:
+                item = await self.crud.get(
+                    db,
+                    schema_to_select=self.select_schema,
+                    return_as_model=True,
+                    **pkeys,
+                )
+            else:
+                item = await self.crud.get(db, **pkeys)
             if not item:  # pragma: no cover
                 raise NotFoundException(detail="Item not found")
             return item  # pragma: no cover
@@ -367,9 +379,28 @@ class EndpointCreator:
                     items_per_page = 10
                 offset = compute_offset(page=page, items_per_page=items_per_page)  # type: ignore
                 limit = items_per_page
+            elif not has_offset_limit:
+                offset = 0
+                limit = 100
+
+            if self.select_schema is not None:
                 crud_data = await self.crud.get_multi(
-                    db, offset=offset, limit=limit, **filters
+                    db,
+                    offset=offset,  # type: ignore
+                    limit=limit,  # type: ignore
+                    schema_to_select=self.select_schema,
+                    return_as_model=True,
+                    **filters,
                 )
+            else:
+                crud_data = await self.crud.get_multi(
+                    db,
+                    offset=offset,  # type: ignore
+                    limit=limit,  # type: ignore
+                    **filters,
+                )
+
+            if is_paginated:
                 return paginated_response(
                     crud_data=crud_data,
                     page=page,  # type: ignore

@@ -9,6 +9,7 @@ from fastcrud.types import (
     DeleteSchemaType,
     ModelType,
     UpdateSchemaType,
+    SelectSchemaType,
 )
 from .endpoint_creator import EndpointCreator
 from .helper import FilterConfig
@@ -38,6 +39,7 @@ def crud_router(
     updated_at_column: str = "updated_at",
     endpoint_names: Optional[dict[str, str]] = None,
     filter_config: Optional[Union[FilterConfig, dict]] = None,
+    select_schema: Optional[Type[SelectSchemaType]] = None,
 ) -> APIRouter:
     """
     Creates and configures a FastAPI router with CRUD endpoints for a given model.
@@ -72,6 +74,7 @@ def crud_router(
                         (`"create"`, `"read"`, `"update"`, `"delete"`, `"db_delete"`, `"read_multi"`), and
                         values are the custom names to use. Unspecified operations will use default names.
         filter_config: Optional `FilterConfig` instance or dictionary to configure filters for the `read_multi` endpoint.
+        select_schema: Optional Pydantic schema for selecting an item.
 
     Returns:
         Configured `APIRouter` instance with the CRUD endpoints.
@@ -541,6 +544,7 @@ def crud_router(
         updated_at_column=updated_at_column,
         endpoint_names=endpoint_names,
         filter_config=filter_config,
+        select_schema=select_schema,  # type: ignore
     )
 
     endpoint_creator_instance.add_routes_to_router(

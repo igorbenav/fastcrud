@@ -6,7 +6,7 @@ from sqlalchemy.sql import ColumnElement
 from pydantic import BaseModel, ConfigDict
 from pydantic.functional_validators import field_validator
 
-from fastcrud.types import ModelType
+from fastcrud.types import ModelType, SelectSchemaType
 
 from ..endpoint.helper import _get_primary_key
 
@@ -40,7 +40,7 @@ class JoinConfig(BaseModel):
 
 def _extract_matching_columns_from_schema(
     model: Union[ModelType, AliasedClass],
-    schema: Optional[type[BaseModel]],
+    schema: Optional[type[SelectSchemaType]],
     prefix: Optional[str] = None,
     alias: Optional[AliasedClass] = None,
     use_temporary_prefix: Optional[bool] = False,
@@ -443,12 +443,12 @@ def _nest_join_data(
 
 def _nest_multi_join_data(
     base_primary_key: str,
-    data: list[Union[dict, BaseModel]],
+    data: Sequence[Union[dict, BaseModel]],
     joins_config: Sequence[JoinConfig],
     return_as_model: bool = False,
-    schema_to_select: Optional[type[BaseModel]] = None,
-    nested_schema_to_select: Optional[dict[str, type[BaseModel]]] = None,
-) -> Sequence[Union[dict, BaseModel]]:
+    schema_to_select: Optional[type[SelectSchemaType]] = None,
+    nested_schema_to_select: Optional[dict[str, type[SelectSchemaType]]] = None,
+) -> Sequence[Union[dict, SelectSchemaType]]:
     """
     Nests joined data based on join definitions provided for multiple records. This function processes the input list of
     dictionaries, identifying keys that correspond to joined tables using the provided `joins_config`, and nests them
@@ -464,7 +464,7 @@ def _nest_multi_join_data(
         nested_schema_to_select: A dictionary mapping join prefixes to their corresponding Pydantic schemas.
 
     Returns:
-        Sequence[Union[dict, BaseModel]]: A list of dictionaries with nested structures for joined table data or Pydantic models.
+        Sequence[Union[dict, SelectSchemaType]]: A list of dictionaries with nested structures for joined table data or Pydantic models.
 
     Example:
 
@@ -616,8 +616,9 @@ def _nest_multi_join_data(
 
 
 def _handle_null_primary_key_multi_join(
-    data: list[Union[dict[str, Any], BaseModel]], join_definitions: list[JoinConfig]
-) -> list[Union[dict[str, Any], BaseModel]]:
+    data: list[Union[dict[str, Any], SelectSchemaType]],
+    join_definitions: list[JoinConfig],
+) -> list[Union[dict[str, Any], SelectSchemaType]]:
     for item in data:
         item_dict = item if isinstance(item, dict) else item.model_dump()
 

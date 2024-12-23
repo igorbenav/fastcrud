@@ -2,7 +2,7 @@ from typing import Any, Dict, Generic, Union, Optional, Callable
 from datetime import datetime, timezone
 import warnings
 
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 from sqlalchemy import (
     Insert,
     Result,
@@ -30,6 +30,7 @@ from fastcrud.types import (
     CreateSchemaType,
     DeleteSchemaType,
     ModelType,
+    SelectSchemaType,
     UpdateSchemaInternalType,
     UpdateSchemaType,
 )
@@ -53,6 +54,7 @@ class FastCRUD(
         UpdateSchemaType,
         UpdateSchemaInternalType,
         DeleteSchemaType,
+        SelectSchemaType,
     ]
 ):
     """
@@ -650,7 +652,7 @@ class FastCRUD(
 
     async def select(
         self,
-        schema_to_select: Optional[type[BaseModel]] = None,
+        schema_to_select: Optional[type[SelectSchemaType]] = None,
         sort_columns: Optional[Union[str, list[str]]] = None,
         sort_orders: Optional[Union[str, list[str]]] = None,
         **kwargs: Any,
@@ -716,11 +718,11 @@ class FastCRUD(
     async def get(
         self,
         db: AsyncSession,
-        schema_to_select: Optional[type[BaseModel]] = None,
+        schema_to_select: Optional[type[SelectSchemaType]] = None,
         return_as_model: bool = False,
         one_or_none: bool = False,
         **kwargs: Any,
-    ) -> Optional[Union[dict, BaseModel]]:
+    ) -> Optional[Union[dict, SelectSchemaType]]:
         """
         Fetches a single record based on specified filters.
 
@@ -788,9 +790,9 @@ class FastCRUD(
         self,
         db: AsyncSession,
         instance: Union[UpdateSchemaType, CreateSchemaType],
-        schema_to_select: Optional[type[BaseModel]] = None,
+        schema_to_select: Optional[type[SelectSchemaType]] = None,
         return_as_model: bool = False,
-    ) -> Union[BaseModel, Dict[str, Any], None]:
+    ) -> Union[SelectSchemaType, Dict[str, Any], None]:
         """Update the instance or create it if it doesn't exists.
 
         Note: This method will perform two transactions to the database (get and create or update).
@@ -805,23 +807,23 @@ class FastCRUD(
             The created or updated instance
         """
         _pks = self._get_pk_dict(instance)
-        schema_to_select = schema_to_select or type(instance)
+        schema_to_select = schema_to_select or type(instance)  # type: ignore
         db_instance = await self.get(
             db,
-            schema_to_select=schema_to_select,
+            schema_to_select=schema_to_select,  # type: ignore
             return_as_model=return_as_model,
             **_pks,
         )
         if db_instance is None:
             db_instance = await self.create(db, instance)  # type: ignore
-            db_instance = schema_to_select.model_validate(
+            db_instance = schema_to_select.model_validate(  # type: ignore
                 db_instance, from_attributes=True
             )
         else:
             await self.update(db, instance)  # type: ignore
             db_instance = await self.get(
                 db,
-                schema_to_select=schema_to_select,
+                schema_to_select=schema_to_select,  # type: ignore
                 return_as_model=return_as_model,
                 **_pks,
             )
@@ -834,7 +836,7 @@ class FastCRUD(
         instances: list[Union[UpdateSchemaType, CreateSchemaType]],
         commit: bool = False,
         return_columns: Optional[list[str]] = None,
-        schema_to_select: Optional[type[BaseModel]] = None,
+        schema_to_select: Optional[type[SelectSchemaType]] = None,
         return_as_model: bool = False,
         update_override: Optional[dict[str, Any]] = None,
         **kwargs: Any,
@@ -1141,7 +1143,7 @@ class FastCRUD(
         db: AsyncSession,
         offset: int = 0,
         limit: Optional[int] = 100,
-        schema_to_select: Optional[type[BaseModel]] = None,
+        schema_to_select: Optional[type[SelectSchemaType]] = None,
         sort_columns: Optional[Union[str, list[str]]] = None,
         sort_orders: Optional[Union[str, list[str]]] = None,
         return_as_model: bool = False,
@@ -1284,11 +1286,11 @@ class FastCRUD(
     async def get_joined(
         self,
         db: AsyncSession,
-        schema_to_select: Optional[type[BaseModel]] = None,
+        schema_to_select: Optional[type[SelectSchemaType]] = None,
         join_model: Optional[ModelType] = None,
         join_on: Optional[Union[Join, BinaryExpression]] = None,
         join_prefix: Optional[str] = None,
-        join_schema_to_select: Optional[type[BaseModel]] = None,
+        join_schema_to_select: Optional[type[SelectSchemaType]] = None,
         join_type: str = "left",
         alias: Optional[AliasedClass] = None,
         join_filters: Optional[dict] = None,
@@ -1600,11 +1602,11 @@ class FastCRUD(
     async def get_multi_joined(
         self,
         db: AsyncSession,
-        schema_to_select: Optional[type[BaseModel]] = None,
+        schema_to_select: Optional[type[SelectSchemaType]] = None,
         join_model: Optional[type[ModelType]] = None,
         join_on: Optional[Any] = None,
         join_prefix: Optional[str] = None,
-        join_schema_to_select: Optional[type[BaseModel]] = None,
+        join_schema_to_select: Optional[type[SelectSchemaType]] = None,
         join_type: str = "left",
         alias: Optional[AliasedClass[Any]] = None,
         join_filters: Optional[dict] = None,
@@ -1948,7 +1950,7 @@ class FastCRUD(
             stmt = stmt.limit(limit)
 
         result = await db.execute(stmt)
-        data: list[Union[dict, BaseModel]] = []
+        data: list[Union[dict, SelectSchemaType]] = []
 
         for row in result.mappings().all():
             row_dict = dict(row)
@@ -1978,7 +1980,7 @@ class FastCRUD(
             join.relationship_type == "one-to-many" for join in join_definitions
         ):
             nested_data = _nest_multi_join_data(
-                base_primary_key=self._primary_keys[0].name,
+                base_primary_key=self._primary_keys[0].name,  # type: ignore[misc]
                 data=data,
                 joins_config=join_definitions,
                 return_as_model=return_as_model,
@@ -2011,7 +2013,7 @@ class FastCRUD(
         db: AsyncSession,
         cursor: Any = None,
         limit: int = 100,
-        schema_to_select: Optional[type[BaseModel]] = None,
+        schema_to_select: Optional[type[SelectSchemaType]] = None,
         sort_column: str = "id",
         sort_order: str = "asc",
         **kwargs: Any,
@@ -2087,10 +2089,7 @@ class FastCRUD(
         if limit == 0:
             return {"data": [], "next_cursor": None}
 
-        stmt = await self.select(
-            schema_to_select=schema_to_select,
-            **kwargs,
-        )
+        stmt = await self.select(schema_to_select=schema_to_select, **kwargs)
 
         if cursor:
             if sort_order == "asc":
@@ -2124,11 +2123,11 @@ class FastCRUD(
         allow_multiple: bool = False,
         commit: bool = True,
         return_columns: Optional[list[str]] = None,
-        schema_to_select: Optional[type[BaseModel]] = None,
+        schema_to_select: Optional[type[SelectSchemaType]] = None,
         return_as_model: bool = False,
         one_or_none: bool = False,
         **kwargs: Any,
-    ) -> Optional[Union[dict, BaseModel]]:
+    ) -> Optional[Union[dict, SelectSchemaType]]:
         """
         Updates an existing record or multiple records in the database based on specified filters. This method allows for precise targeting of records to update.
 
@@ -2265,10 +2264,10 @@ class FastCRUD(
     def _as_single_response(
         self,
         db_row: Result,
-        schema_to_select: Optional[type[BaseModel]] = None,
+        schema_to_select: Optional[type[SelectSchemaType]] = None,
         return_as_model: bool = False,
         one_or_none: bool = False,
-    ) -> Optional[Union[dict, BaseModel]]:
+    ) -> Optional[Union[dict, SelectSchemaType]]:
         result: Optional[Row] = db_row.one_or_none() if one_or_none else db_row.first()
         if result is None:  # pragma: no cover
             return None
@@ -2284,7 +2283,7 @@ class FastCRUD(
     def _as_multi_response(
         self,
         db_row: Result,
-        schema_to_select: Optional[type[BaseModel]] = None,
+        schema_to_select: Optional[type[SelectSchemaType]] = None,
         return_as_model: bool = False,
     ) -> dict:
         data = [dict(row) for row in db_row.mappings()]

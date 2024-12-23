@@ -51,3 +51,26 @@ async def test_read_multi_primary_key_item_success(
     assert data["name"] == tester_data["name"]
     assert data["id"] == tester_data["id"]
     assert data["uuid"] == tester_data["uuid"]
+
+
+@pytest.mark.asyncio
+async def test_read_item_with_schema(
+    client_with_select_schema: TestClient,
+    async_session,
+    test_model,
+    test_data,
+    read_schema,
+):
+    tester_data = {"name": test_data[0]["name"], "tier_id": test_data[0]["tier_id"]}
+    new_item = test_model(**tester_data)
+    async_session.add(new_item)
+    await async_session.commit()
+    await async_session.refresh(new_item)
+
+    response = client_with_select_schema.get(f"/test/get/{new_item.id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert read_schema.model_validate(data)
+    assert data["name"] == tester_data["name"]
+    assert data["tier_id"] == tester_data["tier_id"]

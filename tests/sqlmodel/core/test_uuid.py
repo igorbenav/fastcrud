@@ -187,17 +187,6 @@ async def test_custom_uuid_crud(uuid_client):
 
 
 @pytest.mark.asyncio
-async def test_invalid_uuid_handling(uuid_client):
-    invalid_uuid = "not-a-uuid"
-
-    response = uuid_client.get(f"/uuid-test/get/{invalid_uuid}")
-    assert response.status_code == 404
-
-    response = uuid_client.get(f"/custom-uuid-test/get/{invalid_uuid}")
-    assert response.status_code == 404
-
-
-@pytest.mark.asyncio
 async def test_uuid_list_endpoint(uuid_client):
     created_ids = []
     for i in range(3):

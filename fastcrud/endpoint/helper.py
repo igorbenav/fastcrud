@@ -176,7 +176,6 @@ def _apply_model_pk(**pkeys: dict[str, type]):
     It dynamically changes the endpoint signature and allows to use
     multiple primary keys without defining them explicitly.
     """
-
     def wrapper(endpoint):
         signature = inspect.signature(endpoint)
         parameters = [
@@ -190,16 +189,16 @@ def _apply_model_pk(**pkeys: dict[str, type]):
                 extra_positional_params.append(
                     inspect.Parameter(
                         name=k,
-                        annotation=Annotated[UUID, Path(...)],
-                        kind=inspect.Parameter.POSITIONAL_ONLY
+                        annotation=Annotated[UUID, Path(title=k)],
+                        kind=inspect.Parameter.POSITIONAL_ONLY,
                     )
                 )
             else:
                 extra_positional_params.append(
                     inspect.Parameter(
                         name=k,
-                        annotation=v,
-                        kind=inspect.Parameter.POSITIONAL_ONLY
+                        annotation=Annotated[v, Path(title=k)],
+                        kind=inspect.Parameter.POSITIONAL_ONLY,
                     )
                 )
 

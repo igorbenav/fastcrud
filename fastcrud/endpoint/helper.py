@@ -1,11 +1,14 @@
 import inspect
+from uuid import UUID
 from typing import Optional, Union, Annotated, Sequence, Callable, TypeVar, Any
 
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import field_validator
-from fastapi import Depends, Query, params
+from fastapi import Depends, Query, Path, params
 
 from sqlalchemy import Column, inspect as sa_inspect
+from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
+from sqlalchemy.types import TypeEngine
 from sqlalchemy.sql.elements import KeyedColumnElement
 
 from fastcrud.types import ModelType
@@ -87,12 +90,36 @@ def _get_primary_keys(
     return primary_key_columns
 
 
+def _is_uuid_type(column_type: TypeEngine) -> bool:  # pragma: no cover
+    """
+    Check if a SQLAlchemy column type represents a UUID.
+    Handles various SQL dialects and common UUID implementations.
+    """
+    if isinstance(column_type, PostgresUUID):
+        return True
+
+    type_name = getattr(column_type, "__visit_name__", "").lower()
+    if "uuid" in type_name:
+        return True
+
+    if hasattr(column_type, "impl"):
+        return _is_uuid_type(column_type.impl)
+
+    return False
+
+
 def _get_python_type(column: Column) -> Optional[type]:
+    """Get the Python type for a SQLAlchemy column, with special handling for UUIDs."""
     try:
+        if _is_uuid_type(column.type):
+            return UUID
+
         direct_type: Optional[type] = column.type.python_type
         return direct_type
     except NotImplementedError:
         if hasattr(column.type, "impl") and hasattr(column.type.impl, "python_type"):
+            if _is_uuid_type(column.type.impl):  # pragma: no cover
+                return UUID
             indirect_type: Optional[type] = column.type.impl.python_type
             return indirect_type
         else:  # pragma: no cover
@@ -110,7 +137,10 @@ def _get_column_types(
         raise ValueError("Model inspection failed, resulting in None.")
     column_types = {}
     for column in inspector_result.mapper.columns:
-        column_types[column.name] = _get_python_type(column)
+        column_type = _get_python_type(column)
+        if hasattr(column.type, "__visit_name__") and column.type.__visit_name__ == "uuid":
+            column_type = UUID
+        column_types[column.name] = column_type
     return column_types
 
 
@@ -154,12 +184,24 @@ def _apply_model_pk(**pkeys: dict[str, type]):
             for p in signature.parameters.values()
             if p.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
         ]
-        extra_positional_params = [
-            inspect.Parameter(
-                name=k, annotation=v, kind=inspect.Parameter.POSITIONAL_ONLY
-            )
-            for k, v in pkeys.items()
-        ]
+        extra_positional_params = []
+        for k, v in pkeys.items():
+            if v == UUID:
+                extra_positional_params.append(
+                    inspect.Parameter(
+                        name=k,
+                        annotation=Annotated[UUID, Path(...)],
+                        kind=inspect.Parameter.POSITIONAL_ONLY
+                    )
+                )
+            else:
+                extra_positional_params.append(
+                    inspect.Parameter(
+                        name=k,
+                        annotation=v,
+                        kind=inspect.Parameter.POSITIONAL_ONLY
+                    )
+                )
 
         endpoint.__signature__ = signature.replace(
             parameters=extra_positional_params + parameters

@@ -137,7 +137,10 @@ def _get_column_types(
         raise ValueError("Model inspection failed, resulting in None.")
     column_types = {}
     for column in inspector_result.mapper.columns:
-        column_types[column.name] = _get_python_type(column)
+        column_type = _get_python_type(column)
+        if hasattr(column.type, "__visit_name__") and column.type.__visit_name__ == "uuid":
+            column_type = UUID
+        column_types[column.name] = column_type
     return column_types
 
 
@@ -181,12 +184,24 @@ def _apply_model_pk(**pkeys: dict[str, type]):
             for p in signature.parameters.values()
             if p.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
         ]
-        extra_positional_params = [
-            inspect.Parameter(
-                name=k, annotation=v, kind=inspect.Parameter.POSITIONAL_ONLY
-            )
-            for k, v in pkeys.items()
-        ]
+        extra_positional_params = []
+        for k, v in pkeys.items():
+            if v == UUID:
+                extra_positional_params.append(
+                    inspect.Parameter(
+                        name=k,
+                        annotation=Annotated[UUID, Path(...)],
+                        kind=inspect.Parameter.POSITIONAL_ONLY
+                    )
+                )
+            else:
+                extra_positional_params.append(
+                    inspect.Parameter(
+                        name=k,
+                        annotation=v,
+                        kind=inspect.Parameter.POSITIONAL_ONLY
+                    )
+                )
 
         endpoint.__signature__ = signature.replace(
             parameters=extra_positional_params + parameters

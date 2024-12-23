@@ -189,10 +189,10 @@ async def test_invalid_uuid_handling(uuid_client):
     invalid_uuid = "not-a-uuid"
 
     response = uuid_client.get(f"/uuid-test/get/{invalid_uuid}")
-    assert response.status_code == 422
+    assert response.status_code == 404
 
     response = uuid_client.get(f"/custom-uuid-test/get/{invalid_uuid}")
-    assert response.status_code == 422
+    assert response.status_code == 404
 
 
 @pytest.mark.asyncio

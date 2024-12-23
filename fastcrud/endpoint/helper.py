@@ -138,10 +138,7 @@ def _get_column_types(
     column_types = {}
     for column in inspector_result.mapper.columns:
         column_type = _get_python_type(column)
-        if (
-            hasattr(column.type, "__visit_name__")
-            and column.type.__visit_name__ == "uuid"
-        ):
+        if hasattr(column.type, "__visit_name__") and column.type.__visit_name__ == "uuid":
             column_type = UUID
         column_types[column.name] = column_type
     return column_types
@@ -179,6 +176,7 @@ def _apply_model_pk(**pkeys: dict[str, type]):
     It dynamically changes the endpoint signature and allows to use
     multiple primary keys without defining them explicitly.
     """
+
     def wrapper(endpoint):
         signature = inspect.signature(endpoint)
         parameters = [
@@ -192,23 +190,16 @@ def _apply_model_pk(**pkeys: dict[str, type]):
                 extra_positional_params.append(
                     inspect.Parameter(
                         name=k,
-                        annotation=Annotated[
-                            UUID, 
-                            Path(
-                                ...,
-                                description=f"The {k} must be a valid UUID",
-                                examples=['123e4567-e89b-12d3-a456-426614174000']
-                            )
-                        ],
-                        kind=inspect.Parameter.POSITIONAL_OR_KEYWORD
+                        annotation=Annotated[UUID, Path(...)],
+                        kind=inspect.Parameter.POSITIONAL_ONLY
                     )
                 )
             else:
                 extra_positional_params.append(
                     inspect.Parameter(
                         name=k,
-                        annotation=Annotated[v, Path(...)],
-                        kind=inspect.Parameter.POSITIONAL_OR_KEYWORD
+                        annotation=v,
+                        kind=inspect.Parameter.POSITIONAL_ONLY
                     )
                 )
 

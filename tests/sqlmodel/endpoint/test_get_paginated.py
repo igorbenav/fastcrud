@@ -153,3 +153,25 @@ async def test_read_items_with_only_page_on_pagination(
 
     assert data["page"] == page
     assert data["items_per_page"] == 10
+
+
+@pytest.mark.asyncio
+async def test_read_items_with_partial_pagination_params(
+    client: TestClient, async_session, test_model, test_data
+):
+    for data in test_data:
+        new_item = test_model(**data)
+        async_session.add(new_item)
+    await async_session.commit()
+
+    response = client.get("/test/get_multi?page=2")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["page"] == 2
+    assert data["items_per_page"] == 10
+
+    response = client.get("/test/get_multi?itemsPerPage=5")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["page"] == 1
+    assert data["items_per_page"] == 5

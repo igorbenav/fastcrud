@@ -16,7 +16,7 @@ from ..conftest import Base
 class UUIDModel(Base):
     __tablename__ = "uuid_test"
     id = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String)
+    name = Column(String(255))
 
 
 class CustomUUID(TypeDecorator):
@@ -43,7 +43,7 @@ class CustomUUID(TypeDecorator):
 class CustomUUIDModel(Base):
     __tablename__ = "custom_uuid_test"
     id = Column(CustomUUID(), primary_key=True, default=uuid4)
-    name = Column(String)
+    name = Column(String(255))
 
 
 class UUIDSchema(BaseModel):

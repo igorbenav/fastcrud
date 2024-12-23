@@ -18,7 +18,7 @@ class UUIDModel(SQLModel, table=True):
         default_factory=uuid4,
         sa_column=Column(PostgresUUID(as_uuid=True), primary_key=True),
     )
-    name: str
+    name: str = Field(sa_column=Column(String(255)))
 
 
 class CustomUUID(TypeDecorator):
@@ -47,7 +47,7 @@ class CustomUUIDModel(SQLModel, table=True):
     id: UUID = Field(
         default_factory=uuid4, sa_column=Column(CustomUUID(), primary_key=True)
     )
-    name: str
+    name: str = Field(sa_column=Column(String(255)))
 
 
 class UUIDSchema(SQLModel):

@@ -45,10 +45,11 @@ mypy = "^1.9.0"
 ruff = "^0.3.4"
 coverage = "^7.4.4"
 testcontainers = "^4.7.1"
+asyncpg = "^0.30.0"
+psycopg2-binary = "^2.9.10"
 psycopg = "^3.2.1"
 aiomysql = "^0.2.0"
 cryptography = "^43.0.1"
-asyncpg = "^0.30.0"
 
 [build-system]
 requires = ["poetry-core"]

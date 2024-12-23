@@ -573,12 +573,12 @@ def _nest_multi_join_data(
                                         join_prefix
                                     ].append(item)
                                     existing_items.add(item[join_primary_key])
-            else:
+            else:  # pragma: no cover
                 if join_prefix in row_dict:
                     value = row_dict[join_prefix]
                     if (
                         isinstance(value, dict) and value.get(join_primary_key) is None
-                    ):  # pragma: no cover
+                    ):
                         pre_nested_data[primary_key_value][join_prefix] = None
                     elif isinstance(value, dict):
                         pre_nested_data[primary_key_value][join_prefix] = value

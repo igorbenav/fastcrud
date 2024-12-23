@@ -364,14 +364,19 @@ class EndpointCreator:
             ),
             filters: dict = Depends(dynamic_filters),
         ):
-            is_paginated = (page is not None) and (items_per_page is not None)
+            is_paginated = (page is not None) or (items_per_page is not None)
             has_offset_limit = (offset is not None) and (limit is not None)
 
             if is_paginated and has_offset_limit:
                 raise BadRequestException(
                     detail="Conflicting parameters: Use either 'page' and 'itemsPerPage' for paginated results or 'offset' and 'limit' for specific range queries."
                 )
-            elif is_paginated:
+
+            if is_paginated:
+                if not page:
+                    page = 1
+                if not items_per_page:
+                    items_per_page = 10
                 offset = compute_offset(page=page, items_per_page=items_per_page)  # type: ignore
                 limit = items_per_page
             elif not has_offset_limit:
@@ -402,6 +407,16 @@ class EndpointCreator:
                     items_per_page=items_per_page,  # type: ignore
                 )
 
+            if not has_offset_limit:
+                offset = 0
+                limit = 100
+
+            crud_data = await self.crud.get_multi(
+                db,
+                offset=offset,  # type: ignore
+                limit=limit,  # type: ignore
+                **filters,
+            )
             return crud_data  # pragma: no cover
 
         return endpoint

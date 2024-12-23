@@ -1,5 +1,6 @@
 from typing import Any, Dict, Generic, Union, Optional, Callable
 from datetime import datetime, timezone
+import warnings
 
 from pydantic import ValidationError
 from sqlalchemy import (
@@ -833,6 +834,7 @@ class FastCRUD(
         self,
         db: AsyncSession,
         instances: list[Union[UpdateSchemaType, CreateSchemaType]],
+        commit: bool = False,
         return_columns: Optional[list[str]] = None,
         schema_to_select: Optional[type[SelectSchemaType]] = None,
         return_as_model: bool = False,
@@ -845,6 +847,7 @@ class FastCRUD(
         Args:
             db: The database session to use for the operation.
             instances: A list of Pydantic schemas representing the instances to upsert.
+            commit: If True, commits the transaction immediately. Default is False.
             return_columns: Optional list of column names to return after the upsert operation.
             schema_to_select: Optional Pydantic schema for selecting specific columns. Required if return_as_model is True.
             return_as_model: If True, returns data as instances of the specified Pydantic model.
@@ -893,6 +896,8 @@ class FastCRUD(
         if return_columns:
             statement = statement.returning(*[column(name) for name in return_columns])
             db_row = await db.execute(statement, params)
+            if commit:
+                await db.commit()
             return self._as_multi_response(
                 db_row,
                 schema_to_select=schema_to_select,
@@ -900,6 +905,8 @@ class FastCRUD(
             )
 
         await db.execute(statement, params)
+        if commit:
+            await db.commit()
         return None
 
     async def _upsert_multi_postgresql(
@@ -1908,19 +1915,23 @@ class FastCRUD(
 
         join_definitions = joins_config if joins_config else []
         if join_model:
-            join_definitions.append(
-                JoinConfig(
-                    model=join_model,
-                    join_on=join_on
-                    or _auto_detect_join_condition(self.model, join_model),
-                    join_prefix=join_prefix,
-                    schema_to_select=join_schema_to_select,
-                    join_type=join_type,
-                    alias=alias,
-                    filters=join_filters,
-                    relationship_type=relationship_type,
+            try:
+                join_definitions.append(
+                    JoinConfig(
+                        model=join_model,
+                        join_on=join_on
+                        if join_on is not None
+                        else _auto_detect_join_condition(self.model, join_model),
+                        join_prefix=join_prefix,
+                        schema_to_select=join_schema_to_select,
+                        join_type=join_type,
+                        alias=alias,
+                        filters=join_filters,
+                        relationship_type=relationship_type,
+                    )
                 )
-            )
+            except ValueError as e:  # pragma: no cover
+                raise ValueError(f"Could not configure join: {str(e)}")
 
         stmt = self._prepare_and_apply_joins(
             stmt=stmt, joins_config=join_definitions, use_temporary_prefix=nest_joins
@@ -1978,7 +1989,7 @@ class FastCRUD(
                     (
                         join.join_prefix.rstrip("_")
                         if join.join_prefix
-                        else join.model.__name__
+                        else join.model.__tablename__
                     ): join.schema_to_select
                     for join in join_definitions
                     if join.schema_to_select
@@ -2138,6 +2149,7 @@ class FastCRUD(
 
         Raises:
             MultipleResultsFound: If `allow_multiple` is `False` and more than one record matches the filters.
+            NoResultFound: If no record matches the filters. (on version 0.15.3)
             ValueError: If extra fields not present in the model are provided in the update data.
             ValueError: If `return_as_model` is `True` but `schema_to_select` is not provided.
 
@@ -2192,7 +2204,15 @@ class FastCRUD(
             )
             ```
         """
-        if not allow_multiple and (total_count := await self.count(db, **kwargs)) > 1:
+        total_count = await self.count(db, **kwargs)
+        if total_count == 0:
+            warnings.warn(
+                "Passing non-existing records to `update` will raise NoResultFound on version 0.15.3.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            # raise NoResultFound("No record found to update.")
+        if not allow_multiple and total_count > 1:
             raise MultipleResultsFound(
                 f"Expected exactly one record to update, found {total_count}."
             )
@@ -2221,6 +2241,8 @@ class FastCRUD(
         if return_columns:
             stmt = stmt.returning(*[column(name) for name in return_columns])
             db_row = await db.execute(stmt)
+            if commit:
+                await db.commit()
             if allow_multiple:
                 return self._as_multi_response(
                     db_row,

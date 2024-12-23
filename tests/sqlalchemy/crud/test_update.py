@@ -51,6 +51,18 @@ async def test_update_non_existent_record(async_session, test_data):
     crud = FastCRUD(ModelTest)
     non_existent_id = 99999
     updated_data = {"name": "New Name"}
+    """
+    In version 0.15.3, the `update` method will raise a `NoResultFound` exception:
+
+    ```
+    with pytest.raises(NoResultFound) as exc_info:
+        await crud.update(db=async_session, object=updated_data, id=non_existent_id)
+
+    assert "No record found to update" in str(exc_info.value)
+    ```
+
+    For 0.15.2, the test will check if the record is not updated.
+    """
     await crud.update(db=async_session, object=updated_data, id=non_existent_id)
 
     record = await async_session.execute(
@@ -69,6 +81,18 @@ async def test_update_invalid_filters(async_session, test_data):
     updated_data = {"name": "New Name"}
 
     non_matching_filter = {"name": "NonExistingName"}
+    """
+    In version 0.15.3, the `update` method will raise a `NoResultFound` exception:
+
+    ```
+    with pytest.raises(NoResultFound) as exc_info:
+        await crud.update(db=async_session, object=updated_data, **non_matching_filter)
+
+    assert "No record found to update" in str(exc_info.value)
+    ```
+
+    For 0.15.2, the test will check if the record is not updated.
+    """
     await crud.update(db=async_session, object=updated_data, **non_matching_filter)
 
     for item in test_data:
@@ -276,3 +300,7 @@ async def test_update_with_returning(
     )
 
     assert updated_record == expected_result
+
+    # Rollback the current transaction to see if the record was actually committed
+    await async_session.rollback()
+    assert await crud.count(async_session, name="Updated Name") == 1

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generic, Union, Optional, Callable
+from typing import Any, Generic, Union, Optional, Callable
 from datetime import datetime, timezone
 
 from pydantic import ValidationError
@@ -793,7 +793,7 @@ class FastCRUD(
         instance: Union[UpdateSchemaType, CreateSchemaType],
         schema_to_select: Optional[type[SelectSchemaType]] = None,
         return_as_model: bool = False,
-    ) -> Union[SelectSchemaType, Dict[str, Any], None]:
+    ) -> Union[SelectSchemaType, dict[str, Any], None]:
         """Update the instance or create it if it doesn't exists.
 
         Note: This method will perform two transactions to the database (get and create or update).
@@ -841,7 +841,7 @@ class FastCRUD(
         return_as_model: bool = False,
         update_override: Optional[dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """
         Upsert multiple records in the database. The underlying implementation varies based on the database dialect.
 

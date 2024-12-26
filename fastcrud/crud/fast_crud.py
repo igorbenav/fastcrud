@@ -32,6 +32,8 @@ from fastcrud.types import (
     SelectSchemaType,
     UpdateSchemaInternalType,
     UpdateSchemaType,
+    GetMultiResponseModel,
+    GetMultiResponseDict,
 )
 
 from .helper import (
@@ -1148,7 +1150,7 @@ class FastCRUD(
         return_as_model: bool = False,
         return_total_count: bool = True,
         **kwargs: Any,
-    ) -> dict[str, Any]:
+    ) -> Union[GetMultiResponseModel[SelectSchemaType], GetMultiResponseDict]:
         """
         Fetches multiple records based on filters, supporting sorting, pagination.
 
@@ -1166,7 +1168,10 @@ class FastCRUD(
             **kwargs: Filters to apply to the query, including advanced comparison operators for more detailed querying.
 
         Returns:
-            A dictionary containing `"data"` with fetched records and `"total_count"` indicating the total number of records matching the filters.
+            A dictionary containing the data list and optionally the total count:
+            - With return_as_model=True: Dict with "data": List[SelectSchemaType]
+            - With return_as_model=False: Dict with "data": List[Dict[str, Any]]
+            - If return_total_count=True, includes "total_count": int
 
         Raises:
             ValueError: If `limit` or `offset` is negative, or if `schema_to_select` is required but not provided or invalid.

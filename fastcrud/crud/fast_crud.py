@@ -1,6 +1,5 @@
 from typing import Any, Dict, Generic, Union, Optional, Callable
 from datetime import datetime, timezone
-import warnings
 
 from pydantic import ValidationError
 from sqlalchemy import (
@@ -2206,12 +2205,7 @@ class FastCRUD(
         """
         total_count = await self.count(db, **kwargs)
         if total_count == 0:
-            warnings.warn(
-                "Passing non-existing records to `update` will raise NoResultFound on version 0.15.3.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            # raise NoResultFound("No record found to update.")
+            raise NoResultFound("No record found to update.")
         if not allow_multiple and total_count > 1:
             raise MultipleResultsFound(
                 f"Expected exactly one record to update, found {total_count}."

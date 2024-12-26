@@ -1,4 +1,4 @@
-from typing import TypeVar, Any, Dict, Union, List
+from typing import TypeVar, Any, Union
 
 from pydantic import BaseModel
 
@@ -10,5 +10,5 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 UpdateSchemaInternalType = TypeVar("UpdateSchemaInternalType", bound=BaseModel)
 DeleteSchemaType = TypeVar("DeleteSchemaType", bound=BaseModel)
 
-GetMultiResponseDict = Dict[str, Union[List[Dict[str, Any]], int]]
-GetMultiResponseModel = Dict[str, Union[List[SelectSchemaType], int]]
+GetMultiResponseDict = dict[str, Union[list[dict[str, Any]], int]]
+GetMultiResponseModel = dict[str, Union[list[SelectSchemaType], int]]

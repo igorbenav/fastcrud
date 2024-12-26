@@ -138,7 +138,10 @@ def _get_column_types(
     column_types = {}
     for column in inspector_result.mapper.columns:
         column_type = _get_python_type(column)
-        if hasattr(column.type, "__visit_name__") and column.type.__visit_name__ == "uuid":
+        if (
+            hasattr(column.type, "__visit_name__")
+            and column.type.__visit_name__ == "uuid"
+        ):
             column_type = UUID
         column_types[column.name] = column_type
     return column_types
@@ -191,15 +194,13 @@ def _apply_model_pk(**pkeys: dict[str, type]):
                     inspect.Parameter(
                         name=k,
                         annotation=Annotated[UUID, Path(...)],
-                        kind=inspect.Parameter.POSITIONAL_ONLY
+                        kind=inspect.Parameter.POSITIONAL_ONLY,
                     )
                 )
             else:
                 extra_positional_params.append(
                     inspect.Parameter(
-                        name=k,
-                        annotation=v,
-                        kind=inspect.Parameter.POSITIONAL_ONLY
+                        name=k, annotation=v, kind=inspect.Parameter.POSITIONAL_ONLY
                     )
                 )
 
@@ -223,7 +224,14 @@ def _create_dynamic_filters(
         filtered_params = {}
         for key, value in kwargs.items():
             if value is not None:
-                filtered_params[key] = value
+                parse_func = column_types.get(key)
+                if parse_func:
+                    try:
+                        filtered_params[key] = parse_func(value)
+                    except (ValueError, TypeError):
+                        filtered_params[key] = value
+                else:
+                    filtered_params[key] = value
         return filtered_params
 
     params = []

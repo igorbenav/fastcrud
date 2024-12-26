@@ -9,6 +9,8 @@ from fastapi.testclient import TestClient
 from sqlmodel import Field, SQLModel
 
 from fastcrud import crud_router, FastCRUD
+from fastcrud import FilterConfig
+from fastcrud.endpoint.helper import _create_dynamic_filters
 from pydantic import ConfigDict
 
 
@@ -204,3 +206,43 @@ async def test_uuid_list_endpoint(uuid_client):
             UUID(item["id"])
         except ValueError:  # pragma: no cover
             pytest.fail("Invalid UUID format in list response")
+
+
+def test_create_dynamic_filters_type_conversion():
+    filter_config = FilterConfig(uuid_field=None, int_field=None, str_field=None)
+    column_types = {
+        "uuid_field": UUID,
+        "int_field": int,
+        "str_field": str,
+    }
+
+    filters_func = _create_dynamic_filters(filter_config, column_types)
+
+    test_uuid = "123e4567-e89b-12d3-a456-426614174000"
+    result = filters_func(uuid_field=test_uuid, int_field="123", str_field=456)
+
+    assert isinstance(result["uuid_field"], UUID)
+    assert result["uuid_field"] == UUID(test_uuid)
+    assert isinstance(result["int_field"], int)
+    assert result["int_field"] == 123
+    assert isinstance(result["str_field"], str)
+    assert result["str_field"] == "456"
+
+    result = filters_func(
+        uuid_field="not-a-uuid", int_field="not-an-int", str_field=456
+    )
+
+    assert result["uuid_field"] == "not-a-uuid"
+    assert result["int_field"] == "not-an-int"
+    assert isinstance(result["str_field"], str)
+
+    result = filters_func(uuid_field=None, int_field="123", str_field=None)
+    assert "uuid_field" not in result
+    assert result["int_field"] == 123
+    assert "str_field" not in result
+
+    result = filters_func(unknown_field="test")
+    assert result["unknown_field"] == "test"
+
+    empty_filters_func = _create_dynamic_filters(None, {})
+    assert empty_filters_func() == {}

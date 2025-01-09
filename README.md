@@ -215,6 +215,7 @@ In this example, we define custom endpoints for creating and reading items using
 To read more detailed descriptions, go to the <a href="https://igorbenav.github.io/fastcrud/">documentation</a>.
 
 <h2>Showcase</h2>
+
 Browse our [showcase](https://igorbenav.github.io/fastcrud/showcase/) to see projects and tutorials built with FastCRUD:
 
 - 🚀 **Applications**: Web apps and services powered by FastCRUD

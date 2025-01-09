@@ -214,6 +214,24 @@ In this example, we define custom endpoints for creating and reading items using
 
 To read more detailed descriptions, go to the <a href="https://igorbenav.github.io/fastcrud/">documentation</a>.
 
+<h2>Showcase</h2>
+
+Browse our [showcase](https://igorbenav.github.io/fastcrud/showcase/) to see projects and tutorials built with FastCRUD:
+
+- 🚀 **Applications**: Web apps and services powered by FastCRUD
+- 📖 **Open Source**: Libraries and tools built with FastCRUD
+- 📝 **Tutorials**: Learn how to build with FastCRUD
+
+<h3>Featured Projects</h3>
+
+- **[FastAPI Boilerplate](https://github.com/igorbenav/FastAPI-boilerplate)**: Extendable async API using FastAPI, Pydantic V2, SQLAlchemy 2.0 and PostgreSQL
+- **[Email Assistant API](https://github.com/igorbenav/email-assistant-api)**: Personalized email writing assistant using OpenAI
+- **[SQLModel Boilerplate](https://github.com/igorbenav/SQLModel-boilerplate)**: Async API boilerplate using FastAPI, SQLModel and PostgreSQL
+
+<h3>Share Your Project</h3>
+
+Built something with FastCRUD? We'd love to feature it! Submit your project through our [showcase submission process](https://igorbenav.github.io/fastcrud/community/showcase_submission/).
+
 ## References
 
 - This project was heavily inspired by CRUDBase in [`FastAPI Microservices`](https://github.com/Kludex/fastapi-microservices) by [@kludex](https://github.com/kludex).

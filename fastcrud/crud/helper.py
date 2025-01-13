@@ -20,6 +20,8 @@ class JoinConfig(BaseModel):
     alias: Optional[AliasedClass] = None
     filters: Optional[dict] = None
     relationship_type: Optional[str] = "one-to-one"
+    sort_columns: Optional[Union[str, list[str]]] = None
+    sort_orders: Optional[Union[str, list[str]]] = None
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -35,6 +37,26 @@ class JoinConfig(BaseModel):
         valid_join_types = {"left", "inner"}
         if value not in valid_join_types:
             raise ValueError(f"Unsupported join type: {value}")
+        return value
+
+    @field_validator("sort_columns")
+    def check_valid_sort_columns(cls, value):
+        if value is not None and not isinstance(value, (str, list)):
+            raise ValueError("sort_columns must be a string or a list of strings")
+        return value
+
+    @field_validator("sort_orders")
+    def check_valid_sort_orders(cls, value):
+        if value is not None:
+            if isinstance(value, str):
+                if value not in ["asc", "desc"]:
+                    raise ValueError("Invalid sort order: {value}. Only 'asc' or 'desc' are allowed.")
+            elif isinstance(value, list):
+                for order in value:
+                    if order not in ["asc", "desc"]:
+                        raise ValueError("Invalid sort order: {order}. Only 'asc' or 'desc' are allowed.")
+            else:
+                raise ValueError("sort_orders must be a string or a list of strings")
         return value
 
 

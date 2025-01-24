@@ -96,6 +96,7 @@ class BookingModel(Base):
     user = relationship("ModelTest", foreign_keys=[user_id], backref="user_bookings")
 
 
+# --8<-- [start:model_project]
 class Project(Base):
     __tablename__ = "projects"
     id = Column(Integer, primary_key=True)
@@ -108,6 +109,8 @@ class Project(Base):
     )
 
 
+# --8<-- [end:model_project]
+# --8<-- [start:model_participant]
 class Participant(Base):
     __tablename__ = "participants"
     id = Column(Integer, primary_key=True)
@@ -120,12 +123,15 @@ class Participant(Base):
     )
 
 
+# --8<-- [end:model_participant]
+# --8<-- [start:model_proj_parts_assoc]
 class ProjectsParticipantsAssociation(Base):
     __tablename__ = "projects_participants_association"
     project_id = Column(Integer, ForeignKey("projects.id"), primary_key=True)
     participant_id = Column(Integer, ForeignKey("participants.id"), primary_key=True)
 
 
+# --8<-- [end:model_proj_parts_assoc]
 class Card(Base):
     __tablename__ = "cards"
     id = Column(Integer, primary_key=True)

@@ -381,39 +381,15 @@ Imagine a scenario where projects have multiple participants, and participants c
 
 Our models include `Project`, `Participant`, and an association model `ProjectsParticipantsAssociation`:
 
-```python
-from sqlalchemy import Column, Integer, String, ForeignKey, Table
-from sqlalchemy.orm import declarative_base, relationship
+???+ example "Models"
 
-
-class Base(DeclarativeBase):
-    pass
-
-
-class Project(Base):
-    __tablename__ = 'projects'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    description = Column(String)
-    # Relationship to Participant through the association table
-    participants = relationship("Participant", secondary=projects_participants_association)
-
-
-class Participant(Base):
-    __tablename__ = 'participants'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    role = Column(String)
-    # Relationship to Project through the association table
-    projects = relationship("Project", secondary=projects_participants_association)
-
-
-# Association table for the many-to-many relationship
-class ProjectsParticipantsAssociation(Base):
-    __tablename__ = "projects_participants_association"
-    project_id = Column(Integer, ForeignKey("projects.id"), primary_key=True)
-    participant_id = Column(Integer, ForeignKey("participants.id"), primary_key=True)
-```
+    ```python
+    --8<--
+    tests/sqlalchemy/conftest.py:model_project
+    tests/sqlalchemy/conftest.py:model_participant
+    tests/sqlalchemy/conftest.py:model_proj_parts_assoc
+    --8<--
+    ```
 
 ##### Fetching Data with `get_multi_joined`
 
@@ -423,7 +399,7 @@ To fetch projects along with their participants, we utilize `get_multi_joined` w
 from fastcrud import FastCRUD, JoinConfig
 
 # Initialize FastCRUD for the Project model
-crud_project = FastCRUD(Project)
+project_crud = FastCRUD(Project)
 
 # Define join conditions and configuration
 joins_config = [
@@ -442,110 +418,54 @@ joins_config = [
 ]
 
 # Fetch projects with their participants
-projects_with_participants = await crud_project.get_multi_joined(
-    db_session, 
-    joins_config=joins_config,
-)
-
-# Now, `projects_with_participants['data']` will contain projects along with their participant information.
-```
-
-##### Example
-
-Imagine a scenario where projects have multiple participants, and participants can be involved in multiple projects. This many-to-many relationship is facilitated through an association table.
-
-Define the models:
-
-```python
-class Project(Base):
-    __tablename__ = 'projects'
-    id = Column(Integer, primary key=True)
-    name = Column(String)
-    description = Column(String)
-    participants = relationship("Participant", secondary=projects_participants_association)
-
-
-class Participant(Base):
-    __tablename__ = 'participants'
-    id = Column(Integer, primary key=True)
-    name = Column(String)
-    role = Column(String)
-    projects = relationship("Project", secondary=projects_participants_association)
-
-
-class ProjectsParticipantsAssociation(Base):
-    __tablename__ = "projects_participants_association"
-    project_id = Column(Integer, ForeignKey("projects.id"), primary key=True)
-    participant_id = Column(Integer, ForeignKey("participants.id"), primary key=True)
-```
-
-Fetch projects along with their participants:
-
-```python
-from fastcrud import FastCRUD, JoinConfig
-
-crud_project = FastCRUD(Project)
-
-joins_config = [
-    JoinConfig(
-        model=ProjectsParticipantsAssociation,
-        join_on=Project.id == ProjectsParticipantsAssociation.project_id,
-        join_prefix="pp_",
-        join_type="inner",
-    ),
-    JoinConfig(
-        model=Participant,
-        join_on=ProjectsParticipantsAssociation.participant_id == Participant.id,
-        join_prefix="participant_",
-        join_type="inner",
-    )
-]
-
-projects_with_participants = await crud_project.get_multi_joined(
+projects_with_participants = await project_crud.get_multi_joined(
     db_session, 
     joins_config=joins_config,
 )
 ```
 
-The result will be:
+Now, `projects_with_participants['data']` will contain projects along with their participant information. The full results would look like:
 
 ```json
-[
-    {
-        "id": 1,
-        "name": "Project A",
-        "description": "Description of Project A",
-        "participants": [
-            {
-                "id": 1,
-                "name": "Participant 1",
-                "role": "Developer"
-            },
-            {
-                "id": 2,
-                "name": "Participant 2",
-                "role": "Designer"
-            }
-        ]
-    },
-    {
-        "id": 2,
-        "name": "Project B",
-        "description": "Description of Project B",
-        "participants": [
-            {
-                "id": 3,
-                "name": "Participant 3",
-                "role": "Manager"
-            },
-            {
-                "id": 4,
-                "name": "Participant 4",
-                "role": "Tester"
-            }
-        ]
-    }
-]
+{
+    "data": [
+        {
+            "id": 1,
+            "name": "Project A",
+            "description": "Description of Project A",
+            "participants": [
+                {
+                    "id": 1,
+                    "name": "Participant 1",
+                    "role": "Developer"
+                },
+                {
+                    "id": 2,
+                    "name": "Participant 2",
+                    "role": "Designer"
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "name": "Project B",
+            "description": "Description of Project B",
+            "participants": [
+                {
+                    "id": 3,
+                    "name": "Participant 3",
+                    "role": "Manager"
+                },
+                {
+                    "id": 4,
+                    "name": "Participant 4",
+                    "role": "Tester"
+                }
+            ]
+        }
+    ],
+    "total_count": 2
+}
 ```
 
 #### Practical Tips for Advanced Joins

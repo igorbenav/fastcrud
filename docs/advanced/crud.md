@@ -609,6 +609,16 @@ This order ensures that the SQL joins are structured correctly to reflect the ma
 
     Note that the first one can be the model defined in `FastCRUD(Model)`.
 
+??? example "Models"
+
+    ```python
+    --8<--
+    tests/sqlalchemy/conftest.py:model_project
+    tests/sqlalchemy/conftest.py:model_participant
+    tests/sqlalchemy/conftest.py:model_proj_parts_assoc
+    --8<--
+    ```
+
 ```python
 # Fetch projects with their participants via a many-to-many relationship
 joins_config = [
@@ -626,11 +636,16 @@ joins_config = [
     ),
 ]
 
-crud_project = FastCRUD(Project)
+project_crud = FastCRUD(Project)
+
+class ReadProjectSchema(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
 
 projects_with_participants = await project_crud.get_multi_joined(
     db=db,
-    schema_to_select=ProjectSchema,
+    schema_to_select=ReadProjectSchema,
     joins_config=joins_config,
 )
 ```

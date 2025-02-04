@@ -312,6 +312,28 @@ class FastCRUD(
                 --8<--
                 ```
 
+            ---
+
+            ??? example "`Project`, `Participant`, `ProjectsParticipantsAssociation`"
+
+                ```python
+                # These models taken from tests/sqlalchemy/conftest.py
+                --8<--
+                tests/sqlalchemy/conftest.py:model_project
+                tests/sqlalchemy/conftest.py:model_participant
+                tests/sqlalchemy/conftest.py:model_proj_parts_assoc
+                --8<--
+                ```
+
+            ??? example "`ReadProjectSchema`"
+
+                ```python
+                class ReadProjectSchema(BaseModel):
+                    id: int
+                    name: str
+                    description: Optional[str] = None
+                ```
+
         Example 1: Basic Usage
         ----------------------
 
@@ -1060,6 +1082,7 @@ class FastCRUD(
             ```
 
             Count projects with at least one participant (many-to-many relationship):
+
             ```python
             joins_config = [
                 JoinConfig(
@@ -1073,10 +1096,12 @@ class FastCRUD(
                     join_type="inner",
                 ),
             ]
-            count = await crud.count(db, joins_config=joins_config)
+            project_crud = FastCRUD(Project)
+            count = await project_crud.count(db, joins_config=joins_config)
             ```
 
             Count projects by a specific participant name (filter applied on a joined model):
+
             ```python
             joins_config = [
                 JoinConfig(
@@ -1091,7 +1116,7 @@ class FastCRUD(
                     filters={'name': 'Jane Doe'},
                 ),
             ]
-            count = await crud.count(db, joins_config=joins_config)
+            count = await project_crud.count(db, joins_config=joins_config)
             ```
         """
         primary_filters = self._parse_filters(**kwargs)
@@ -1456,6 +1481,7 @@ class FastCRUD(
             ```
 
             Fetching a single project and its associated participants where a participant has a specific role:
+
             ```python
             joins_config = [
                 JoinConfig(
@@ -1470,9 +1496,12 @@ class FastCRUD(
                     filters={'role': 'Designer'},
                 ),
             ]
-            project = await crud.get_joined(
+
+            project_crud = FastCRUD(Project)
+
+            project = await project_crud.get_joined(
                 db=session,
-                schema_to_select=ProjectSchema,
+                schema_to_select=ReadProjectSchema,
                 joins_config=joins_config,
             )
             ```
@@ -1803,6 +1832,7 @@ class FastCRUD(
             ```
 
             Fetching multiple project records and their associated participants where participants have a specific role:
+
             ```python
             joins_config = [
                 JoinConfig(
@@ -1817,11 +1847,14 @@ class FastCRUD(
                     filters={'role': 'Developer'},
                 ),
             ]
-            projects = await crud.get_multi_joined(
+
+            project_crud = FastCRUD(Project)
+
+            projects = await project_crud.get_multi_joined(
                 db=session,
-                schema_to_select=ProjectSchema,
-                joins_config=joins_config,
+                schema_to_select=ReadProjectSchema,
                 limit=10,
+                joins_config=joins_config,
             )
             ```
 

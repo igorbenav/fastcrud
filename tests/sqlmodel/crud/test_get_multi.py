@@ -29,7 +29,7 @@ async def test_get_multi_basic(async_session, test_model, test_data):
 
 
 @pytest.mark.asyncio
-async def test_get_multi_pagination(async_session, test_model, test_data):
+async def test_get_multi_offset_limit(async_session, test_model, test_data):
     for item in test_data:
         record = test_model(**item)
         async_session.add(record)
@@ -51,7 +51,29 @@ async def test_get_multi_pagination(async_session, test_model, test_data):
     assert max(ids1) < min(ids2) 
 
 @pytest.mark.asyncio
-async def test_get_multi_unpaginated(async_session, test_model, test_data):
+async def test_get_multi_pagination(async_session, test_model, test_data):
+    for item in test_data:
+        record = test_model(**item)
+        async_session.add(record)
+    await async_session.commit()
+
+    total_count_query = await async_session.execute(
+        select(func.count()).select_from(test_model)
+    )
+    total_count = total_count_query.scalar()
+
+    crud = FastCRUD(test_model)
+    result_page_1 = await crud.get_multi(async_session, offset=0, limit=5, sort_columns=["id"], sort_orders=["asc"])
+    result_page_2 = await crud.get_multi(async_session, offset=5, limit=5, sort_columns=["id"], sort_orders=["asc"])
+
+    assert len(result_page_1["data"]) == min(5, total_count)
+    assert len(result_page_2["data"]) == min(5, max(0, total_count - 5))
+    ids1 = [item["id"] for item in result_page_1["data"]]
+    ids2 = [item["id"] for item in result_page_2["data"]]
+    assert max(ids1) < min(ids2) 
+
+@pytest.mark.asyncio
+async def test_get_multi_limitless(async_session, test_model, test_data):
     for item in test_data:
         record = test_model(**item)
         async_session.add(record)

@@ -25,6 +25,7 @@ async def test_read_items_with_pagination(
     assert "page" in data
     assert "items_per_page" in data
     assert "has_more" in data
+    assert "cursor" in data
 
     assert len(data["data"]) > 0
     assert len(data["data"]) <= items_per_page
@@ -61,6 +62,7 @@ async def test_read_items_with_pagination_and_filters(
     assert "page" in data
     assert "items_per_page" in data
     assert "has_more" in data
+    assert "cursor" in data
 
     assert len(data["data"]) > 0
     assert len(data["data"]) <= items_per_page
@@ -81,6 +83,7 @@ async def test_read_items_with_pagination_and_filters(
     assert "page" in data
     assert "items_per_page" in data
     assert "has_more" in data
+    assert "cursor" in data
 
     assert len(data["data"]) > 0
     assert len(data["data"]) <= items_per_page
@@ -109,3 +112,350 @@ async def test_read_items_with_partial_pagination_params(
     data = response.json()
     assert data["page"] == 1
     assert data["items_per_page"] == 5
+
+@pytest.mark.asyncio
+async def test_read_items_with_pagination_correctly_ordered(
+    client: TestClient, async_session, test_model, test_data
+):
+    for data in test_data:
+        new_item = test_model(**data)
+        async_session.add(new_item)
+    await async_session.commit()
+
+    page = 1
+    items_per_page = 5
+
+    response = client.get(f"/test/get_multi?page={page}&itemsPerPage={items_per_page}")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert "data" in data
+    assert "total_count" in data
+    assert "page" in data
+    assert "items_per_page" in data
+    assert "has_more" in data
+    assert "cursor" in data
+
+    assert len(data["data"]) > 0
+    assert len(data["data"]) <= items_per_page
+
+    test_item = test_data[0]
+    assert any(item["name"] == test_item["name"] for item in data["data"])
+
+    assert data["page"] == page
+    assert data["items_per_page"] == items_per_page
+
+    # pagination should automatically order results by 
+    # primary key to ensure consistent responses 
+    page = 2
+    response2 = client.get(f"/test/get_multi?page={page}&itemsPerPage={items_per_page}")
+    data2 = response2.json()
+    ids1 = [td["id"] for td in data["data"]]
+    ids2 = [td["id"] for td in data2["data"]]
+    # this checks for disjoint sets of ids
+    # and for correct sequential ordering
+    assert max(ids1) < min(ids2) 
+
+@pytest.mark.asyncio
+async def test_read_items_with_pagination_and_filters_correctly_ordered(
+    filtered_client: TestClient, async_session, test_model, test_data
+):
+    for data in test_data:
+        new_item = test_model(**data)
+        async_session.add(new_item)
+    await async_session.commit()
+
+    page = 1
+    items_per_page = 5
+
+    tier_id = 1
+    response = filtered_client.get(
+        f"/test/get_multi?page={page}&itemsPerPage={items_per_page}&tier_id={tier_id}"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "data" in data
+    assert "total_count" in data
+    assert "page" in data
+    assert "items_per_page" in data
+    assert "has_more" in data
+    assert "cursor" in data
+
+    assert len(data["data"]) > 0
+    assert len(data["data"]) <= items_per_page
+
+    for item in data["data"]:
+        assert item["tier_id"] == tier_id
+
+    name = "Alice"
+    response = filtered_client.get(
+        f"/test/get_multi?page={page}&itemsPerPage={items_per_page}&name={name}"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "data" in data
+    assert "total_count" in data
+    assert "page" in data
+    assert "items_per_page" in data
+    assert "has_more" in data
+    assert "cursor" in data
+
+    assert len(data["data"]) > 0
+    assert len(data["data"]) <= items_per_page
+
+    for item in data["data"]:
+        assert item["name"] == name
+
+    # pagination should automatically order results by 
+    # primary key to ensure consistent responses 
+    # e.g. for itemsPerPage=5, the first page should deliver items 1-5 and the second page items 6-10
+    page = 2
+    response2 = filtered_client.get(
+        f"/test/get_multi?page={page}&itemsPerPage={items_per_page}&tier_id={tier_id}"
+    )
+    data2 = response2.json()
+    ids1 = [td["id"] for td in data["data"]]
+    ids2 = [td["id"] for td in data2["data"]]
+    # this checks for disjoint sets of ids
+    # and for correct sequential ordering
+    assert max(ids1) < min(ids2) 
+
+
+@pytest.mark.asyncio
+async def test_read_items_with_pagination_cursor(
+    client: TestClient, async_session, test_model, test_data
+):
+    for data in test_data:
+        new_item = test_model(**data)
+        async_session.add(new_item)
+    await async_session.commit()
+
+    # how to encode None values in url query params:
+    # https://github.com/python/cpython/issues/63057
+    cursor = None
+    limit = 5
+    response = client.get(f"/test/get_multi?cursor={cursor}&limit={limit}")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert "data" in data
+    assert "total_count" in data
+    assert "page" in data
+    assert "items_per_page" in data
+    assert "has_more" in data
+    assert "cursor" in data
+
+    assert len(data["data"]) > 0
+    assert len(data["data"]) <= limit
+
+    test_item = test_data[0]
+    assert any(item["name"] == test_item["name"] for item in data["data"])
+
+    ids = [item["id"] for item in data["data"]]
+    assert data["cursor"] == max(ids)
+
+@pytest.mark.asyncio
+async def test_read_items_with_pagination_cursor_and_filters(
+    filtered_client: TestClient, async_session, test_model, test_data
+):
+    for data in test_data:
+        new_item = test_model(**data)
+        async_session.add(new_item)
+    await async_session.commit()
+
+    # how to encode None values in url query params:
+    # https://github.com/python/cpython/issues/63057
+    cursor = None
+    limit = 5
+
+    tier_id = 1
+    response = filtered_client.get(
+        f"/test/get_multi?cursor={cursor}&limit={limit}&tier_id={tier_id}"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "data" in data
+    assert "total_count" in data
+    assert "page" in data
+    assert "items_per_page" in data
+    assert "has_more" in data
+    assert "cursor" in data
+
+    assert len(data["data"]) > 0
+    assert len(data["data"]) <= limit
+
+    for item in data["data"]:
+        assert item["tier_id"] == tier_id
+
+    ids = [item["id"] for item in data["data"]]
+    assert data["cursor"] == max(ids)
+
+    name = "Alice"
+    response = filtered_client.get(
+        f"/test/get_multi?cursor={cursor}&limit={limit}&name={name}"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "data" in data
+    assert "total_count" in data
+    assert "has_more" in data
+    assert "cursor" in data
+
+    assert len(data["data"]) > 0
+    assert len(data["data"]) <= limit
+
+    for item in data["data"]:
+        assert item["name"] == name
+
+    ids = [item["id"] for item in data["data"]]
+    assert data["cursor"] == max(ids)
+
+
+@pytest.mark.asyncio
+async def test_read_items_with_partial_pagination_cursor_params(
+    client: TestClient, async_session, test_model, test_data
+):
+    for data in test_data:
+        new_item = test_model(**data)
+        async_session.add(new_item)
+    await async_session.commit()
+    # how to encode None values in url query params:
+    # https://github.com/python/cpython/issues/63057
+    cursor = None
+
+    response = client.get(f"/test/get_multi?cursor={cursor}")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["data"]) > 0
+
+    response = client.get(f"/test/get_multi?limit=5")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["data"]) > 0
+    assert len(data["data"]) <= 5
+
+@pytest.mark.asyncio
+async def test_read_items_with_pagination_cursor_correctly_ordered(
+    client: TestClient, async_session, test_model, test_data
+):
+    for data in test_data:
+        new_item = test_model(**data)
+        async_session.add(new_item)
+    await async_session.commit()
+
+    # how to encode None values in url query params:
+    # https://github.com/python/cpython/issues/63057
+    cursor = None
+    limit = 5
+
+    response = client.get(f"/test/get_multi?cursor={cursor}&limit={limit}")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert "data" in data
+    assert "total_count" in data
+    assert "has_more" in data
+    assert "cursor" in data
+
+    assert len(data["data"]) > 0
+    assert len(data["data"]) <= limit
+
+    test_item = test_data[0]
+    assert any(item["name"] == test_item["name"] for item in data["data"])
+
+    ids1 = [item["id"] for item in data["data"]]
+    assert data["cursor"] == max(ids1)
+
+    # pagination should automatically order results by 
+    # primary key to ensure consistent responses 
+    cursor = data["cursor"]
+    response2 = client.get(f"/test/get_multi?cursor={cursor}&limit={limit}")
+    data2 = response2.json()
+    ids1 = [td["id"] for td in data["data"]]
+    ids2 = [td["id"] for td in data2["data"]]
+    # this checks for disjoint sets of ids
+    # and for correct sequential ordering
+    assert max(ids1) < min(ids2) 
+
+@pytest.mark.asyncio
+async def test_read_items_with_pagination_cursor_and_filters_correctly_ordered(
+    filtered_client: TestClient, async_session, test_model, test_data
+):
+    for data in test_data:
+        new_item = test_model(**data)
+        async_session.add(new_item)
+    await async_session.commit()
+
+    # how to encode None values in url query params:
+    # https://github.com/python/cpython/issues/63057
+    cursor = None
+    limit = 5
+
+    tier_id = 1
+    response = filtered_client.get(
+        f"/test/get_multi?cursor={cursor}&limit={limit}&tier_id={tier_id}"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "data" in data
+    assert "total_count" in data
+    assert "has_more" in data
+    assert "cursor" in data
+
+    assert len(data["data"]) > 0
+    assert len(data["data"]) <= limit
+
+    for item in data["data"]:
+        assert item["tier_id"] == tier_id
+
+    ids1 = [td["id"] for td in data["data"]]
+    assert data["cursor"] == max(ids1)
+
+    # pagination should automatically order results by 
+    # primary key to ensure consistent responses 
+    # e.g. for itemsPerPage=5, the first page should deliver items 1-5 and the second page items 6-10
+    cursor = data["cursor"]
+    response2 = filtered_client.get(
+        f"/test/get_multi?cursor={cursor}&limit={limit}&tier_id={tier_id}"
+    )
+    data2 = response2.json()
+    ids2 = [td["id"] for td in data2["data"]]
+    # this checks for disjoint sets of ids
+    # and for correct sequential ordering
+    assert max(ids1) < min(ids2) 
+
+    name = "Alice"
+    response = filtered_client.get(
+        f"/test/get_multi?cursor={cursor}&limit={limit}&name={name}"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "data" in data
+    assert "total_count" in data
+    assert "has_more" in data
+    assert "cursor" in data
+
+    assert len(data["data"]) > 0
+    assert len(data["data"]) <= limit
+
+    for item in data["data"]:
+        assert item["name"] == name
+

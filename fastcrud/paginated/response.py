@@ -20,7 +20,8 @@ def paginated_response(
     return {
         "data": crud_data["data"],
         "total_count": crud_data["total_count"],
-        "has_more": (page * items_per_page) < crud_data["total_count"],
+        "has_more": crud_data["next_cursor"] is not None if "next_cursor" in crud_data else (page * items_per_page) < crud_data["total_count"],
         "page": page,
         "items_per_page": items_per_page,
+        "cursor": crud_data.get("next_cursor", False)
     }

@@ -1,5 +1,6 @@
 from typing import Any, Generic, Union, Optional, Callable
 from datetime import datetime, timezone
+import warnings
 
 from pydantic import ValidationError
 from sqlalchemy import (
@@ -15,6 +16,7 @@ from sqlalchemy import (
     desc,
     or_,
     column,
+    tuple_
 )
 from sqlalchemy.exc import ArgumentError, MultipleResultsFound, NoResultFound
 from sqlalchemy.sql import Join
@@ -2048,11 +2050,13 @@ class FastCRUD(
     async def get_multi_by_cursor(
         self,
         db: AsyncSession,
-        cursor: Any = None,
+        cursor: Any | tuple[Any] = None,
         limit: int = 100,
         schema_to_select: Optional[type[SelectSchemaType]] = None,
         sort_column: str = "id",
         sort_order: str = "asc",
+        sort_columns: list[str] = [],
+        return_total_count: bool = True,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
@@ -2126,19 +2130,28 @@ class FastCRUD(
         if limit == 0:
             return {"data": [], "next_cursor": None}
 
+        if len(sort_columns) == 0:
+            sort_columns = [sort_column]
+
+        assert not cursor or (isinstance(cursor, tuple) and len(sort_columns) == len(cursor)) or (len(sort_columns) == 1), f"cursor {cursor} not valid for sort_columns {sort_columns}"
+
         stmt = await self.select(schema_to_select=schema_to_select, **kwargs)
 
-        if cursor:
-            if sort_order == "asc":
-                stmt = stmt.filter(getattr(self.model, sort_column) > cursor)
+        if not isinstance(cursor, bool) and cursor and (not isinstance(cursor, tuple) or len(cursor) > 0):
+            if len(sort_columns) == 1 and sort_order == "asc":
+                stmt = stmt.filter(getattr(self.model, sort_columns[0]) > cursor)
+            elif len(sort_columns) == 1 and sort_order == "desc":
+                stmt = stmt.filter(getattr(self.model, sort_columns[0]) < cursor)
+            elif sort_order == "asc":
+                attributes = (getattr(self.model, sc) for sc in sort_columns)
+                stmt = stmt.filter(tuple_(*attributes) > tuple_(*cursor))
             else:
-                stmt = stmt.filter(getattr(self.model, sort_column) < cursor)
+                attributes = (getattr(self.model, sc) for sc in sort_columns)
+                stmt = stmt.filter(tuple_(*attributes) < tuple_(*cursor))
 
-        stmt = stmt.order_by(
-            asc(getattr(self.model, sort_column))
-            if sort_order == "asc"
-            else desc(getattr(self.model, sort_column))
-        )
+        stmt = self._apply_sorting(stmt, sort_columns, [sort_order] * len(sort_columns))
+        filters = self._parse_filters(**kwargs)
+        stmt = stmt.filter(*filters)
         stmt = stmt.limit(limit)
 
         result = await db.execute(stmt)
@@ -2146,12 +2159,19 @@ class FastCRUD(
 
         next_cursor = None
         if len(data) == limit:
-            if sort_order == "asc":
-                next_cursor = data[-1][sort_column]
+            if len(sort_columns) == 1:
+                next_cursor = data[-1][sort_columns[0]]
             else:
-                data[0][sort_column]
+                next_cursor = tuple([data[-1][sc] for sc in sort_columns])
+        
+        response = {"data": data, "next_cursor": next_cursor}
 
-        return {"data": data, "next_cursor": next_cursor}
+        if return_total_count:
+            total_count = await self.count(db=db, **kwargs)
+            response["total_count"] = total_count
+
+        return response
+
 
     async def update(
         self,

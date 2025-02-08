@@ -72,7 +72,6 @@ async def test_get_multi_pagination(async_session, test_model, test_data):
     ids2 = [item["id"] for item in result_page_2["data"]]
     assert max(ids1) < min(ids2) 
 
-
 @pytest.mark.asyncio
 async def test_get_multi_limitless(async_session, test_model, test_data):
     for item in test_data:
@@ -89,7 +88,6 @@ async def test_get_multi_limitless(async_session, test_model, test_data):
     results = await crud.get_multi(async_session, offset=0, limit=None)
 
     assert len(results["data"]) == total_count
-
 
 @pytest.mark.asyncio
 async def test_get_multi_sorting(async_session, test_model, test_data):

@@ -1,6 +1,5 @@
 from typing import Any, Generic, Union, Optional, Callable
 from datetime import datetime, timezone
-import warnings
 
 from pydantic import ValidationError
 from sqlalchemy import (

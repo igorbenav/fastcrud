@@ -60,14 +60,14 @@ def parse_cursor(cursor: Any, type_tuple: tuple[Type[Any], ...] | tuple[()]):
         for idx in range(len(cursor_tuple)):
             try:
                 parsed_cursor.append(type_tuple[idx](cursor_tuple[idx]))
-            except:
+            except Exception:
                 raise RequestValidationError(f"cannot cast cursor value {cursor_tuple[idx]} to type {type_tuple[idx]}")
         return tuple(parsed_cursor)
     elif isinstance(cursor, str):
         assert len(type_tuple) == 1, f"cursor should be a tuple of len {len(type_tuple)} with types {type_tuple}"
         try:
             return type_tuple[0](cursor)
-        except:
+        except Exception:
             raise RequestValidationError(f"cannot cast cursor value {cursor} to type {type_tuple[0]}")
     else:
         raise ValueError(f"invalid cursor {cursor}")

@@ -418,7 +418,7 @@ class EndpointCreator:
 
             sort_columns = None
             sort_orders = None
-            sort_column_types = ()
+            sort_column_types: list[type] = []
 
             if paginated or cursor:
                 sort_columns = [k.name for k in _get_primary_keys(self.model)]
@@ -431,7 +431,6 @@ class EndpointCreator:
                         # if the python_type does not exist for the column
                         # we assume str
                         sort_column_types.append(str)
-                sort_column_types = tuple(sort_column_types)
 
             if cursor:
                 crud_data = await self.crud.get_multi_by_cursor(
@@ -440,7 +439,7 @@ class EndpointCreator:
                     schema_to_select=self.select_schema,
                     sort_columns=sort_columns, # type: ignore
                     sort_order=sort_orders[0], # type: ignore
-                    cursor=parse_cursor(cursor, sort_column_types),
+                    cursor=parse_cursor(cursor, tuple(sort_column_types)),
                     **filters,
                 )
             elif self.select_schema is not None:

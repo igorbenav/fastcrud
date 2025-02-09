@@ -1,4 +1,4 @@
-from typing import Any, Type
+from typing import Any, Type, Union
 from fastapi.exceptions import RequestValidationError
 
 
@@ -24,7 +24,7 @@ def compute_offset(page: int, items_per_page: int) -> int:
     """
     return (page - 1) * items_per_page
 
-def parse_cursor(cursor: Any, type_tuple: tuple[Type[Any], ...] | tuple[()]):
+def parse_cursor(cursor: Any, type_tuple: Union[tuple[Type[Any], ...], tuple[()]]):
     """Parses a cursor the the expected format.
 
     The cursor supplied by the query param is always a string. 

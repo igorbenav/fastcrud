@@ -388,7 +388,7 @@ class EndpointCreator:
             items_per_page: Optional[int] = Query(
                 None, alias="itemsPerPage", description="Number of items per page"
             ),
-            cursor: Optional[bool | Any] = Query(False, description="Pagination cursor -- set to True for first cursor page; can be used in conjuction with limit"),
+            cursor: Optional[Union[bool, Any]] = Query(False, description="Pagination cursor -- set to True for first cursor page; can be used in conjuction with limit"),
             filters: dict = Depends(dynamic_filters),
         ) -> Union[dict[str, Any], PaginatedListResponse, ListResponse]:
             paginated = (page is not None) or (items_per_page is not None)

@@ -2049,7 +2049,7 @@ class FastCRUD(
     async def get_multi_by_cursor(
         self,
         db: AsyncSession,
-        cursor: Any | tuple[Any] = None,
+        cursor: Union[Any, tuple[Any]] = None,
         limit: int = 100,
         schema_to_select: Optional[type[SelectSchemaType]] = None,
         sort_column: str = "id",

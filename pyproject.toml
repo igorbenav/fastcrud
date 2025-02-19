@@ -31,6 +31,7 @@ SQLAlchemy = "^2.0.0"
 pydantic = "^2.0.0"
 SQLAlchemy-Utils = "^0.41.1"
 fastapi = ">=0.100.0"
+testcontainers = {extras = ["postgres"], version = "^4.9.1"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4.4"
@@ -44,7 +45,7 @@ sqlmodel = "^0.0.14"
 mypy = "^1.9.0"
 ruff = "^0.3.4"
 coverage = "^7.4.4"
-testcontainers = "^4.7.1"
+testcontainers = {extras = ["postgres"], version = "^4.9.1"}
 asyncpg = "^0.30.0"
 psycopg2-binary = "^2.9.10"
 psycopg = "^3.2.1"

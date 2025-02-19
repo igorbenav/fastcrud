@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastcrud"
-version = "0.15.5"
+version = "0.15.6"
 description = "FastCRUD is a Python package for FastAPI, offering robust async CRUD operations and flexible endpoint creation utilities."
 authors = ["Igor Benav <igor.magalhaes.r@gmail.com>"]
 license = "MIT"
@@ -49,7 +49,7 @@ asyncpg = "^0.30.0"
 psycopg2-binary = "^2.9.10"
 psycopg = "^3.2.1"
 aiomysql = "^0.2.0"
-cryptography = "^43.0.1"
+cryptography = "^44.0.1"
 
 [build-system]
 requires = ["poetry-core"]

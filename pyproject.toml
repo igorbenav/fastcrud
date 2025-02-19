@@ -26,7 +26,7 @@ classifiers = [
 keywords = ["fastapi", "crud", "async", "sqlalchemy", "pydantic"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.9.2"
 SQLAlchemy = "^2.0.0"
 pydantic = "^2.0.0"
 SQLAlchemy-Utils = "^0.41.1"

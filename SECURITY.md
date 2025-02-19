@@ -18,10 +18,10 @@ We take the security of FastCRUD seriously. If you believe you have found a secu
 ### Reporting Process
 
 1. **Do Not** disclose the vulnerability publicly until it has been addressed by our team
-2. Submit the vulnerability report to our security team via email at:
-   igor.magalhaes.r+fastcrud@gmail.com
+2. Submit the vulnerability report through one of these channels:
 
-   For critical vulnerabilities, you may also open a private issue on the repository or contact the maintainers directly.
+   - Email: igor.magalhaes.r+fastcrud@gmail.com
+   - GitHub Security Advisory: https://github.com/igorbenav/fastcrud/security/advisories/new
 
 ### What to Include
 

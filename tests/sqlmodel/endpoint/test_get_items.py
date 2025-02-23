@@ -116,3 +116,34 @@ async def test_read_items_with_schema(
     assert len(data["data"]) > 0
 
     assert all(read_schema.model_validate(item) for item in data["data"])
+
+
+@pytest.mark.asyncio
+async def test_read_items_with_advanced_filters(
+    filtered_client: TestClient, async_session, test_model, test_data
+):
+    for data in test_data:
+        new_item = test_model(**data)
+        async_session.add(new_item)
+    await async_session.commit()
+
+    name = "Ali"
+    response = filtered_client.get(f"/test/get_multi?name__startswith={name}")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "data" in data
+    assert len(data["data"]) > 0
+
+    for item in data["data"]:
+        assert item["name"].startswith(name)
+
+    name = "Nothing"
+    response = filtered_client.get(f"/test/get_multi?name__startswith={name}")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "data" in data
+    assert len(data["data"]) == 0

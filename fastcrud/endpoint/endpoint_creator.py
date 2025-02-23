@@ -323,8 +323,18 @@ class EndpointCreator:
 
     def _validate_filter_config(self, filter_config: FilterConfig) -> None:
         model_columns = self.crud.model_col_names
+        supported_filters = self.crud._SUPPORTED_FILTERS
         for key in filter_config.filters.keys():
-            if key not in model_columns:
+            if "__" in key:
+                field_name, op = key.rsplit("__", 1)
+                if op not in supported_filters:
+                    raise ValueError(
+                        f"Invalid filter op '{op}': following filter ops are allowed: {supported_filters.keys()}"
+                    )
+            else:
+                field_name = key
+
+            if field_name not in model_columns:
                 raise ValueError(
                     f"Invalid filter column '{key}': not found in model '{self.model.__name__}' columns"
                 )

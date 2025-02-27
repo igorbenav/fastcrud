@@ -15,6 +15,7 @@ from sqlalchemy import (
     desc,
     or_,
     column,
+    not_,
 )
 from sqlalchemy.exc import ArgumentError, MultipleResultsFound, NoResultFound
 from sqlalchemy.sql import Join
@@ -471,6 +472,7 @@ class FastCRUD(
         "between": lambda column: column.between,
         "in": lambda column: column.in_,
         "not_in": lambda column: column.not_in,
+        "not": lambda column: lambda value: not_(column == value),
     }
 
     def __init__(
@@ -488,47 +490,53 @@ class FastCRUD(
         self._primary_keys = _get_primary_keys(self.model)
 
     def _get_sqlalchemy_filter(
-        self,
-        operator: str,
-        value: Any,
+        self, operator: str, value: Any
     ) -> Optional[Callable[[str], Callable]]:
         if operator in {"in", "not_in", "between"}:
             if not isinstance(value, (tuple, list, set)):
                 raise ValueError(f"<{operator}> filter must be tuple, list or set")
         return self._SUPPORTED_FILTERS.get(operator)
 
-    def _parse_filters(
-        self, model: Optional[Union[type[ModelType], AliasedClass]] = None, **kwargs
-    ) -> list[ColumnElement]:
+    def _parse_filters(self, model: Optional[Union[type[ModelType], AliasedClass]] = None, **kwargs) -> list[ColumnElement]:
         model = model or self.model
         filters = []
 
         for key, value in kwargs.items():
-            if "__" in key:
+            if key in {"or_", "and_"}:  # Handle top-level OR and AND conditions
+                if not isinstance(value, list) or not value:
+                    raise ValueError(f"{key.upper()} filter must be a non-empty list of conditions.")
+
+                conditions = []
+                for condition in value:
+                    if isinstance(condition, dict):
+                        for sub_key, sub_value in condition.items():
+                            if "__" in sub_key:
+                                field_name, op = sub_key.rsplit("__", 1)
+                                column = getattr(model, field_name, None)
+                                if column is None:
+                                    raise ValueError(f"Invalid filter column: {field_name}")
+
+                                sqlalchemy_filter = self._get_sqlalchemy_filter(op, sub_value)
+                                if sqlalchemy_filter:
+                                    conditions.append(sqlalchemy_filter(column)(sub_value))
+                            else:
+                                column = getattr(model, sub_key, None)
+                                if column is not None:
+                                    conditions.append(column == sub_value)
+
+                if conditions:
+                    filters.append(or_(*conditions) if key == "or_" else and_(*conditions))
+
+            elif "__" in key:
                 field_name, op = key.rsplit("__", 1)
                 column = getattr(model, field_name, None)
                 if column is None:
                     raise ValueError(f"Invalid filter column: {field_name}")
-                if op == "or":
-                    or_filters = [
-                        sqlalchemy_filter(column)(or_value)
-                        for or_key, or_value in value.items()
-                        if (
-                            sqlalchemy_filter := self._get_sqlalchemy_filter(
-                                or_key, or_value
-                            )
-                        )
-                        is not None
-                    ]
-                    filters.append(or_(*or_filters))
-                else:
-                    sqlalchemy_filter = self._get_sqlalchemy_filter(op, value)
-                    if sqlalchemy_filter:
-                        filters.append(
-                            sqlalchemy_filter(column)(value)
-                            if op != "between"
-                            else sqlalchemy_filter(column)(*value)
-                        )
+
+                sqlalchemy_filter = self._get_sqlalchemy_filter(op, value)
+                if sqlalchemy_filter:
+                    filters.append(sqlalchemy_filter(column)(value))
+
             else:
                 column = getattr(model, key, None)
                 if column is not None:

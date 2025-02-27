@@ -25,9 +25,71 @@ async def test_parse_filters_multiple_conditions(test_model):
 async def test_parse_filters_or_condition(test_model):
     fast_crud = FastCRUD(test_model)
 
-    filters = fast_crud._parse_filters(name__or={"gt": 1, "lt": 5})
+    filters = fast_crud._parse_filters(or_=[{"name": "John"}, {"tier_id__gt": 1}])
     assert len(filters) == 1
-    assert str(filters[0]) == "test.name > :name_1 OR test.name < :name_2"
+
+    filter_sql = str(filters[0])
+    assert "test.name = :name_1" in filter_sql
+    assert "test.tier_id > :tier_id_2" in filter_sql
+    assert "OR" in filter_sql  # Ensure OR is used correctly
+
+
+@pytest.mark.asyncio
+async def test_parse_filters_or_multiple_conditions(test_model):
+    fast_crud = FastCRUD(test_model)
+
+    filters = fast_crud._parse_filters(
+        or_=[{"status": "pending"}, {"status": "approved"}, {"tier_id__gt": 1}]
+    )
+    assert len(filters) == 1
+
+    filter_sql = str(filters[0])
+    assert "test.status = :status_1" in filter_sql
+    assert "test.status = :status_2" in filter_sql
+    assert "test.tier_id > :tier_id_3" in filter_sql
+    assert "OR" in filter_sql
+
+
+@pytest.mark.asyncio
+async def test_parse_filters_and_condition(test_model):
+    """Ensure AND conditions are processed correctly"""
+    fast_crud = FastCRUD(test_model)
+
+    filters = fast_crud._parse_filters(and_=[{"status": "active"}, {"tier_id__gt": 3}])
+    assert len(filters) == 1
+
+    filter_sql = str(filters[0])
+    assert "test.status = :status_1" in filter_sql
+    assert "test.tier_id > :tier_id_2" in filter_sql
+    assert "AND" in filter_sql  # Ensure AND is applied
+
+
+@pytest.mark.asyncio
+async def test_parse_filters_and_or_combination(test_model):
+    """Ensure OR and AND conditions can be mixed"""
+    fast_crud = FastCRUD(test_model)
+
+    filters = fast_crud._parse_filters(
+        and_=[{"status": "active"}, {"or_": [{"tier_id__gt": 3}, {"category_id": 2}]}]
+    )
+    assert len(filters) == 1  # Single AND condition with OR inside
+
+    filter_sql = str(filters[0])
+    assert "test.status = :status_1" in filter_sql
+    assert (
+        "(test.tier_id > :tier_id_2 OR test.category_id = :category_id_3)" in filter_sql
+    )
+    assert "AND" in filter_sql
+    assert "OR" in filter_sql
+
+
+@pytest.mark.asyncio
+async def test_parse_filters_not_condition(test_model):
+    fast_crud = FastCRUD(test_model)
+
+    filters = fast_crud._parse_filters(name__not="John Doe")
+    assert len(filters) == 1
+    assert str(filters[0]) == "NOT (test.name = :name_1)"
 
 
 @pytest.mark.asyncio

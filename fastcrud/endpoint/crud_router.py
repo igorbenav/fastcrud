@@ -520,7 +520,6 @@ def crud_router(
         # Example GET request: /mymodel/get_multi?id=1&name=example
         ```
     """
-
     crud = crud or FastCRUD(
         model=model,
         is_deleted_column=is_deleted_column,

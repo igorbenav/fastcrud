@@ -304,8 +304,8 @@ class EndpointCreator:
                 select_schema, response_key
             )
         else:
-            self.list_response_model = None
-            self.paginated_response_model = None
+            self.list_response_model = None # type: ignore
+            self.paginated_response_model = None # type: ignore
 
     def _validate_filter_config(self, filter_config: FilterConfig) -> None:
         model_columns = self.crud.model_col_names

@@ -39,8 +39,8 @@ FastCRUD automates the creation of CRUD (Create, Read, Update, Delete) endpoints
 - **Query Parameters**:
     - `offset` (optional): The offset from where to start fetching items.
     - `limit` (optional): The maximum number of items to return.
-    - `page` (optional): The page number, starting from 1. This is pagination by row index. Keep in mind, that parallel requests, such as deletes, can change the number of rows in a table. Therefore, using row indices can lead to inconsistent responses in high traffic applications. Consider using cursor based pagination instead, as it is generally faster as well.
-    - `cursor` (optional): The current cursor (e.g. id) for cursor based pagination. For the first page, set to one of True, "True", "true", "T", "t", "Yes", "yes", "Y", "y".
+    - `page` (optional): The page number, starting from 1. This is pagination by row index. Keep in mind, that parallel requests, such as deletes, can change the number of rows in a table. Therefore, using row indices can lead to inconsistent responses in high traffic applications. Consider using cursor based pagination instead, as it often results in better performance as well.
+    - `cursor` (optional): The current cursor (e.g. id) for cursor based pagination. For the first page, set to one of [True, 'True', 'true', 'T', 't', 'Yes', 'yes', 'Y', 'y'].
     - `itemsPerPage` (optional): The number of items per page.
 - **Example Request**: `GET /items?offset=3&limit=4`.
 - **Example Return**:

@@ -172,9 +172,9 @@ async def test_update_multiple_records_allow_multiple(
     )
 
     updated_records = await crud.get_multi(db=async_session, name="Updated Name")
-    assert (
-        len(updated_records["data"]) > 1
-    ), "Should update multiple records when allow_multiple is True"
+    assert len(updated_records["data"]) > 1, (
+        "Should update multiple records when allow_multiple is True"
+    )
 
 
 @pytest.mark.asyncio
@@ -285,12 +285,12 @@ async def test_get_joined_with_aliases(
     )
 
     assert result is not None
-    assert (
-        result["owner_name"] == expected_owner_name
-    ), "Owner name does not match expected value"
-    assert (
-        result["user_name"] == expected_user_name
-    ), "User name does not match expected value"
+    assert result["owner_name"] == expected_owner_name, (
+        "Owner name does not match expected value"
+    )
+    assert result["user_name"] == expected_user_name, (
+        "User name does not match expected value"
+    )
 
 
 @pytest.mark.asyncio
@@ -339,12 +339,12 @@ async def test_get_joined_with_aliases_no_schema(
     )
 
     assert result is not None
-    assert (
-        result["owner_name"] == expected_owner_name
-    ), "Owner name does not match expected value"
-    assert (
-        result["user_name"] == expected_user_name
-    ), "User name does not match expected value"
+    assert result["owner_name"] == expected_owner_name, (
+        "Owner name does not match expected value"
+    )
+    assert result["user_name"] == expected_user_name, (
+        "User name does not match expected value"
+    )
 
 
 @pytest.mark.asyncio
@@ -440,9 +440,9 @@ async def test_get_joined_with_joined_model_filters(
     )
 
     assert result is not None, "Expected to find at least one matching record"
-    assert (
-        result["tier_name"] == "Premium"
-    ), "Expected joined record to meet the filter criteria"
+    assert result["tier_name"] == "Premium", (
+        "Expected joined record to meet the filter criteria"
+    )
 
 
 @pytest.mark.asyncio
@@ -469,12 +469,12 @@ async def test_get_joined_nest_joins(async_session, test_data, test_data_tier):
     assert result is not None, "No result returned, expected a nested join result."
     assert "name" in result, "Expected primary model field 'name' in result."
     assert "tier" in result, "Expected nested 'tier' key in result for joined fields."
-    assert (
-        "name" in result["tier"]
-    ), "Expected 'name' inside nested 'tier' dictionary from TierModel."
-    assert (
-        "tier_name" not in result
-    ), "'tier_name' should not be at the top level in the result."
+    assert "name" in result["tier"], (
+        "Expected 'name' inside nested 'tier' dictionary from TierModel."
+    )
+    assert "tier_name" not in result, (
+        "'tier_name' should not be at the top level in the result."
+    )
 
 
 @pytest.mark.asyncio
@@ -501,9 +501,9 @@ async def test_get_joined_nested_no_prefix_provided(
 
     assert result is not None, "No result returned, expected a nested join result."
     assert "name" in result, "Expected primary model field 'name' in result."
-    assert (
-        "name" in result["tier"]
-    ), "Expected 'name' field inside nested 'tier' dictionary."
+    assert "name" in result["tier"], (
+        "Expected 'name' field inside nested 'tier' dictionary."
+    )
 
 
 @pytest.mark.asyncio
@@ -528,13 +528,13 @@ async def test_get_joined_no_prefix_no_nesting(
     )
 
     assert result is not None, "Expected to retrieve a result from joined query."
-    assert (
-        "name" in result
-    ), "Expected 'name' field from the primary model in the result."
+    assert "name" in result, (
+        "Expected 'name' field from the primary model in the result."
+    )
     assert "tier_id" in result, "Expected 'tier_id' (foreign key) in the result."
-    assert (
-        "tier_name" not in result
-    ), "Field 'tier_name' should not exist unless specifically prefixed or nested."
+    assert "tier_name" not in result, (
+        "Field 'tier_name' should not exist unless specifically prefixed or nested."
+    )
 
 
 @pytest.mark.asyncio
@@ -571,9 +571,9 @@ async def test_get_joined_card_with_articles(async_session):
     assert "articles" in result, "Articles should be nested under 'articles'."
     assert isinstance(result["articles"], list), "Articles should be a list."
     assert len(result["articles"]) == 3, "There should be three articles."
-    assert all(
-        "title" in article for article in result["articles"]
-    ), "Each article should have a title."
+    assert all("title" in article for article in result["articles"]), (
+        "Each article should have a title."
+    )
 
 
 @pytest.mark.asyncio
@@ -680,15 +680,15 @@ async def test_get_joined_nested_data_none_dict(async_session):
     )
 
     assert task1_result is not None, "No data returned from the database."
-    assert (
-        "client" in task1_result
-    ), "Nested client data should be present under key 'client'"
-    assert (
-        "department" in task1_result
-    ), "Nested department data should be present under key 'department'"
-    assert (
-        "assignee" in task1_result
-    ), "Nested assignee data should be present under key 'assignee'"
+    assert "client" in task1_result, (
+        "Nested client data should be present under key 'client'"
+    )
+    assert "department" in task1_result, (
+        "Nested department data should be present under key 'department'"
+    )
+    assert "assignee" in task1_result, (
+        "Nested assignee data should be present under key 'assignee'"
+    )
     assert task1_result["client"] is not None, "Task 1 should have a client."
     assert task1_result["department"] is not None, "Task 1 should have a department."
     assert task1_result["assignee"] is not None, "Task 1 should have an assignee."
@@ -702,15 +702,15 @@ async def test_get_joined_nested_data_none_dict(async_session):
     )
 
     assert task3_result is not None, "No data returned from the database."
-    assert (
-        "client" in task3_result
-    ), "Nested client data should be present under key 'client'"
-    assert (
-        "department" in task3_result
-    ), "Nested department data should be present under key 'department'"
-    assert (
-        "assignee" in task3_result
-    ), "Nested assignee data should be present under key 'assignee'"
+    assert "client" in task3_result, (
+        "Nested client data should be present under key 'client'"
+    )
+    assert "department" in task3_result, (
+        "Nested department data should be present under key 'department'"
+    )
+    assert "assignee" in task3_result, (
+        "Nested assignee data should be present under key 'assignee'"
+    )
     assert task3_result["client"] is None, "Task 3 should have no client."
     assert task3_result["department"] is None, "Task 3 should have no department."
     assert task3_result["assignee"] is None, "Task 3 should have no assignee."

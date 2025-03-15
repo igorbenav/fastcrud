@@ -74,9 +74,9 @@ async def test_get_with_advanced_filters(async_session, test_data):
     fetched_record_ne = await crud.get(async_session, **ne_filter)
 
     assert fetched_record_ne is not None
-    assert (
-        fetched_record_ne["name"] != test_data[0]["name"]
-    ), "Should fetch a record with a different name"
+    assert fetched_record_ne["name"] != test_data[0]["name"], (
+        "Should fetch a record with a different name"
+    )
 
 
 @pytest.mark.asyncio
@@ -93,9 +93,9 @@ async def test_get_with_schema_selecting_specific_columns(async_session, test_da
     )
 
     assert fetched_record is not None
-    assert (
-        "name" in fetched_record and "tier_id" not in fetched_record
-    ), "Should only fetch the 'name' column based on the PartialSchema"
+    assert "name" in fetched_record and "tier_id" not in fetched_record, (
+        "Should only fetch the 'name' column based on the PartialSchema"
+    )
 
 
 @pytest.mark.asyncio
@@ -111,9 +111,9 @@ async def test_get_return_as_model_instance(async_session, test_data, read_schem
         id=test_data[0]["id"],
     )
 
-    assert isinstance(
-        fetched_record, read_schema
-    ), "The fetched record should be an instance of the ReadSchemaTest Pydantic model"
+    assert isinstance(fetched_record, read_schema), (
+        "The fetched record should be an instance of the ReadSchemaTest Pydantic model"
+    )
 
 
 @pytest.mark.asyncio

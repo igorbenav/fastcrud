@@ -26,6 +26,6 @@ def test_crud_methods_default_methods():
         "delete",
         "db_delete",
     ]
-    assert (
-        crud_methods.valid_methods == expected_methods
-    ), "Default CRUD methods are incorrect."
+    assert crud_methods.valid_methods == expected_methods, (
+        "Default CRUD methods are incorrect."
+    )

@@ -30,7 +30,7 @@ from .helper import (
     _inject_dependencies,
     _apply_model_pk,
     _create_dynamic_filters,
-    _get_column_types
+    _get_column_types,
 )
 
 
@@ -388,16 +388,28 @@ class EndpointCreator:
             items_per_page: Optional[int] = Query(
                 None, alias="itemsPerPage", description="Number of items per page"
             ),
-            cursor: Optional[Union[bool, Any]] = Query(False, description="Pagination cursor -- set to True for first cursor page; can be used in conjuction with limit"),
+            cursor: Optional[Union[bool, Any]] = Query(
+                False,
+                description="Pagination cursor -- set to True for first cursor page; can be used in conjuction with limit",
+            ),
             filters: dict = Depends(dynamic_filters),
         ) -> Union[dict[str, Any], PaginatedListResponse, ListResponse]:
             paginated = (page is not None) or (items_per_page is not None)
             has_offset_limit = (offset is not None) and (limit is not None)
 
-            if paginated and has_offset_limit or paginated and cursor or has_offset_limit and cursor:
+            if (
+                paginated
+                and has_offset_limit
+                or paginated
+                and cursor
+                or has_offset_limit
+                and cursor
+            ):
                 raise BadRequestException(
-                    detail=("Conflicting parameters: Use either 'page' and 'itemsPerPage' for paginated results,"
-                        +" 'cursor' and 'limit' for more efficient pagination or 'offset' and 'limit' for general range queries.")
+                    detail=(
+                        "Conflicting parameters: Use either 'page' and 'itemsPerPage' for paginated results,"
+                        + " 'cursor' and 'limit' for more efficient pagination or 'offset' and 'limit' for general range queries."
+                    )
                 )
 
             if paginated:
@@ -435,10 +447,10 @@ class EndpointCreator:
             if cursor:
                 crud_data = await self.crud.get_multi_by_cursor(
                     db,
-                    limit=limit, # type: ignore 
+                    limit=limit,  # type: ignore
                     schema_to_select=self.select_schema,
-                    sort_columns=sort_columns, # type: ignore
-                    sort_order=sort_orders[0], # type: ignore
+                    sort_columns=sort_columns,  # type: ignore
+                    sort_order=sort_orders[0],  # type: ignore
                     cursor=parse_cursor(cursor, tuple(sort_column_types)),
                     **filters,
                 )

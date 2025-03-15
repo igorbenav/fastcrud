@@ -15,7 +15,7 @@ from sqlalchemy import (
     desc,
     or_,
     column,
-    tuple_
+    tuple_,
 )
 from sqlalchemy.exc import ArgumentError, MultipleResultsFound, NoResultFound
 from sqlalchemy.sql import Join
@@ -2132,11 +2132,19 @@ class FastCRUD(
         if len(sort_columns) == 0:
             sort_columns = [sort_column]
 
-        assert not cursor or (isinstance(cursor, tuple) and len(sort_columns) == len(cursor)) or (len(sort_columns) == 1), f"cursor {cursor} not valid for sort_columns {sort_columns}"
+        assert (
+            not cursor
+            or (isinstance(cursor, tuple) and len(sort_columns) == len(cursor))
+            or (len(sort_columns) == 1)
+        ), f"cursor {cursor} not valid for sort_columns {sort_columns}"
 
         stmt = await self.select(schema_to_select=schema_to_select, **kwargs)
 
-        if not isinstance(cursor, bool) and cursor and (not isinstance(cursor, tuple) or len(cursor) > 0):
+        if (
+            not isinstance(cursor, bool)
+            and cursor
+            and (not isinstance(cursor, tuple) or len(cursor) > 0)
+        ):
             if len(sort_columns) == 1 and sort_order == "asc":
                 stmt = stmt.filter(getattr(self.model, sort_columns[0]) > cursor)
             elif len(sort_columns) == 1 and sort_order == "desc":
@@ -2162,7 +2170,7 @@ class FastCRUD(
                 next_cursor = data[-1][sort_columns[0]]
             else:
                 next_cursor = tuple([data[-1][sc] for sc in sort_columns])
-        
+
         response = {"data": data, "next_cursor": next_cursor}
 
         if return_total_count:
@@ -2170,7 +2178,6 @@ class FastCRUD(
             response["total_count"] = total_count
 
         return response
-
 
     async def update(
         self,

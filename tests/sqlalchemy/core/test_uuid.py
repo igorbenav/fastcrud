@@ -149,9 +149,9 @@ def uuid_client(async_session):
 @pytest.mark.dialect("sqlite")
 async def test_custom_uuid_crud(uuid_client):
     response = uuid_client.post("/custom-uuid-test/create", json={"name": "test"})
-    assert (
-        response.status_code == 200
-    ), f"Creation failed with response: {response.text}"
+    assert response.status_code == 200, (
+        f"Creation failed with response: {response.text}"
+    )
 
     try:
         data = response.json()

@@ -373,9 +373,8 @@ def test_data_category() -> list[dict]:
 def test_data_multipk(request) -> list[dict]:
     return request.param
 
-@pytest.fixture(
-    scope="function"
-)
+
+@pytest.fixture(scope="function")
 def test_data_multipk_list() -> list[dict]:
     return [
         {"id": 1, "uuid": "a", "name": "Tech"},

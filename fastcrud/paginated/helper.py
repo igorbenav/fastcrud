@@ -24,11 +24,12 @@ def compute_offset(page: int, items_per_page: int) -> int:
     """
     return (page - 1) * items_per_page
 
+
 def parse_cursor(cursor: Any, type_tuple: Union[tuple[Type[Any], ...], tuple[()]]):
     """Parses a cursor the the expected format.
 
-    The cursor supplied by the query param is always a string. 
-    In reality, it can be either a truth-value (True) or a comma 
+    The cursor supplied by the query param is always a string.
+    In reality, it can be either a truth-value (True) or a comma
     seperated sequence of any types or a singular any type.
     The correct types are given by the type_tuple.
     If it is a True-value, then None is returned as representative of the "first-page" cursor
@@ -51,23 +52,39 @@ def parse_cursor(cursor: Any, type_tuple: Union[tuple[Type[Any], ...], tuple[()]
     """
     if isinstance(cursor, bool) and cursor:
         return None
-    elif isinstance(cursor, str) and cursor in {"True", "true", "t", "Yes", "yes", "Y", "y"}:
+    elif isinstance(cursor, str) and cursor in {
+        "True",
+        "true",
+        "t",
+        "Yes",
+        "yes",
+        "Y",
+        "y",
+    }:
         return None
     elif isinstance(cursor, str) and "," in cursor:
         cursor_tuple = tuple(cursor.split(","))
-        assert len(cursor_tuple) == len(type_tuple), f"cursor should be a tuple of len {len(type_tuple)} with types {type_tuple}"
+        assert len(cursor_tuple) == len(type_tuple), (
+            f"cursor should be a tuple of len {len(type_tuple)} with types {type_tuple}"
+        )
         parsed_cursor = []
         for idx in range(len(cursor_tuple)):
             try:
                 parsed_cursor.append(type_tuple[idx](cursor_tuple[idx]))
             except Exception:
-                raise RequestValidationError(f"cannot cast cursor value {cursor_tuple[idx]} to type {type_tuple[idx]}")
+                raise RequestValidationError(
+                    f"cannot cast cursor value {cursor_tuple[idx]} to type {type_tuple[idx]}"
+                )
         return tuple(parsed_cursor)
     elif isinstance(cursor, str):
-        assert len(type_tuple) == 1, f"cursor should be a tuple of len {len(type_tuple)} with types {type_tuple}"
+        assert len(type_tuple) == 1, (
+            f"cursor should be a tuple of len {len(type_tuple)} with types {type_tuple}"
+        )
         try:
             return type_tuple[0](cursor)
         except Exception:
-            raise RequestValidationError(f"cannot cast cursor value {cursor} to type {type_tuple[0]}")
+            raise RequestValidationError(
+                f"cannot cast cursor value {cursor} to type {type_tuple[0]}"
+            )
     else:
         raise ValueError(f"invalid cursor {cursor}")

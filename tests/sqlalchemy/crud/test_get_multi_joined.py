@@ -1462,10 +1462,10 @@ async def test_get_multi_joined_sorting_nested_items_many_to_many(async_session)
         project_id=1, participant_id=3
     )
     projects_participants4 = ProjectsParticipantsAssociation(
-        project_id=2, participant_id=2
+        project_id=2, participant_id=1
     )
     projects_participants5 = ProjectsParticipantsAssociation(
-        project_id=2, participant_id=3
+        project_id=2, participant_id=2
     )
 
     async_session.add_all(
@@ -1496,6 +1496,7 @@ async def test_get_multi_joined_sorting_nested_items_many_to_many(async_session)
             join_on=join_condition_2,
             join_type="inner",
             join_prefix="participant_",
+            relationship_type="one-to-many",
             sort_columns=["name"],
             sort_orders=["asc"],
         ),
@@ -1535,8 +1536,8 @@ async def test_get_multi_joined_sorting_nested_items_many_to_many(async_session)
     ), "Project 2 should have nested participants."
     assert len(project_2["participants"]) == 2, "Project 2 should have two participants."
     assert (
-        project_2["participants"][0]["name"] == "Participant 2"
-    ), "Project 2's first participant name should be 'Participant 2'."
+        project_2["participants"][0]["name"] == "Participant 1"
+    ), "Project 2's first participant name should be 'Participant 1'."
     assert (
-        project_2["participants"][1]["name"] == "Participant 1"
-    ), "Project 2's second participant name should be 'Participant 1'."
+        project_2["participants"][1]["name"] == "Participant 2"
+    ), "Project 2's second participant name should be 'Participant 2'."

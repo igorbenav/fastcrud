@@ -445,8 +445,18 @@ count(
 **Purpose**: To count records that match specified filters, especially useful in scenarios involving joins between models. This method supports counting unique entities across relationships, a common requirement in many-to-many or complex relationships.  
 **Usage Example**: Count the number of unique projects a participant is involved in, considering a many-to-many relationship between `Project` and `Participant` models.
 
+??? example "Models"
+
+    ```python
+    --8<--
+    tests/sqlalchemy/conftest.py:model_project
+    tests/sqlalchemy/conftest.py:model_participant
+    tests/sqlalchemy/conftest.py:model_proj_parts_assoc
+    --8<--
+    ```
+
 ```python
-# Assuming a Project model related to a Participant model through a many-to-many relationship
+project_crud = FastCRUD(Project)
 projects_count = await project_crud.count(
     db=session,
     joins_config=[

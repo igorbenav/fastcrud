@@ -103,9 +103,9 @@ async def test_soft_delete_with_custom_columns(async_session, test_data, test_mo
     assert (
         getattr(deleted_record, "is_deleted") == True  # noqa
     ), "Record should be marked as soft deleted"
-    assert (
-        getattr(deleted_record, "deleted_at") is not None
-    ), "Record should have a deletion timestamp"
+    assert getattr(deleted_record, "deleted_at") is not None, (
+        "Record should have a deletion timestamp"
+    )
 
 
 @pytest.mark.asyncio
@@ -125,9 +125,9 @@ async def test_soft_delete_custom_columns(async_session, test_model, test_data):
     await crud.delete(async_session, id=test_data[0]["id"], allow_multiple=False)
 
     deleted_record = await crud.get(async_session, id=test_data[0]["id"])
-    assert (
-        deleted_record is None
-    ), "Custom columns not found, so record should be deleted."
+    assert deleted_record is None, (
+        "Custom columns not found, so record should be deleted."
+    )
 
 
 @pytest.mark.asyncio

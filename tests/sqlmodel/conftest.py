@@ -375,6 +375,20 @@ def test_data_multipk(request) -> list[dict]:
 
 
 @pytest.fixture(scope="function")
+def test_data_multipk_list() -> list[dict]:
+    return [
+        {"id": 1, "uuid": "a", "name": "Tech"},
+        {"id": 1, "uuid": "b", "name": "Health"},
+        {"id": 1, "uuid": "c", "name": "Travel"},
+        {"id": 2, "uuid": "a", "name": "Adventure"},
+        {"id": 2, "uuid": "b", "name": "Dining"},
+        {"id": 3, "uuid": "a", "name": "Business"},
+        {"id": 4, "uuid": "c", "name": "Craftmanship"},
+        {"id": 4, "uuid": "x", "name": "Natural Ressources"},
+    ]
+
+
+@pytest.fixture(scope="function")
 def test_data_booking() -> list[dict]:
     return [
         {

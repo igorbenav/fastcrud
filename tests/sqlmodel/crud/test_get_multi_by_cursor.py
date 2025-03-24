@@ -99,16 +99,16 @@ async def test_get_multi_by_cursor_with_advanced_filters(async_session, test_dat
     )
 
     assert len(advanced_filter_gt["data"]) <= 5
-    assert all(
-        item["id"] > 5 for item in advanced_filter_gt["data"]
-    ), "All fetched records should have ID greater than 5"
+    assert all(item["id"] > 5 for item in advanced_filter_gt["data"]), (
+        "All fetched records should have ID greater than 5"
+    )
 
     advanced_filter_lt = await crud.get_multi_by_cursor(
         db=async_session, limit=5, id__lt=5
     )
-    assert (
-        len(advanced_filter_lt["data"]) <= 5
-    ), "Should correctly paginate records with ID less than 5"
+    assert len(advanced_filter_lt["data"]) <= 5, (
+        "Should correctly paginate records with ID less than 5"
+    )
 
 
 @pytest.mark.asyncio
@@ -131,12 +131,12 @@ async def test_get_multi_by_cursor_pagination_integrity(async_session, test_data
         db=async_session, cursor=first_batch["next_cursor"], limit=5
     )
 
-    assert (
-        len(second_batch["data"]) == 5
-    ), "Pagination should fetch the correct number of records despite updates"
-    assert (
-        first_batch["data"][-1]["id"] < second_batch["data"][0]["id"]
-    ), "Pagination should maintain order across batches"
+    assert len(second_batch["data"]) == 5, (
+        "Pagination should fetch the correct number of records despite updates"
+    )
+    assert first_batch["data"][-1]["id"] < second_batch["data"][0]["id"], (
+        "Pagination should maintain order across batches"
+    )
 
 
 @pytest.mark.asyncio
@@ -162,10 +162,10 @@ async def test_get_multi_by_cursor_desc_with_cursor_filter(async_session, test_d
         sort_order="desc",
     )
 
-    assert (
-        len(second_page["data"]) == 3
-    ), "Should fetch the correct number of records for the second page"
+    assert len(second_page["data"]) == 3, (
+        "Should fetch the correct number of records for the second page"
+    )
     for record in second_page["data"]:
-        assert (
-            record["id"] < first_page_last_id
-        ), "Each ID in the second page should be less than the last ID of the first page"
+        assert record["id"] < first_page_last_id, (
+            "Each ID in the second page should be less than the last ID of the first page"
+        )

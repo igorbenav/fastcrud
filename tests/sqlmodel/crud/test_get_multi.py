@@ -29,7 +29,7 @@ async def test_get_multi_basic(async_session, test_model, test_data):
 
 
 @pytest.mark.asyncio
-async def test_get_multi_pagination(async_session, test_model, test_data):
+async def test_get_multi_offset_limit(async_session, test_model, test_data):
     for item in test_data:
         record = test_model(**item)
         async_session.add(record)
@@ -46,10 +46,40 @@ async def test_get_multi_pagination(async_session, test_model, test_data):
 
     assert len(result_page_1["data"]) == min(5, total_count)
     assert len(result_page_2["data"]) == min(5, max(0, total_count - 5))
+    ids1 = [item["id"] for item in result_page_1["data"]]
+    ids2 = [item["id"] for item in result_page_2["data"]]
+    assert max(ids1) < min(ids2)
 
 
 @pytest.mark.asyncio
-async def test_get_multi_unpaginated(async_session, test_model, test_data):
+async def test_get_multi_pagination(async_session, test_model, test_data):
+    for item in test_data:
+        record = test_model(**item)
+        async_session.add(record)
+    await async_session.commit()
+
+    total_count_query = await async_session.execute(
+        select(func.count()).select_from(test_model)
+    )
+    total_count = total_count_query.scalar()
+
+    crud = FastCRUD(test_model)
+    result_page_1 = await crud.get_multi(
+        async_session, offset=0, limit=5, sort_columns=["id"], sort_orders=["asc"]
+    )
+    result_page_2 = await crud.get_multi(
+        async_session, offset=5, limit=5, sort_columns=["id"], sort_orders=["asc"]
+    )
+
+    assert len(result_page_1["data"]) == min(5, total_count)
+    assert len(result_page_2["data"]) == min(5, max(0, total_count - 5))
+    ids1 = [item["id"] for item in result_page_1["data"]]
+    ids2 = [item["id"] for item in result_page_2["data"]]
+    assert max(ids1) < min(ids2)
+
+
+@pytest.mark.asyncio
+async def test_get_multi_limitless(async_session, test_model, test_data):
     for item in test_data:
         record = test_model(**item)
         async_session.add(record)
@@ -148,9 +178,9 @@ async def test_get_multi_advanced_filtering(async_session, test_model, test_data
     crud = FastCRUD(test_model)
     filtered_results = await crud.get_multi(async_session, id__gt=5)
 
-    assert all(
-        item["id"] > 5 for item in filtered_results["data"]
-    ), "Should only include records with ID greater than 5"
+    assert all(item["id"] > 5 for item in filtered_results["data"]), (
+        "Should only include records with ID greater than 5"
+    )
 
 
 @pytest.mark.asyncio
@@ -174,18 +204,20 @@ async def test_get_multi_multiple_sorting(async_session, test_model, test_data):
     for item in result["data"]:
         if item["tier_id"] != current_tier_id:
             if names_in_current_tier:
-                assert (
-                    names_in_current_tier == sorted(names_in_current_tier, reverse=True)
-                ), f"Names within tier_id {current_tier_id} should be sorted in descending order"
+                assert names_in_current_tier == sorted(
+                    names_in_current_tier, reverse=True
+                ), (
+                    f"Names within tier_id {current_tier_id} should be sorted in descending order"
+                )
             current_tier_id = item["tier_id"]
             names_in_current_tier = [item["name"]]
         else:
             names_in_current_tier.append(item["name"])
 
     if names_in_current_tier:
-        assert (
-            names_in_current_tier == sorted(names_in_current_tier, reverse=True)
-        ), f"Names within tier_id {current_tier_id} should be sorted in descending order"
+        assert names_in_current_tier == sorted(names_in_current_tier, reverse=True), (
+            f"Names within tier_id {current_tier_id} should be sorted in descending order"
+        )
 
 
 @pytest.mark.asyncio
@@ -201,12 +233,12 @@ async def test_get_multi_advanced_filtering_return_model(
         async_session, id__lte=5, return_as_model=True, schema_to_select=read_schema
     )
 
-    assert all(
-        isinstance(item, read_schema) for item in result["data"]
-    ), "All items should be instances of the schema"
-    assert all(
-        item.id <= 5 for item in result["data"]
-    ), "Should only include records with ID less than or equal to 5"
+    assert all(isinstance(item, read_schema) for item in result["data"]), (
+        "All items should be instances of the schema"
+    )
+    assert all(item.id <= 5 for item in result["data"]), (
+        "Should only include records with ID less than or equal to 5"
+    )
 
 
 @pytest.mark.asyncio

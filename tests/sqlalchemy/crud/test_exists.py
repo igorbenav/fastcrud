@@ -47,6 +47,6 @@ async def test_exists_multiple_records_match(async_session, test_model, test_dat
     duplicate_tier_id = test_data[0]["tier_id"]
     crud = FastCRUD(test_model)
     exists = await crud.exists(async_session, tier_id=duplicate_tier_id)
-    assert (
-        exists is True
-    ), "Should return True if multiple records match the filter criteria"
+    assert exists is True, (
+        "Should return True if multiple records match the filter criteria"
+    )

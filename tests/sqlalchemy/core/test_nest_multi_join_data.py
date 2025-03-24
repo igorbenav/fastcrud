@@ -50,21 +50,21 @@ async def test_nest_multi_join_data_new_row_none(async_session):
     data = result["data"]
 
     card_a = next((c for c in data if c["id"] == cards[0].id), None)
-    assert (
-        card_a is not None and "articles" in card_a
-    ), "Card A should have nested articles."
+    assert card_a is not None and "articles" in card_a, (
+        "Card A should have nested articles."
+    )
     assert len(card_a["articles"]) == 1, "Card A should have one valid article."
-    assert (
-        card_a["articles"][0]["title"] == "Article 1"
-    ), "Card A's article title should be 'Article 1'."
+    assert card_a["articles"][0]["title"] == "Article 1", (
+        "Card A's article title should be 'Article 1'."
+    )
 
     card_b = next((c for c in data if c["id"] == cards[1].id), None)
-    assert (
-        card_b is not None and "articles" in card_b
-    ), "Card B should have nested articles."
-    assert (
-        len(card_b["articles"]) == 0
-    ), "Card B should have no articles due to None card_id in Article."
+    assert card_b is not None and "articles" in card_b, (
+        "Card B should have nested articles."
+    )
+    assert len(card_b["articles"]) == 0, (
+        "Card B should have no articles due to None card_id in Article."
+    )
 
 
 @pytest.mark.asyncio
@@ -107,16 +107,16 @@ async def test_nest_multi_join_data_existing_row_none(async_session):
     data = result["data"]
 
     card_a = next((c for c in data if c["id"] == cards[0].id), None)
-    assert (
-        card_a is not None and "articles" in card_a
-    ), "Card A should have nested articles."
+    assert card_a is not None and "articles" in card_a, (
+        "Card A should have nested articles."
+    )
     assert len(card_a["articles"]) == 2, "Card A should have two valid articles."
-    assert (
-        card_a["articles"][0]["title"] == "Article 1"
-    ), "Card A's first article title should be 'Article 1'."
-    assert (
-        card_a["articles"][1]["title"] == "Article 2"
-    ), "Card A's second article title should be 'Article 2'."
+    assert card_a["articles"][0]["title"] == "Article 1", (
+        "Card A's first article title should be 'Article 1'."
+    )
+    assert card_a["articles"][1]["title"] == "Article 2", (
+        "Card A's second article title should be 'Article 2'."
+    )
 
 
 @pytest.mark.asyncio
@@ -161,12 +161,12 @@ async def test_nest_multi_join_data_nested_schema(async_session):
     assert isinstance(card_a, CardSchema), "Card should be an instance of CardSchema."
     assert hasattr(card_a, "articles"), "Card should have nested articles."
     assert len(card_a.articles) == 1, "Card should have one article."
-    assert isinstance(
-        card_a.articles[0], ArticleSchema
-    ), "Article should be an instance of ArticleSchema."
-    assert (
-        card_a.articles[0].title == "Article 1"
-    ), "Article title should be 'Article 1'."
+    assert isinstance(card_a.articles[0], ArticleSchema), (
+        "Article should be an instance of ArticleSchema."
+    )
+    assert card_a.articles[0].title == "Article 1", (
+        "Article title should be 'Article 1'."
+    )
 
 
 @pytest.mark.asyncio
@@ -211,12 +211,12 @@ async def test_nest_multi_join_data_prefix_in_item(async_session):
     assert isinstance(card_a, CardSchema), "Card should be an instance of CardSchema."
     assert hasattr(card_a, "articles"), "Card should have nested articles."
     assert len(card_a.articles) == 1, "Card should have one article."
-    assert isinstance(
-        card_a.articles[0], ArticleSchema
-    ), "Article should be an instance of ArticleSchema."
-    assert (
-        card_a.articles[0].title == "Article 1"
-    ), "Article title should be 'Article 1'."
+    assert isinstance(card_a.articles[0], ArticleSchema), (
+        "Article should be an instance of ArticleSchema."
+    )
+    assert card_a.articles[0].title == "Article 1", (
+        "Article title should be 'Article 1'."
+    )
 
 
 @pytest.mark.asyncio
@@ -262,9 +262,9 @@ async def test_nest_multi_join_data_isinstance_list(async_session):
     assert isinstance(card_a, CardSchema), "Card should be an instance of CardSchema."
     assert hasattr(card_a, "articles"), "Card should have nested articles."
     assert len(card_a.articles) == 2, "Card should have two articles."
-    assert all(
-        isinstance(article, ArticleSchema) for article in card_a.articles
-    ), "All articles should be instances of ArticleSchema."
+    assert all(isinstance(article, ArticleSchema) for article in card_a.articles), (
+        "All articles should be instances of ArticleSchema."
+    )
 
 
 @pytest.mark.asyncio
@@ -310,9 +310,9 @@ async def test_nest_multi_join_data_convert_list_to_schema(async_session):
     assert isinstance(card_a, CardSchema), "Card should be an instance of CardSchema."
     assert hasattr(card_a, "articles"), "Card should have nested articles."
     assert len(card_a.articles) == 2, "Card should have two articles."
-    assert all(
-        isinstance(article, ArticleSchema) for article in card_a.articles
-    ), "All articles should be instances of ArticleSchema."
+    assert all(isinstance(article, ArticleSchema) for article in card_a.articles), (
+        "All articles should be instances of ArticleSchema."
+    )
 
 
 @pytest.mark.asyncio
@@ -357,9 +357,9 @@ async def test_nest_multi_join_data_convert_dict_to_schema(async_session):
     assert isinstance(card_a, CardSchema), "Card should be an instance of CardSchema."
     assert hasattr(card_a, "articles"), "Card should have nested articles."
     assert len(card_a.articles) == 1, "Card should have one article."
-    assert isinstance(
-        card_a.articles[0], ArticleSchema
-    ), "Article should be an instance of ArticleSchema."
-    assert (
-        card_a.articles[0].title == "Article 1"
-    ), "Article title should be 'Article 1'."
+    assert isinstance(card_a.articles[0], ArticleSchema), (
+        "Article should be an instance of ArticleSchema."
+    )
+    assert card_a.articles[0].title == "Article 1", (
+        "Article title should be 'Article 1'."
+    )

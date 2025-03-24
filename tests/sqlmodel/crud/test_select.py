@@ -73,9 +73,9 @@ async def test_select_with_greater_than_filter(async_session, test_model, test_d
     filtered_items = [dict(r) for r in res.mappings()]
     expected_items = [item for item in test_data if item["name"] > "Charlie"]
 
-    assert len(filtered_items) == len(
-        expected_items
-    ), "Filtering with greater than operator failed"
+    assert len(filtered_items) == len(expected_items), (
+        "Filtering with greater than operator failed"
+    )
 
 
 @pytest.mark.asyncio
@@ -93,9 +93,9 @@ async def test_select_with_less_than_or_equal_filter(
     filtered_items = [dict(r) for r in res.mappings()]
     expected_items = [item for item in test_data if item["id"] <= 5]
 
-    assert len(filtered_items) == len(
-        expected_items
-    ), "Filtering with less than or equal operator failed"
+    assert len(filtered_items) == len(expected_items), (
+        "Filtering with less than or equal operator failed"
+    )
 
 
 @pytest.mark.asyncio
@@ -112,9 +112,9 @@ async def test_select_with_descending_sort(async_session, test_model, test_data)
     res = await async_session.execute(stmt)
     sorted_items = [dict(r) for r in res.mappings()]
 
-    assert sorted_items == sorted(
-        test_data, key=lambda x: x["name"], reverse=True
-    ), "Sorting in descending order failed"
+    assert sorted_items == sorted(test_data, key=lambda x: x["name"], reverse=True), (
+        "Sorting in descending order failed"
+    )
 
 
 @pytest.mark.asyncio
@@ -136,6 +136,6 @@ async def test_select_combining_filters_and_sorting(
         [item for item in test_data if item["name"] >= "Eve"], key=lambda x: x["id"]
     )
 
-    assert (
-        filtered_and_sorted_items == expected_items
-    ), "Combining filters and sorting failed"
+    assert filtered_and_sorted_items == expected_items, (
+        "Combining filters and sorting failed"
+    )

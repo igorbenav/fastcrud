@@ -19,7 +19,7 @@ from ..exceptions.http_exceptions import (
     NotFoundException,
     BadRequestException,
 )
-from ..paginated.helper import compute_offset
+from ..paginated.helper import compute_offset, parse_cursor
 from ..paginated.response import paginated_response
 from .helper import (
     CRUDMethods,
@@ -398,34 +398,81 @@ class EndpointCreator:
             items_per_page: Optional[int] = Query(
                 None, alias="itemsPerPage", description="Number of items per page"
             ),
+            cursor: Optional[Union[bool, Any]] = Query(
+                False,
+                description="Pagination cursor -- set to True for first cursor page; can be used in conjuction with limit",
+            ),
             filters: dict = Depends(dynamic_filters),
         ) -> Union[dict[str, Any], PaginatedListResponse, ListResponse]:
-            is_paginated = (page is not None) or (items_per_page is not None)
+            paginated = (page is not None) or (items_per_page is not None)
             has_offset_limit = (offset is not None) and (limit is not None)
 
-            if is_paginated and has_offset_limit:
+            if (
+                paginated
+                and has_offset_limit
+                or paginated
+                and cursor
+                or has_offset_limit
+                and cursor
+            ):
                 raise BadRequestException(
-                    detail="Conflicting parameters: Use either 'page' and 'itemsPerPage' for paginated results or 'offset' and 'limit' for specific range queries."
+                    detail=(
+                        "Conflicting parameters: Use either 'page' and 'itemsPerPage' for paginated results,"
+                        + " 'cursor' and 'limit' for more efficient pagination or 'offset' and 'limit' for general range queries."
+                    )
                 )
 
-            if is_paginated:
+            if paginated:
                 if not page:
                     page = 1
                 if not items_per_page:
                     items_per_page = 10
                 offset = compute_offset(page=page, items_per_page=items_per_page)  # type: ignore
                 limit = items_per_page
+            elif cursor:
+                if not limit:
+                    limit = 100
+                page = -1
+                items_per_page = limit
             elif not has_offset_limit:
                 offset = 0
                 limit = 100
 
-            if self.select_schema is not None:
+            sort_columns = None
+            sort_orders = None
+            sort_column_types: list[type] = []
+
+            if paginated or cursor:
+                sort_columns = [k.name for k in _get_primary_keys(self.model)]
+                sort_orders = ["asc"] * len(sort_columns)
+                sort_column_types = []
+                for k in _get_primary_keys(self.model):
+                    try:
+                        sort_column_types.append(k.type.python_type)
+                    except NotImplementedError:
+                        # if the python_type does not exist for the column
+                        # we assume str
+                        sort_column_types.append(str)
+
+            if cursor:
+                crud_data = await self.crud.get_multi_by_cursor(
+                    db,
+                    limit=limit,  # type: ignore
+                    schema_to_select=self.select_schema,
+                    sort_columns=sort_columns,  # type: ignore
+                    sort_order=sort_orders[0],  # type: ignore
+                    cursor=parse_cursor(cursor, tuple(sort_column_types)),
+                    **filters,
+                )
+            elif self.select_schema is not None:
                 crud_data = await self.crud.get_multi(
                     db,
                     offset=offset,  # type: ignore
                     limit=limit,  # type: ignore
                     schema_to_select=self.select_schema,
                     return_as_model=True,
+                    sort_columns=sort_columns,
+                    sort_orders=sort_orders,
                     **filters,
                 )
             else:
@@ -433,17 +480,19 @@ class EndpointCreator:
                     db,
                     offset=offset,  # type: ignore
                     limit=limit,  # type: ignore
+                    sort_columns=sort_columns,
+                    sort_orders=sort_orders,
                     **filters,
                 )
 
-            if is_paginated:
+            if paginated or cursor:
                 return paginated_response(
                     crud_data=crud_data,
                     page=page,  # type: ignore
                     items_per_page=items_per_page,  # type: ignore
                 )
-
-            return crud_data  # pragma: no cover
+            else:
+                return crud_data  # pragma: no cover
 
         return endpoint
 

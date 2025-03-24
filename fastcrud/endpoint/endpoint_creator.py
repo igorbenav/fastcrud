@@ -443,16 +443,6 @@ class EndpointCreator:
                     items_per_page=items_per_page,  # type: ignore
                 )
 
-            if not has_offset_limit:
-                offset = 0
-                limit = 100
-
-            crud_data = await self.crud.get_multi(
-                db,
-                offset=offset,  # type: ignore
-                limit=limit,  # type: ignore
-                **filters,
-            )
             return crud_data  # pragma: no cover
 
         return endpoint

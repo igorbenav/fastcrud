@@ -591,7 +591,7 @@ def filtered_client(
             create_schema=create_schema,
             update_schema=update_schema,
             delete_schema=delete_schema,
-            filter_config=FilterConfig(tier_id=None, name=None),
+            filter_config=FilterConfig(tier_id=None, name=None, name__startswith=None),
             path="/test",
             tags=["test"],
             endpoint_names={

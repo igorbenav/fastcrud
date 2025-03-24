@@ -278,3 +278,29 @@ async def test_get_multi_handle_validation_error(async_session, test_model):
     assert "Data validation error for schema CustomCreateSchemaTest:" in str(
         exc_info.value
     )
+
+
+@pytest.mark.asyncio
+async def test_read_items_with_advanced_filters(
+        async_session, test_model, test_data
+):
+    for data in test_data:
+        new_item = test_model(**data)
+        async_session.add(new_item)
+    await async_session.commit()
+
+    crud = FastCRUD(test_model)
+
+    # Test startswith filter
+    name = "Ali"
+    result = await crud.get_multi(async_session, name__startswith=name)
+
+    assert len(result["data"]) > 0
+    for item in result["data"]:
+        assert item["name"].startswith(name)
+
+    # Test with non-matching filter
+    name = "Nothing"
+    result = await crud.get_multi(async_session, name__startswith=name)
+
+    assert len(result["data"]) == 0

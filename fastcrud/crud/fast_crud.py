@@ -1,4 +1,4 @@
-from typing import Any, Generic, Union, Optional, Callable
+from typing import Any, Generic, Union, Optional, Callable, cast
 from datetime import datetime, timezone
 
 from pydantic import ValidationError
@@ -49,6 +49,7 @@ from .helper import (
 
 from ..endpoint.helper import _get_primary_keys
 
+FilterCallable = Callable[[Column[Any]], Callable[..., ColumnElement[bool]]]
 
 class FastCRUD(
     Generic[
@@ -496,11 +497,11 @@ class FastCRUD(
         self,
         operator: str,
         value: Any,
-    ) -> Optional[Callable[[str], Callable]]:
+    ) -> Optional[FilterCallable]:
         if operator in {"in", "not_in", "between"}:
             if not isinstance(value, (tuple, list, set)):
                 raise ValueError(f"<{operator}> filter must be tuple, list or set")
-        return self._SUPPORTED_FILTERS.get(operator)
+        return cast(Optional[FilterCallable], self._SUPPORTED_FILTERS.get(operator))
 
     def _parse_filters(
             self,
@@ -557,7 +558,7 @@ class FastCRUD(
 
         or_conditions = []
         for or_op, or_value in value.items():
-            sqlalchemy_filter: Callable = self._get_sqlalchemy_filter(or_op, or_value)
+            sqlalchemy_filter = self._get_sqlalchemy_filter(or_op, or_value)
             if sqlalchemy_filter:
                 condition = (
                     sqlalchemy_filter(col)(*or_value)
@@ -572,14 +573,14 @@ class FastCRUD(
             self,
             col: Column,
             value: dict
-    ) -> list[ColumnElement]:
+    ) -> list[ColumnElement[bool]]:
         """Handle NOT conditions (e.g., age__not={'eq': 20, 'between': (30, 40)})."""
         if not isinstance(value, dict):
             raise ValueError("NOT filter value must be a dictionary")
 
         not_conditions = []
         for not_op, not_value in value.items():
-            sqlalchemy_filter: Callable = self._get_sqlalchemy_filter(not_op, not_value)
+            sqlalchemy_filter = self._get_sqlalchemy_filter(not_op, not_value)
             if sqlalchemy_filter is None:
                 continue
 
@@ -594,13 +595,13 @@ class FastCRUD(
 
     def _handle_standard_filter(
             self,
-            col: Column,
+            col: Column[Any],
             operator: str,
             value: Any
-    ) -> list[ColumnElement]:
+    ) -> list[ColumnElement[bool]]:
         """Handle standard comparison operators (e.g., age__gt=18)."""
         sqlalchemy_filter = self._get_sqlalchemy_filter(operator, value)
-        if not sqlalchemy_filter:
+        if sqlalchemy_filter is None:
             return []
 
         condition = (
@@ -614,12 +615,12 @@ class FastCRUD(
             self,
             model: Union[type[ModelType], AliasedClass],
             field_name: str
-    ) -> Column:
+    ) -> Column[Any]:
         """Get column from model, raising ValueError if not found."""
         model_column = getattr(model, field_name, None)
         if model_column is None:
             raise ValueError(f"Invalid filter column: {field_name}")
-        return model_column
+        return cast(Column[Any], model_column)
 
     def _apply_sorting(
         self,
@@ -2571,8 +2572,3 @@ class FastCRUD(
             await db.execute(delete_stmt)
         if commit:
             await db.commit()
-
-
-
-
-

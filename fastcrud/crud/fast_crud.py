@@ -1,4 +1,4 @@
-from typing import Any, Generic, Union, Optional, Callable
+from typing import Any, Generic, Union, Optional, Callable, cast
 from datetime import datetime, timezone
 
 from pydantic import ValidationError
@@ -15,6 +15,8 @@ from sqlalchemy import (
     desc,
     or_,
     column,
+    not_,
+    Column,
 )
 from sqlalchemy.exc import ArgumentError, MultipleResultsFound, NoResultFound
 from sqlalchemy.sql import Join
@@ -47,6 +49,7 @@ from .helper import (
 
 from ..endpoint.helper import _get_primary_keys
 
+FilterCallable = Callable[[Column[Any]], Callable[..., ColumnElement[bool]]]
 
 class FastCRUD(
     Generic[
@@ -453,6 +456,7 @@ class FastCRUD(
     """
 
     _SUPPORTED_FILTERS = {
+        "eq": lambda column: column.__eq__,
         "gt": lambda column: column.__gt__,
         "lt": lambda column: column.__lt__,
         "gte": lambda column: column.__ge__,
@@ -471,6 +475,8 @@ class FastCRUD(
         "between": lambda column: column.between,
         "in": lambda column: column.in_,
         "not_in": lambda column: column.not_in,
+        "or": lambda column: column.or_,
+        "not": lambda column: column.not_,
     }
 
     def __init__(
@@ -491,50 +497,130 @@ class FastCRUD(
         self,
         operator: str,
         value: Any,
-    ) -> Optional[Callable[[str], Callable]]:
+    ) -> Optional[FilterCallable]:
         if operator in {"in", "not_in", "between"}:
             if not isinstance(value, (tuple, list, set)):
                 raise ValueError(f"<{operator}> filter must be tuple, list or set")
-        return self._SUPPORTED_FILTERS.get(operator)
+        return cast(Optional[FilterCallable], self._SUPPORTED_FILTERS.get(operator))
 
     def _parse_filters(
-        self, model: Optional[Union[type[ModelType], AliasedClass]] = None, **kwargs
+            self,
+            model: Optional[Union[type[ModelType], AliasedClass]] = None,
+            **kwargs
     ) -> list[ColumnElement]:
+        """Parse and convert filter arguments into SQLAlchemy filter conditions.
+
+        Args:
+            model: The model to apply filters to. Defaults to self.model
+            **kwargs: Filter arguments in the format field_name__operator=value
+
+        Returns:
+            List of SQLAlchemy filter conditions
+        """
         model = model or self.model
         filters = []
 
         for key, value in kwargs.items():
-            if "__" in key:
-                field_name, op = key.rsplit("__", 1)
-                column = getattr(model, field_name, None)
-                if column is None:
-                    raise ValueError(f"Invalid filter column: {field_name}")
-                if op == "or":
-                    or_filters = [
-                        sqlalchemy_filter(column)(or_value)
-                        for or_key, or_value in value.items()
-                        if (
-                            sqlalchemy_filter := self._get_sqlalchemy_filter(
-                                or_key, or_value
-                            )
-                        )
-                        is not None
-                    ]
-                    filters.append(or_(*or_filters))
-                else:
-                    sqlalchemy_filter = self._get_sqlalchemy_filter(op, value)
-                    if sqlalchemy_filter:
-                        filters.append(
-                            sqlalchemy_filter(column)(value)
-                            if op != "between"
-                            else sqlalchemy_filter(column)(*value)
-                        )
+            if "__" not in key:
+                filters.extend(self._handle_simple_filter(model, key, value))
+                continue
+
+            field_name, operator = key.rsplit("__", 1)
+            model_column = self._get_column(model, field_name)
+
+            if operator == "or":
+                filters.extend(self._handle_or_filter(model_column, value))
+            elif operator == "not":
+                filters.extend(self._handle_not_filter(model_column, value))
             else:
-                column = getattr(model, key, None)
-                if column is not None:
-                    filters.append(column == value)
+                filters.extend(self._handle_standard_filter(model_column, operator, value))
 
         return filters
+
+    def _handle_simple_filter(
+            self,
+            model: Union[type[ModelType], AliasedClass],
+            key: str,
+            value: Any
+    ) -> list[ColumnElement]:
+        """Handle simple equality filters (e.g., name='John')."""
+        col = getattr(model, key, None)
+        return [col == value] if col is not None else []
+
+    def _handle_or_filter(
+            self,
+            col: Column,
+            value: dict
+    ) -> list[ColumnElement]:
+        """Handle OR conditions (e.g., age__or={'gt': 18, 'lt': 65})."""
+        if not isinstance(value, dict):
+            raise ValueError("OR filter value must be a dictionary")
+
+        or_conditions = []
+        for or_op, or_value in value.items():
+            sqlalchemy_filter = self._get_sqlalchemy_filter(or_op, or_value)
+            if sqlalchemy_filter:
+                condition = (
+                    sqlalchemy_filter(col)(*or_value)
+                    if or_op == "between"
+                    else sqlalchemy_filter(col)(or_value)
+                )
+                or_conditions.append(condition)
+
+        return [or_(*or_conditions)] if or_conditions else []
+
+    def _handle_not_filter(
+            self,
+            col: Column,
+            value: dict
+    ) -> list[ColumnElement[bool]]:
+        """Handle NOT conditions (e.g., age__not={'eq': 20, 'between': (30, 40)})."""
+        if not isinstance(value, dict):
+            raise ValueError("NOT filter value must be a dictionary")
+
+        not_conditions = []
+        for not_op, not_value in value.items():
+            sqlalchemy_filter = self._get_sqlalchemy_filter(not_op, not_value)
+            if sqlalchemy_filter is None:
+                continue
+
+            condition = (
+                sqlalchemy_filter(col)(*not_value)
+                if not_op == "between"
+                else sqlalchemy_filter(col)(not_value)
+            )
+            not_conditions.append(condition)
+
+        return [and_(*(not_(cond) for cond in not_conditions))] if not_conditions else []
+
+    def _handle_standard_filter(
+            self,
+            col: Column[Any],
+            operator: str,
+            value: Any
+    ) -> list[ColumnElement[bool]]:
+        """Handle standard comparison operators (e.g., age__gt=18)."""
+        sqlalchemy_filter = self._get_sqlalchemy_filter(operator, value)
+        if sqlalchemy_filter is None:
+            return []
+
+        condition = (
+            sqlalchemy_filter(col)(*value)
+            if operator == "between"
+            else sqlalchemy_filter(col)(value)
+        )
+        return [condition]
+
+    def _get_column(
+            self,
+            model: Union[type[ModelType], AliasedClass],
+            field_name: str
+    ) -> Column[Any]:
+        """Get column from model, raising ValueError if not found."""
+        model_column = getattr(model, field_name, None)
+        if model_column is None:
+            raise ValueError(f"Invalid filter column: {field_name}")
+        return cast(Column[Any], model_column)
 
     def _apply_sorting(
         self,
@@ -2080,11 +2166,9 @@ class FastCRUD(
                 db,
                 limit=10,
                 sort_column='registration_date',
-                sort_order='desc',
             )
 
             # Fetch the next set of records using the cursor from the first page
-            next_cursor = first_page['next_cursor']
             second_page = await user_crud.get_multi_by_cursor(
                 db,
                 cursor=next_cursor,
@@ -2102,14 +2186,12 @@ class FastCRUD(
                 limit=10,
                 sort_column='age',
                 sort_order='asc',
-                age__gt=30,
             )
             ```
 
             Fetch records excluding a specific username using cursor-based pagination:
 
             ```python
-            first_page = await user_crud.get_multi_by_cursor(
                 db,
                 limit=10,
                 sort_column='username',
@@ -2121,7 +2203,6 @@ class FastCRUD(
         Note:
             This method is designed for efficient pagination in large datasets and is ideal for infinite scrolling features.
             Make sure the column used for cursor pagination is indexed for performance.
-            This method assumes that your records can be ordered by a unique, sequential field (like `id` or `created_at`).
         """
         if limit == 0:
             return {"data": [], "next_cursor": None}

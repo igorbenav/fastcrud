@@ -6,9 +6,10 @@ The Advanced section of our documentation delves into the sophisticated capabili
 
 ### 1. Advanced Filtering and Searching
 
-Explore how to implement advanced filtering and searching capabilities in your application. This guide covers the use of comparison operators (such as greater than, less than, etc.), pattern matching, and more to perform complex queries.
+Explore how to implement advanced filtering and searching capabilities in your application. This guide covers the use of comparison operators (such as greater than, less than, etc.), pattern matching, logical operations like OR and NOT, and more to perform complex queries.
 
-- [Advanced Filtering Guide](crud.md#advanced-filters)
+- [Advanced Filtering Guide](filters.md)
+- [Legacy Filtering Options](crud.md#advanced-filters)
 
 ### 2. Bulk Operations and Batch Processing
 

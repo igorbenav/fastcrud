@@ -4,6 +4,125 @@
 
 The Changelog documents all notable changes made to FastCRUD. This includes new features, bug fixes, and improvements. It's organized by version and date, providing a clear history of the library's development.
 ___
+## [0.15.7] - Mar 25, 2025
+
+#### Added
+- **Advanced filter configs** by [@doubledare704](https://github.com/doubledare704)
+- **OR and NOT for filtering** by [@doubledare704](https://github.com/doubledare704)
+
+#### Improved
+- **Remove redundant code** by [@suhanwu](https://github.com/suhanwu) in [#211](https://github.com/igorbenav/fastcrud/pull/211)
+- **Added pragma: no cover to relevant lines** by [@igorbenav](https://github.com/igorbenav) in [#212](https://github.com/igorbenav/fastcrud/pull/212)
+
+#### What's Changed
+* Implement advanced filter configs by [@doubledare704](https://github.com/doubledare704) in [#204](https://github.com/igorbenav/fastcrud/pull/204)
+* Implement OR and NOT for filtering by [@doubledare704](https://github.com/doubledare704) in [#210](https://github.com/igorbenav/fastcrud/pull/210)
+* Fix: Remove redundant code by [@suhanwu](https://github.com/suhanwu) in [#211](https://github.com/igorbenav/fastcrud/pull/211)
+* Added # pragma: no cover to relevant lines by [@igorbenav](https://github.com/igorbenav) in [#212](https://github.com/igorbenav/fastcrud/pull/212)
+
+#### New Contributors
+* [@suhanwu](https://github.com/suhanwu) made their first contribution in [#211](https://github.com/igorbenav/fastcrud/pull/211)
+* [@doubledare704](https://github.com/doubledare704) made their first contribution in [#204](https://github.com/igorbenav/fastcrud/pull/204)
+
+**Full Changelog**: https://github.com/igorbenav/fastcrud/compare/v0.15.6...v0.15.7
+___
+## [0.15.6] - Feb 19, 2025
+
+#### Added
+- **Models and Schemas, Batch 5: Projects and Participants** by [@slaarti](https://github.com/slaarti) in [#195](https://github.com/igorbenav/fastcrud/pull/195)
+- **Security.md** by [@igorbenav](https://github.com/igorbenav) in [#200](https://github.com/igorbenav/fastcrud/pull/200)
+
+#### Fixed
+- **Cryptography Package Vulnerability** updated to address OpenSSL vulnerability by [@igorbenav](https://github.com/igorbenav) in [#202](https://github.com/igorbenav/fastcrud/pull/202)
+
+#### Documentation Updates
+- **Showcase** by [@igorbenav](https://github.com/igorbenav) in [#193](https://github.com/igorbenav/fastcrud/pull/193)
+
+#### What's Changed
+* Showcase by [@igorbenav](https://github.com/igorbenav) in [#193](https://github.com/igorbenav/fastcrud/pull/193)
+* Models and Schemas, Batch 5: Projects and Participants by [@slaarti](https://github.com/slaarti) in [#195](https://github.com/igorbenav/fastcrud/pull/195)
+* Create SECURITY.md by [@igorbenav](https://github.com/igorbenav) in [#200](https://github.com/igorbenav/fastcrud/pull/200)
+* Bump cryptography to fix vulnerability by [@igorbenav](https://github.com/igorbenav) in [#202](https://github.com/igorbenav/fastcrud/pull/202)
+
+**Full Changelog**: https://github.com/igorbenav/fastcrud/compare/v0.15.5...v0.15.6
+___
+## [0.15.5] - Dec 25, 2024
+
+#### Fixed
+- **Get multi with return_as_model** is now properly typed
+- **Filter with a UUID** that is not a primary key now working
+- **Update with not found record** now raises error as previously defined by warning
+- **Response model** working properly in swagger
+
+#### What's Changed
+* Some fixes by [@igorbenav](https://github.com/igorbenav) in [#190](https://github.com/igorbenav/fastcrud/pull/190)
+* Response model in swagger by [@igorbenav](https://github.com/igorbenav) in [#191](https://github.com/igorbenav/fastcrud/pull/191)
+* Change version in pyproject to 0.15.5 by [@igorbenav](https://github.com/igorbenav) in [#192](https://github.com/igorbenav/fastcrud/pull/192)
+
+**Full Changelog**: https://github.com/igorbenav/fastcrud/compare/v0.15.4...v0.15.5
+___
+## [0.15.4] - Dec 23, 2024
+
+#### Added
+- **Implement select_schema on EndpointCreator and crud_router** by [@ljmc-github](https://github.com/ljmc-github) in [#169](https://github.com/igorbenav/fastcrud/pull/169)
+
+#### Fixed
+- **Custom name bug fix** by [@igorbenav](https://github.com/igorbenav) in [#187](https://github.com/igorbenav/fastcrud/pull/187)
+- **UUID support fix** by [@igorbenav](https://github.com/igorbenav) in [#188](https://github.com/igorbenav/fastcrud/pull/188)
+
+#### What's Changed
+* Implement select_schema on EndpointCreator and crud_router by [@ljmc-github](https://github.com/ljmc-github) in [#169](https://github.com/igorbenav/fastcrud/pull/169)
+* Custom name bug fix by [@igorbenav](https://github.com/igorbenav) in [#187](https://github.com/igorbenav/fastcrud/pull/187)
+* UUID support fix by [@igorbenav](https://github.com/igorbenav) in [#188](https://github.com/igorbenav/fastcrud/pull/188)
+* Bump version to 0.15.4 by [@igorbenav](https://github.com/igorbenav) in [#189](https://github.com/igorbenav/fastcrud/pull/189)
+
+#### New Contributors
+* [@ljmc-github](https://github.com/ljmc-github) made their first contribution in [#169](https://github.com/igorbenav/fastcrud/pull/169)
+
+**Full Changelog**: https://github.com/igorbenav/fastcrud/compare/v0.15.3...v0.15.4
+___
+## [0.15.3] - Dec 23, 2024
+
+#### Fixed
+- **Get multi joined issue** with repetition and wrong count
+
+#### What's Changed
+* Bug fixes by [@igorbenav](https://github.com/igorbenav) in [#186](https://github.com/igorbenav/fastcrud/pull/186)
+
+**Full Changelog**: https://github.com/igorbenav/fastcrud/compare/v0.15.2...v0.15.3
+___
+## [0.15.2] - Dec 15, 2024
+
+#### Added
+- **Add commit option to upsert_multi** by [@feluelle](https://github.com/feluelle) in [#174](https://github.com/igorbenav/fastcrud/pull/174)
+
+#### Fixed
+- **Add missing commit to update** by [@feluelle](https://github.com/feluelle) in [#173](https://github.com/igorbenav/fastcrud/pull/173)
+- **Default page or items_per_page** for when paginating using the get on list by [@phguyss](https://github.com/phguyss) in [#177](https://github.com/igorbenav/fastcrud/pull/177)
+- **Improve update method** when item is not found by [@julianaklulo](https://github.com/julianaklulo) in [#176](https://github.com/igorbenav/fastcrud/pull/176)
+
+#### Improved
+- **Fix quick-start documentation** by [@EduardoTT](https://github.com/EduardoTT) in [#178](https://github.com/igorbenav/fastcrud/pull/178)
+- **Bump actions to avoid node16 EOL issue** by [@Zatura](https://github.com/Zatura) in [#180](https://github.com/igorbenav/fastcrud/pull/180)
+- **Changelog updated** by [@igorbenav](https://github.com/igorbenav) in [#167](https://github.com/igorbenav/fastcrud/pull/167)
+
+#### What's Changed
+* Changelog updated by [@igorbenav](https://github.com/igorbenav) in [#167](https://github.com/igorbenav/fastcrud/pull/167)
+* Add missing commit to update by [@feluelle](https://github.com/feluelle) in [#173](https://github.com/igorbenav/fastcrud/pull/173)
+* Add commit option to upsert_multi by [@feluelle](https://github.com/feluelle) in [#174](https://github.com/igorbenav/fastcrud/pull/174)
+* Fix: quick-start documentation by [@EduardoTT](https://github.com/EduardoTT) in [#178](https://github.com/igorbenav/fastcrud/pull/178)
+* Improve update method when item is not found by [@julianaklulo](https://github.com/julianaklulo) in [#176](https://github.com/igorbenav/fastcrud/pull/176)
+* Bump actions to avoid node16 EOL issue by [@Zatura](https://github.com/Zatura) in [#180](https://github.com/igorbenav/fastcrud/pull/180)
+* Fix: default page or items_per_page for when paginating using the get on list by [@phguyss](https://github.com/phguyss) in [#177](https://github.com/igorbenav/fastcrud/pull/177)
+
+#### New Contributors
+* [@EduardoTT](https://github.com/EduardoTT) made their first contribution in [#178](https://github.com/igorbenav/fastcrud/pull/178)
+* [@julianaklulo](https://github.com/julianaklulo) made their first contribution in [#176](https://github.com/igorbenav/fastcrud/pull/176)
+* [@Zatura](https://github.com/Zatura) made their first contribution in [#180](https://github.com/igorbenav/fastcrud/pull/180)
+* [@phguyss](https://github.com/phguyss) made their first contribution in [#177](https://github.com/igorbenav/fastcrud/pull/177)
+
+**Full Changelog**: https://github.com/igorbenav/fastcrud/compare/v0.15.1...v0.15.2
+___
 ## [0.15.1] - Sep 18, 2024
 
 #### Added

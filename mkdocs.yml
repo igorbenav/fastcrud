@@ -54,6 +54,7 @@ nav:
     - Overview: advanced/overview.md
     - Custom Endpoints: advanced/endpoint.md
     - Advanced CRUD Usage: advanced/crud.md
+    - Advanced Filtering: advanced/filters.md
     - Joining Models: advanced/joins.md
   - API Reference: 
     - Overview: api/overview.md

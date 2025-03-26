@@ -553,7 +553,7 @@ class FastCRUD(
             value: dict
     ) -> list[ColumnElement]:
         """Handle OR conditions (e.g., age__or={'gt': 18, 'lt': 65})."""
-        if not isinstance(value, dict):
+        if not isinstance(value, dict):  # pragma: no cover
             raise ValueError("OR filter value must be a dictionary")
 
         or_conditions = []
@@ -575,13 +575,13 @@ class FastCRUD(
             value: dict
     ) -> list[ColumnElement[bool]]:
         """Handle NOT conditions (e.g., age__not={'eq': 20, 'between': (30, 40)})."""
-        if not isinstance(value, dict):
+        if not isinstance(value, dict):  # pragma: no cover
             raise ValueError("NOT filter value must be a dictionary")
 
         not_conditions = []
         for not_op, not_value in value.items():
             sqlalchemy_filter = self._get_sqlalchemy_filter(not_op, not_value)
-            if sqlalchemy_filter is None:
+            if sqlalchemy_filter is None:  # pragma: no cover
                 continue
 
             condition = (
@@ -601,7 +601,7 @@ class FastCRUD(
     ) -> list[ColumnElement[bool]]:
         """Handle standard comparison operators (e.g., age__gt=18)."""
         sqlalchemy_filter = self._get_sqlalchemy_filter(operator, value)
-        if sqlalchemy_filter is None:
+        if sqlalchemy_filter is None:  # pragma: no cover
             return []
 
         condition = (

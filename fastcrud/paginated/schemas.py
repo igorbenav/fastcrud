@@ -9,7 +9,7 @@ def create_list_response(
     schema: Type[SchemaType], response_key: str = "data"
 ) -> Type[BaseModel]:
     """Creates a dynamic ListResponse model with the specified response key."""
-    return create_model("DynamicListResponse", **{response_key: (list[SchemaType], ...)}) # type: ignore
+    return create_model("DynamicListResponse", **{response_key: (list[schema], ...)}) # type: ignore
 
 
 def create_paginated_response(
@@ -17,7 +17,7 @@ def create_paginated_response(
 ) -> Type[BaseModel]:
     """Creates a dynamic PaginatedResponse model with the specified response key."""
     fields = {
-        response_key: (list[SchemaType], ...),
+        response_key: (list[schema], ...), # type: ignore
         "total_count": (int, ...),
         "has_more": (bool, ...),
         "page": (Optional[int], None),

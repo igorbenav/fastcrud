@@ -2230,7 +2230,7 @@ class FastCRUD(
             if sort_order == "asc":
                 next_cursor = data[-1][sort_column]
             else:
-                data[0][sort_column]
+                next_cursor = data[-1][sort_column]
 
         return {"data": data, "next_cursor": next_cursor}
 

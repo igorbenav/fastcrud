@@ -2125,7 +2125,7 @@ class FastCRUD(
 
         if return_total_count:
             total_count: int = await self.count(
-                db=db, joins_config=joins_config, **kwargs
+                db=db, joins_config=join_definitions, **kwargs
             )
             response["total_count"] = total_count
 

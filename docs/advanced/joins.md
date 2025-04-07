@@ -14,6 +14,8 @@ FastCRUD simplifies CRUD operations while offering capabilities for handling com
 - **`alias`**: An optional SQLAlchemy `AliasedClass` for complex scenarios like self-referential joins or multiple joins on the same model.
 - **`filters`**: An optional dictionary to apply filters directly to the joined model.
 - **`relationship_type`**: Specifies the relationship type, such as `"one-to-one"` or `"one-to-many"`. Default is `"one-to-one"`.
+- **`sort_columns`**: An optional column name or list of column names to sort the nested items by. Only applies to `"one-to-many"` relationships.
+- **`sort_orders`**: An optional sort order (`"asc"` or `"desc"`) or list of sort orders corresponding to the columns in `sort_columns`. If not provided, defaults to `"asc"` for each column.
 
 !!! TIP
 
@@ -86,12 +88,12 @@ task_count = await task_crud.count(
     db=db,
     joins_config=[
         JoinConfig(
-            model=User, 
+            model=User,
             join_on=Task.assigned_user_id == User.id,
         ),
         JoinConfig(
-            model=Department, 
-            join_on=User.department_id == Department.id, 
+            model=Department,
+            join_on=User.department_id == Department.id,
             filters={"name": "Engineering"},
         ),
     ],
@@ -213,19 +215,19 @@ users = await user_crud.get_multi_joined(
     schema_to_select=ReadUserSchema,
     joins_config=[
         JoinConfig(
-            model=Department, 
-            join_on=User.department_id == Department.id, 
+            model=Department,
+            join_on=User.department_id == Department.id,
             join_prefix="dept_",
         ),
         JoinConfig(
-            model=Tier, 
-            join_on=User.tier_id == Tier.id, 
+            model=Tier,
+            join_on=User.tier_id == Tier.id,
             join_prefix="tier_",
         ),
         JoinConfig(
-            model=User, 
-            alias=manager_alias, 
-            join_on=User.manager_id == manager_alias.id, 
+            model=User,
+            alias=manager_alias,
+            join_on=User.manager_id == manager_alias.id,
             join_prefix="manager_",
         ),
     ],
@@ -355,13 +357,59 @@ The result will be:
 }
 ```
 
+##### Sorting Nested Items in One-to-Many Relationships
+
+FastCRUD allows you to sort nested items in one-to-many relationships using the `sort_columns` and `sort_orders` parameters in the `JoinConfig`. This is particularly useful when you want to display nested items in a specific order.
+
+```python
+from fastcrud import FastCRUD, JoinConfig
+
+author_crud = FastCRUD(Author)
+
+# Define join configuration with sorting
+joins_config = [
+    JoinConfig(
+        model=Article,
+        join_on=Author.id == Article.author_id,
+        join_prefix="articles_",
+        relationship_type="one-to-many",
+        sort_columns="title",  # Sort articles by title
+        sort_orders="asc"      # In ascending order
+    )
+]
+
+# Fetch authors with their articles sorted by title
+result = await author_crud.get_multi_joined(
+    db=db,
+    joins_config=joins_config,
+    nest_joins=True
+)
+```
+
+You can also sort by multiple columns with different sort orders:
+
+```python
+joins_config = [
+    JoinConfig(
+        model=Article,
+        join_on=Author.id == Article.author_id,
+        join_prefix="articles_",
+        relationship_type="one-to-many",
+        sort_columns=["published_date", "title"],  # Sort by date first, then title
+        sort_orders=["desc", "asc"]               # Date descending, title ascending
+    )
+]
+```
+
+This will result in nested articles being sorted first by published_date in descending order, and then by title in ascending order within each date group.
+
 #### Many-to-Many Relationships with `get_multi_joined`
 
 FastCRUD simplifies dealing with many-to-many relationships by allowing easy fetch operations with joined models. Here, we demonstrate using `get_multi_joined` to handle a many-to-many relationship between `Project` and `Participant` models, linked through an association table.
 
 **Note on Handling Many-to-Many Relationships:**
 
-When using `get_multi_joined` for many-to-many relationships, it's essential to maintain a specific order in your `joins_config`: 
+When using `get_multi_joined` for many-to-many relationships, it's essential to maintain a specific order in your `joins_config`:
 
 1. **First**, specify the main table you're querying from.
 2. **Next**, include the association table that links your main table to the other table involved in the many-to-many relationship.
@@ -419,7 +467,7 @@ joins_config = [
 
 # Fetch projects with their participants
 projects_with_participants = await project_crud.get_multi_joined(
-    db_session, 
+    db_session,
     joins_config=joins_config,
 )
 ```

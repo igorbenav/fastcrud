@@ -2434,10 +2434,10 @@ class FastCRUD(
         return_as_model: bool = False,
         one_or_none: bool = False,
     ) -> Optional[Union[dict, SelectSchemaType]]:
-        result: Optional[Row] = db_row.one_or_none() if one_or_none else db_row.first()
-        if result is None:  # pragma: no cover
+        if not (result := db_row.one_or_none() if one_or_none else db_row.first()):
             return None
-        out: dict = dict(result._mapping)
+
+        out = dict(result._mapping)
         if not return_as_model:
             return out
         if not schema_to_select:  # pragma: no cover
@@ -2453,23 +2453,17 @@ class FastCRUD(
         return_as_model: bool = False,
     ) -> dict:
         data = [dict(row) for row in db_row.mappings()]
-
-        response: dict[str, Any] = {"data": data}
-
-        if return_as_model:
-            if not schema_to_select:  # pragma: no cover
-                raise ValueError(
-                    "schema_to_select must be provided when return_as_model is True."
-                )
-            try:
-                model_data = [schema_to_select(**row) for row in data]
-                response["data"] = model_data
-            except ValidationError as e:  # pragma: no cover
-                raise ValueError(
-                    f"Data validation error for schema {schema_to_select.__name__}: {e}"
-                )
-
-        return response
+        
+        if not return_as_model:
+            return {"data": data}
+        
+        if not schema_to_select:  # pragma: no cover
+            raise ValueError("schema_to_select required when return_as_model is True")
+        
+        try:
+            return {"data": [schema_to_select(**row) for row in data]}
+        except ValidationError as e:  # pragma: no cover
+            raise ValueError(f"Schema validation error ({schema_to_select.__name__}): {e}")
 
     async def db_delete(
         self,
@@ -2589,13 +2583,13 @@ class FastCRUD(
         """
         filters = self._parse_filters(**kwargs)
         if db_row:
-            if hasattr(db_row, self.is_deleted_column) and hasattr(
-                db_row, self.deleted_at_column
-            ):
+            has_soft_delete = (
+                hasattr(db_row, self.is_deleted_column) and 
+                hasattr(db_row, self.deleted_at_column)
+            )
+            if has_soft_delete:
                 setattr(db_row, self.is_deleted_column, True)
                 setattr(db_row, self.deleted_at_column, datetime.now(timezone.utc))
-                if commit:
-                    await db.commit()
             else:
                 await db.delete(db_row)
             if commit:

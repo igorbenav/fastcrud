@@ -7,26 +7,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.11
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install Poetry
-      run: pip install poetry
+      - name: Install the project
+        run: uv sync --all-extras --dev
 
-    - name: Install dependencies
-      run: poetry install --with dev
+      - name: Run tests with coverage.py
+        run: |
+          uv run coverage run -m pytest
+          uv run coverage xml
 
-    - name: Run tests with coverage.py
-      run: |
-        poetry run coverage run -m pytest
-        poetry run coverage xml
-
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v4.0.1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        slug: igorbenav/fastcrud
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: igorbenav/fastcrud

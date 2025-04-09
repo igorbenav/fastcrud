@@ -56,10 +56,10 @@ To install, just run:
 pip install fastcrud
 ```
 
-Or, if using poetry:
+Or, if using UV:
 
 ```sh
-poetry add fastcrud
+uv add fastcrud
 ```
 
 <h2>Usage</h2>

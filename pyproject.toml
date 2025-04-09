@@ -1,13 +1,12 @@
-[tool.poetry]
+[project]
 name = "fastcrud"
 version = "0.15.7"
 description = "FastCRUD is a Python package for FastAPI, offering robust async CRUD operations and flexible endpoint creation utilities."
-authors = ["Igor Benav <igor.magalhaes.r@gmail.com>"]
-license = "MIT"
+authors = [{ name = "Igor Benav", email = "igor.magalhaes.r@gmail.com" }]
+requires-python = ">=3.9.2,<4"
 readme = "README.md"
-repository = "https://github.com/igorbenav/fastcrud"
-include = ["LICENSE"]
-
+license = "MIT"
+keywords = ["fastapi", "crud", "async", "sqlalchemy", "pydantic"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -22,40 +21,46 @@ classifiers = [
     "Framework :: FastAPI",
     "Typing :: Typed",
 ]
+dependencies = [
+    "SQLAlchemy>=2.0.0,<3",
+    "pydantic>=2.0.0,<3",
+    "SQLAlchemy-Utils>=0.41.1,<0.42",
+    "fastapi>=0.100.0",
+]
 
-keywords = ["fastapi", "crud", "async", "sqlalchemy", "pydantic"]
+[project.urls]
+Repository = "https://github.com/igorbenav/fastcrud"
 
-[tool.poetry.dependencies]
-python = "^3.9.2"
-SQLAlchemy = "^2.0.0"
-pydantic = "^2.0.0"
-SQLAlchemy-Utils = "^0.41.1"
-fastapi = ">=0.100.0"
+[dependency-groups]
+dev = [
+    "pytest>=7.4.4,<8",
+    "aiosqlite>=0.19.0,<0.20",
+    "greenlet>=3.0.3,<4",
+    "httpx>=0.26.0,<0.27",
+    "pytest-asyncio>=0.23.3,<0.24",
+    "tox>=4.12.1,<5",
+    "uvicorn>=0.25.0,<0.26",
+    "sqlmodel>=0.0.14,<0.0.15",
+    "mypy>=1.9.0,<2",
+    "ruff>=0.3.4,<0.4",
+    "coverage>=7.4.4,<8",
+    "testcontainers>=4.7.1,<5",
+    "asyncpg>=0.30.0,<0.31",
+    "psycopg2-binary>=2.9.10,<3",
+    "psycopg>=3.2.1,<4",
+    "aiomysql>=0.2.0,<0.3",
+    "cryptography>=44.0.1,<45",
+]
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.4.4"
-aiosqlite = "^0.19.0"
-greenlet = "^3.0.3"
-httpx = "^0.26.0"
-pytest-asyncio = "^0.23.3"
-tox = "^4.12.1"
-uvicorn = "^0.25.0"
-sqlmodel = "^0.0.14"
-mypy = "^1.9.0"
-ruff = "^0.3.4"
-coverage = "^7.4.4"
-testcontainers = "^4.7.1"
-asyncpg = "^0.30.0"
-psycopg2-binary = "^2.9.10"
-psycopg = "^3.2.1"
-aiomysql = "^0.2.0"
-cryptography = "^44.0.1"
+[tool.hatch.build.targets.sdist]
+include = ["LICENSE"]
+
+[tool.hatch.build.targets.wheel]
+include = ["LICENSE"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
-markers = [
-    "dialect(name): mark test to run only on specific SQL dialect",
-]
+markers = ["dialect(name): mark test to run only on specific SQL dialect"]

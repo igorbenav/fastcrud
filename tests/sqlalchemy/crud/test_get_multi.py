@@ -364,3 +364,43 @@ async def test_get_multi_not_filtering(async_session, test_model):
     )
     # Should only return records with tier_id = 4 or tier_id = 6
     assert all(item["tier_id"] in [4, 6] for item in result["data"])
+
+
+@pytest.mark.asyncio
+async def test_get_multi_basic_changed_multi_response_key(
+    async_session, test_model, test_data
+):
+    for item in test_data:
+        async_session.add(test_model(**item))
+    await async_session.commit()
+
+    total_count_query = await async_session.execute(
+        select(func.count()).select_from(test_model)
+    )
+    total_count = total_count_query.scalar()
+
+    new_multi_response_key = "items"
+    crud = FastCRUD(test_model, multi_response_key=new_multi_response_key)
+    result = await crud.get_multi(async_session)
+
+    assert len(result[new_multi_response_key]) <= 100
+    assert result["total_count"] == total_count
+
+
+@pytest.mark.asyncio
+async def test_get_multi_return_model_changed_multi_response_key(
+    async_session, test_model, test_data, create_schema
+):
+    for item in test_data:
+        async_session.add(test_model(**item))
+    await async_session.commit()
+
+    new_multi_response_key = "items"
+    crud = FastCRUD(test_model, multi_response_key=new_multi_response_key)
+    result = await crud.get_multi(
+        async_session, return_as_model=True, schema_to_select=create_schema
+    )
+
+    assert all(
+        isinstance(item, create_schema) for item in result[new_multi_response_key]
+    )

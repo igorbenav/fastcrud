@@ -6,18 +6,17 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.11
+      - uses: actions/checkout@v4
 
-    - name: Install Poetry
-      run: pip install poetry
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install dependencies
-      run: poetry install --with dev
+      - name: Install the project
+        run: uv sync --all-extras --dev
 
-    - name: Run Ruff
-      run: poetry run ruff check fastcrud
+      - name: Run Ruff
+        run: uv run ruff check fastcrud

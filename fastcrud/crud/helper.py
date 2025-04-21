@@ -20,6 +20,8 @@ class JoinConfig(BaseModel):
     alias: Optional[AliasedClass] = None
     filters: Optional[dict] = None
     relationship_type: Optional[str] = "one-to-one"
+    sort_columns: Optional[Union[str, list[str]]] = None
+    sort_orders: Optional[Union[str, list[str]]] = None
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -289,6 +291,57 @@ def _handle_one_to_many(nested_data, nested_key, nested_field, value):
     return nested_data
 
 
+def _sort_nested_list(nested_list: list[dict], sort_columns: Union[str, list[str]], sort_orders: Optional[Union[str, list[str]]] = None) -> list[dict]:
+    """
+    Sorts a list of dictionaries based on specified sort columns and orders.
+
+    Args:
+        nested_list: The list of dictionaries to sort.
+        sort_columns: A single column name or a list of column names on which to apply sorting.
+        sort_orders: A single sort order ("asc" or "desc") or a list of sort orders corresponding
+            to the columns in `sort_columns`. If not provided, defaults to "asc" for each column.
+
+    Returns:
+        The sorted list of dictionaries.
+
+    Examples:
+        Sorting a list of dictionaries by a single column in ascending order:
+        >>> _sort_nested_list([{"id": 2, "name": "B"}, {"id": 1, "name": "A"}], "name")
+        [{"id": 1, "name": "A"}, {"id": 2, "name": "B"}]
+
+        Sorting by multiple columns with different orders:
+        >>> _sort_nested_list([{"id": 1, "name": "A"}, {"id": 2, "name": "A"}], ["name", "id"], ["asc", "desc"])
+        [{"id": 2, "name": "A"}, {"id": 1, "name": "A"}]
+    """
+    if not nested_list or not sort_columns:
+        return nested_list
+
+    if not isinstance(sort_columns, list):
+        sort_columns = [sort_columns]
+
+    if sort_orders:
+        if not isinstance(sort_orders, list):
+            sort_orders = [sort_orders] * len(sort_columns)
+        if len(sort_columns) != len(sort_orders):
+            raise ValueError("The length of sort_columns and sort_orders must match.")
+
+        for order in sort_orders:
+            if order not in ["asc", "desc"]:
+                raise ValueError(f"Invalid sort order: {order}. Only 'asc' or 'desc' are allowed.")
+    else:
+        sort_orders = ["asc"] * len(sort_columns)
+
+    # Create a list of (column, order) tuples for sorting
+    sort_specs = [(col, 1 if order == "asc" else -1) for col, order in zip(sort_columns, sort_orders)]
+
+    # Sort the list using the sort_specs
+    sorted_list = nested_list.copy()
+    for col, direction in reversed(sort_specs):
+        sorted_list.sort(key=lambda x: (x.get(col) is None, x.get(col)), reverse=direction == -1)
+
+    return sorted_list
+
+
 def _nest_join_data(
     data: dict,
     join_definitions: list[JoinConfig],
@@ -432,6 +485,11 @@ def _nest_join_data(
                     item[join_primary_key] is None for item in nested_data[nested_key]
                 ):
                     nested_data[nested_key] = []
+                # Apply sorting to nested list if sort_columns is specified
+                elif join.sort_columns and nested_data[nested_key]:
+                    nested_data[nested_key] = _sort_nested_list(
+                        nested_data[nested_key], join.sort_columns, join.sort_orders
+                    )
 
         if nested_key in nested_data and isinstance(nested_data[nested_key], dict):
             if (
@@ -576,6 +634,14 @@ def _nest_multi_join_data(
                                         join_prefix
                                     ].append(item)
                                     existing_items.add(item[join_primary_key])
+
+                            # Apply sorting to nested list if sort_columns is specified
+                            if join_config.sort_columns and pre_nested_data[primary_key_value][join_prefix]:
+                                pre_nested_data[primary_key_value][join_prefix] = _sort_nested_list(
+                                    pre_nested_data[primary_key_value][join_prefix],
+                                    join_config.sort_columns,
+                                    join_config.sort_orders
+                                )
             else:  # pragma: no cover
                 if join_prefix in row_dict:
                     value = row_dict[join_prefix]

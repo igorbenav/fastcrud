@@ -138,11 +138,22 @@ class Card(Base):
     title = Column(String(32))
 
 
+class Author(Base):
+    __tablename__ = "authors"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(32))
+    articles = relationship("Article", back_populates="author")
+
+
 class Article(Base):
     __tablename__ = "articles"
     id = Column(Integer, primary_key=True)
     title = Column(String(32))
-    card_id = Column(Integer, ForeignKey("cards.id"))
+    content = Column(String(100))
+    published_date = Column(String(32))
+    author_id = Column(Integer, ForeignKey("authors.id"))
+    author = relationship("Author", back_populates="articles")
+    card_id = Column(Integer, ForeignKey("cards.id"), nullable=True)
     card = relationship("Card", back_populates="articles")
 
 
@@ -254,7 +265,16 @@ class BookingSchema(BaseModel):
 class ArticleSchema(BaseModel):
     id: int
     title: str
-    card_id: int
+    content: Optional[str] = None
+    published_date: Optional[str] = None
+    author_id: Optional[int] = None
+    card_id: Optional[int] = None
+
+
+class AuthorSchema(BaseModel):
+    id: int
+    name: str
+    articles: Optional[list[ArticleSchema]] = []
 
 
 class CardSchema(BaseModel):

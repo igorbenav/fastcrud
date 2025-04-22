@@ -2278,12 +2278,7 @@ class FastCRUD(
         result = await db.execute(stmt)
         data = [dict(row) for row in result.mappings()]
 
-        next_cursor = None
-        if len(data) == limit:
-            if sort_order == "asc":
-                next_cursor = data[-1][sort_column]
-            else:
-                data[0][sort_column]
+        next_cursor = data[-1][sort_column] if len(data) == limit else None
 
         return {"data": data, "next_cursor": next_cursor}
 

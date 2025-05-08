@@ -20,7 +20,9 @@ async def test_nest_multi_join_data_new_row_none(async_session):
     await async_session.flush()
 
     articles = [
-        Article(title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id),
+        Article(
+            title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id
+        ),
         Article(
             title="Article 2", content="Content 2", author_id=2, card_id=None
         ),  # This should trigger new_row[key] = []
@@ -76,8 +78,12 @@ async def test_nest_multi_join_data_existing_row_none(async_session):
     await async_session.flush()
 
     articles = [
-        Article(title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id),
-        Article(title="Article 2", content="Content 2", author_id=2, card_id=cards[0].id),
+        Article(
+            title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id
+        ),
+        Article(
+            title="Article 2", content="Content 2", author_id=2, card_id=cards[0].id
+        ),
         Article(
             title="Article 3", content="Content 3", author_id=3, card_id=None
         ),  # This will trigger existing_row[key] = []
@@ -128,7 +134,9 @@ async def test_nest_multi_join_data_nested_schema(async_session):
     await async_session.flush()
 
     articles = [
-        Article(title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id),
+        Article(
+            title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id
+        ),
     ]
     async_session.add_all(articles)
     await async_session.commit()
@@ -178,7 +186,9 @@ async def test_nest_multi_join_data_prefix_in_item(async_session):
     await async_session.flush()
 
     articles = [
-        Article(title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id),
+        Article(
+            title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id
+        ),
     ]
     async_session.add_all(articles)
     await async_session.commit()
@@ -228,8 +238,12 @@ async def test_nest_multi_join_data_isinstance_list(async_session):
     await async_session.flush()
 
     articles = [
-        Article(title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id),
-        Article(title="Article 2", content="Content 2", author_id=2, card_id=cards[0].id),
+        Article(
+            title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id
+        ),
+        Article(
+            title="Article 2", content="Content 2", author_id=2, card_id=cards[0].id
+        ),
     ]
     async_session.add_all(articles)
     await async_session.commit()
@@ -276,8 +290,12 @@ async def test_nest_multi_join_data_convert_list_to_schema(async_session):
     await async_session.flush()
 
     articles = [
-        Article(title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id),
-        Article(title="Article 2", content="Content 2", author_id=2, card_id=cards[0].id),
+        Article(
+            title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id
+        ),
+        Article(
+            title="Article 2", content="Content 2", author_id=2, card_id=cards[0].id
+        ),
     ]
     async_session.add_all(articles)
     await async_session.commit()
@@ -324,7 +342,9 @@ async def test_nest_multi_join_data_convert_dict_to_schema(async_session):
     await async_session.flush()
 
     articles = [
-        Article(title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id),
+        Article(
+            title="Article 1", content="Content 1", author_id=1, card_id=cards[0].id
+        ),
     ]
     async_session.add_all(articles)
     await async_session.commit()

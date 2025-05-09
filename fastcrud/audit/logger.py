@@ -84,6 +84,11 @@ class AuditLogger(Generic[T]):
                 context = self.context_getter()
                 if isinstance(context, dict):
                     return cast(Dict[str, Any], context)
+                elif hasattr(context, "model_dump") and callable(
+                    getattr(context, "model_dump")
+                ):
+                    return cast(Dict[str, Any], context.model_dump())
+                # Fallback for older Pydantic versions
                 elif hasattr(context, "dict") and callable(getattr(context, "dict")):
                     return cast(Dict[str, Any], context.dict())
                 elif hasattr(context, "__dict__"):
@@ -111,11 +116,11 @@ class AuditLogger(Generic[T]):
         if old_data is None and new_data:
             # Handle creation case
             for key, value in new_data.items():
-                changes[key] = {"old": None, "new": value}
+                changes[key] = {"new": value}  # Don't include "old": None
         elif old_data and new_data is None:
             # Handle deletion case
             for key, value in old_data.items():
-                changes[key] = {"old": value, "new": None}
+                changes[key] = {"old": value}  # Don't include "new": None
         elif old_data and new_data:
             # Handle update case
             all_keys = set(old_data.keys()) | set(new_data.keys())
@@ -123,7 +128,12 @@ class AuditLogger(Generic[T]):
                 old_value = old_data.get(key)
                 new_value = new_data.get(key)
                 if old_value != new_value:
-                    changes[key] = {"old": old_value, "new": new_value}
+                    change = {}
+                    if old_value is not None:
+                        change["old"] = old_value
+                    if new_value is not None:
+                        change["new"] = new_value
+                    changes[key] = change
 
         return changes
 

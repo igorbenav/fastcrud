@@ -2,16 +2,16 @@
 Audit log models for database operation tracking.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from sqlalchemy.orm import Mapped
 from enum import Enum
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, JSON
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 
 # Create a Base for audit models
-AuditBase = declarative_base()
+AuditBase = declarative_base()  # Using sqlalchemy.orm.declarative_base
 
 # Type alias for change data
 ChangeData = Dict[str, Dict[str, Any]]
@@ -36,7 +36,9 @@ class AuditLogBase:
     """
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
     user_id = Column(String(255), nullable=True, index=True)
     operation = Column(String(50), nullable=False, index=True)
     table_name = Column(String(255), nullable=False, index=True)
@@ -76,6 +78,8 @@ class AuditLog(AuditBase, AuditLogBase):
         details: Optional[str] = None,
         changes: Optional[ChangeData] = None,
         context: Optional[Dict[str, Any]] = None,
+        new_data: Optional[Dict[str, Any]] = None,
+        old_data: Optional[Dict[str, Any]] = None,
     ) -> "AuditLog":
         """
         Create a new audit log entry.
@@ -90,10 +94,37 @@ class AuditLog(AuditBase, AuditLogBase):
             details: Additional text details about the operation
             changes: Dictionary of changes with before/after values
             context: Additional contextual information as a dictionary
+            new_data: Data after the operation (for creates and updates)
+            old_data: Data before the operation (for updates and deletes)
 
         Returns:
             A new AuditLog instance
         """
+        # Process changes if not provided but new_data/old_data are
+        if changes is None and (new_data is not None or old_data is not None):
+            changes = {}
+            if old_data is None and new_data:
+                # Handle creation case
+                for key, value in new_data.items():
+                    changes[key] = {"new": value}
+            elif old_data and new_data is None:
+                # Handle deletion case
+                for key, value in old_data.items():
+                    changes[key] = {"old": value}
+            elif old_data and new_data:
+                # Handle update case
+                all_keys = set(old_data.keys()) | set(new_data.keys())
+                for key in all_keys:
+                    old_value = old_data.get(key)
+                    new_value = new_data.get(key)
+                    if old_value != new_value:
+                        change = {}
+                        if old_value is not None:
+                            change["old"] = old_value
+                        if new_value is not None:
+                            change["new"] = new_value
+                        changes[key] = change
+
         return cls(
             operation=operation.value,
             table_name=table_name,

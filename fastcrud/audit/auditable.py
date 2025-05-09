@@ -70,8 +70,10 @@ class AuditableFastCRUD(
         super().__init__(model, is_deleted_column, deleted_at_column, updated_at_column)
 
         self.enable_audit = enable_audit
+        self.audit_logger = (
+            audit_logger or AuditLogger()
+        )  # Always set audit_logger regardless of enable_audit
         if enable_audit:
-            self.audit_logger = audit_logger or AuditLogger()
             self.audit_context_manager = AuditContextManager(self.audit_logger)
 
     async def create(
@@ -289,4 +291,5 @@ class AuditableFastCRUD(
         if not self.enable_audit:
             raise RuntimeError("Audit logging is not enabled for this instance")
 
-        return self.audit_context_manager
+        # Create a new context manager with the provided context as default_context
+        return AuditContextManager(self.audit_logger, default_context=context)

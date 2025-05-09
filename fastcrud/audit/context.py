@@ -24,14 +24,18 @@ class AuditContextManager:
     for both synchronous and asynchronous database operations.
     """
 
-    def __init__(self, logger: AuditLogger):
+    def __init__(
+        self, logger: AuditLogger, default_context: Optional[Dict[str, Any]] = None
+    ):
         """
         Initialize the audit context manager.
 
         Args:
             logger: The AuditLogger instance to use for logging
+            default_context: Default context to use if no session-specific context is set
         """
         self.logger = logger
+        self.default_context = default_context or {}
         self._context: Dict[str, Dict[str, Any]] = {}
 
     def _get_context_key(self, session_id: str) -> str:

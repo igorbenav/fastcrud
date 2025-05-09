@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://benavlabs.github.io/fastcrud/">
-    <img src="https://github.com/benavlabs/fastcrud/blob/main/assets/fastcrud.png?raw=true" alt="FastCRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto">
+    <img src="https://github.com/igorbenav/fastcrud/blob/main/assets/fastcrud.png?raw=true" alt="FastCRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto">
   </a>
 </p>
 <p align="center" markdown=1>

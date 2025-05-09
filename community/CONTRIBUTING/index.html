@@ -1138,18 +1138,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#using-poetry-for-dependency-management" class="md-nav__link">
+  <a href="#using-uv-for-dependency-management" class="md-nav__link">
     <span class="md-ellipsis">
-      Using Poetry for Dependency Management
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#activating-the-virtual-environment" class="md-nav__link">
-    <span class="md-ellipsis">
-      Activating the Virtual Environment
+      Using UV for Dependency Management
     </span>
   </a>
   
@@ -1389,18 +1380,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#using-poetry-for-dependency-management" class="md-nav__link">
+  <a href="#using-uv-for-dependency-management" class="md-nav__link">
     <span class="md-ellipsis">
-      Using Poetry for Dependency Management
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#activating-the-virtual-environment" class="md-nav__link">
-    <span class="md-ellipsis">
-      Activating the Virtual Environment
+      Using UV for Dependency Management
     </span>
   </a>
   
@@ -1520,15 +1502,11 @@
 <p>Start by forking and cloning the FastCRUD repository:</p>
 <div class="language-sh highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/YOUR-GITHUB-USERNAME/fastcrud.git
 </span></code></pre></div>
-<h3 id="using-poetry-for-dependency-management">Using Poetry for Dependency Management<a class="headerlink" href="#using-poetry-for-dependency-management" title="Permanent link">&para;</a></h3>
-<p>FastCRUD uses Poetry for managing dependencies. If you don't have Poetry installed, follow the instructions on the <a href="https://python-poetry.org/docs/">official Poetry website</a>.</p>
-<p>Once Poetry is installed, navigate to the cloned repository and install the dependencies:
+<h3 id="using-uv-for-dependency-management">Using UV for Dependency Management<a class="headerlink" href="#using-uv-for-dependency-management" title="Permanent link">&para;</a></h3>
+<p>FastCRUD uses UV for managing dependencies. If you don't have UV installed, follow the instructions on the <a href="https://docs.astral.sh/uv/">official UV website</a>.</p>
+<p>Once UV is installed, navigate to the cloned repository and install the dependencies:</p>
 <div class="language-sh highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>fastcrud
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>poetry<span class="w"> </span>install
-</span></code></pre></div></p>
-<h3 id="activating-the-virtual-environment">Activating the Virtual Environment<a class="headerlink" href="#activating-the-virtual-environment" title="Permanent link">&para;</a></h3>
-<p>Poetry creates a virtual environment for your project. Activate it using:</p>
-<div class="language-sh highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>poetry<span class="w"> </span>shell
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>uv<span class="w"> </span>sync
 </span></code></pre></div>
 <h2 id="making-contributions">Making Contributions<a class="headerlink" href="#making-contributions" title="Permanent link">&para;</a></h2>
 <h3 id="coding-standards">Coding Standards<a class="headerlink" href="#coding-standards" title="Permanent link">&para;</a></h3>
@@ -1537,17 +1515,17 @@
 <li>Write meaningful tests for new features or bug fixes.</li>
 </ul>
 <h3 id="testing-with-pytest">Testing with Pytest<a class="headerlink" href="#testing-with-pytest" title="Permanent link">&para;</a></h3>
-<p>FastCRUD uses pytest for testing. Run tests using:
-<div class="language-sh highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>poetry<span class="w"> </span>run<span class="w"> </span>pytest
-</span></code></pre></div></p>
+<p>FastCRUD uses pytest for testing. Run tests using:</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>uv<span class="w"> </span>run<span class="w"> </span>pytest
+</span></code></pre></div>
 <h3 id="linting">Linting<a class="headerlink" href="#linting" title="Permanent link">&para;</a></h3>
-<p>Use mypy for type checking:
-<div class="language-sh highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mypy<span class="w"> </span>fastcrud
-</span></code></pre></div></p>
-<p>Use ruff for style:
-<div class="language-sh highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>ruff<span class="w"> </span>check<span class="w"> </span>--fix
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>ruff<span class="w"> </span>format
-</span></code></pre></div></p>
+<p>Use mypy for type checking:</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>uv<span class="w"> </span>run<span class="w"> </span>mypy<span class="w"> </span>fastcrud
+</span></code></pre></div>
+<p>Use ruff for style:</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>uv<span class="w"> </span>ruff<span class="w"> </span>check<span class="w"> </span>--fix
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>uv<span class="w"> </span>ruff<span class="w"> </span>format
+</span></code></pre></div>
 <p>Ensure your code passes linting before submitting.</p>
 <h2 id="submitting-your-contributions">Submitting Your Contributions<a class="headerlink" href="#submitting-your-contributions" title="Permanent link">&para;</a></h2>
 <h3 id="creating-a-pull-request">Creating a Pull Request<a class="headerlink" href="#creating-a-pull-request" title="Permanent link">&para;</a></h3>

@@ -16,6 +16,8 @@ results = await crud.get_multi(db, age__gt=18)
 
 ## OR Operations
 
+### Single Field OR
+
 Use the `__or` suffix to apply multiple conditions to the same field with OR logic:
 
 ```python
@@ -29,6 +31,24 @@ results = await crud.get_multi(
 )
 # Generates: WHERE age < 18 OR age > 65
 ```
+
+### Multi-Field OR
+
+Use the special `_or` parameter to apply OR conditions across multiple different fields:
+
+```python
+# Find users with name containing 'john' OR email containing 'john'
+results = await crud.get_multi(
+    db,
+    _or={
+        "name__ilike": "%john%",
+        "email__ilike": "%john%"
+    }
+)
+# Generates: WHERE name ILIKE '%john%' OR email ILIKE '%john%'
+```
+
+This is particularly useful for implementing search functionality across multiple fields.
 
 ## NOT Operations
 
@@ -69,12 +89,34 @@ results = await crud.get_multi(
     }
 )
 
-# Text search with OR conditions
+# Text search with OR conditions on a single field
 results = await crud.get_multi(
     db,
     name__or={
         "startswith": "A",
         "endswith": "smith"
+    }
+)
+
+# Search across multiple fields with the same keyword
+keyword = "john"
+results = await crud.get_multi(
+    db,
+    _or={
+        "name__ilike": f"%{keyword}%",
+        "email__ilike": f"%{keyword}%",
+        "phone__ilike": f"%{keyword}%",
+        "address__ilike": f"%{keyword}%"
+    }
+)
+
+# Combining multi-field OR with regular filters
+results = await crud.get_multi(
+    db,
+    is_active=True,  # Regular filter applied to all results
+    _or={
+        "name__ilike": "%search term%",
+        "description__ilike": "%search term%"
     }
 )
 ```

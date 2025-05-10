@@ -519,6 +519,9 @@ class FastCRUD(
         model = model or self.model
         filters = []
 
+        if "_or" in kwargs:
+            filters.extend(self._handle_multi_field_or_filter(model, kwargs.pop("_or")))
+
         for key, value in kwargs.items():
             if "__" not in key:
                 filters.extend(self._handle_simple_filter(model, key, value))
@@ -599,6 +602,53 @@ class FastCRUD(
             else sqlalchemy_filter(col)(value)
         )
         return [condition]
+
+    def _handle_multi_field_or_filter(
+            self,
+            model: Union[type[ModelType], AliasedClass],
+            value: dict
+    ) -> list[ColumnElement]:
+        """Handle OR conditions across multiple fields.
+
+        This method allows for OR conditions between different fields, such as:
+        _or={'name__ilike': '%keyword%', 'email__ilike': '%keyword%'}
+
+        Args:
+            model: The model to apply filters to
+            value: Dictionary of field conditions in the format {'field_name__operator': value}
+
+        Returns:
+            List containing a single SQLAlchemy OR condition combining all specified filters
+        """
+        if not isinstance(value, dict):  # pragma: no cover
+            raise ValueError("Multi-field OR filter value must be a dictionary")
+
+        or_conditions = []
+
+        for field_condition, condition_value in value.items():
+            if "__" not in field_condition:
+                col = getattr(model, field_condition, None)
+                if col is not None:
+                    or_conditions.append(col == condition_value)
+                continue
+
+            field_name, operator = field_condition.rsplit("__", 1)
+            try:
+                model_column = self._get_column(model, field_name)
+
+                sqlalchemy_filter = self._get_sqlalchemy_filter(operator, condition_value)
+                if sqlalchemy_filter:
+                    condition = (
+                        sqlalchemy_filter(model_column)(*condition_value)
+                        if operator == "between"
+                        else sqlalchemy_filter(model_column)(condition_value)
+                    )
+                    or_conditions.append(condition)
+            except ValueError:
+                # TODO: log warning
+                continue
+
+        return [or_(*or_conditions)] if or_conditions else []
 
     def _get_column(
         self, model: Union[type[ModelType], AliasedClass], field_name: str

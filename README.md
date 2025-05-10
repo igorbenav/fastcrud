@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://igorbenav.github.io/fastcrud/">
+  <a href="https://benavlabs.github.io/fastcrud/">
     <img src="https://github.com/igorbenav/fastcrud/blob/main/assets/fastcrud.png?raw=true" alt="FastCRUD written in white with a drawing of a gear and inside this gear a bolt." width="45%" height="auto">
   </a>
 </p>
@@ -7,8 +7,8 @@
   <i>Powerful CRUD methods and automatic endpoint creation for FastAPI.</i>
 </p>
 <p align="center" markdown=1>
-<a href="https://github.com/igorbenav/fastcrud/actions/workflows/tests.yml">
-  <img src="https://github.com/igorbenav/fastcrud/actions/workflows/tests.yml/badge.svg" alt="Tests"/>
+<a href="https://github.com/benavlabs/fastcrud/actions/workflows/tests.yml">
+  <img src="https://github.com/benavlabs/fastcrud/actions/workflows/tests.yml/badge.svg" alt="Tests"/>
 </a>
 <a href="https://pypi.org/project/fastcrud/">
   <img src="https://img.shields.io/pypi/v/fastcrud?color=%2334D058&label=pypi%20package" alt="PyPi Version"/>
@@ -16,15 +16,15 @@
 <a href="https://pypi.org/project/fastcrud/">
   <img src="https://img.shields.io/pypi/pyversions/fastcrud.svg?color=%2334D058" alt="Supported Python Versions"/>
 </a>
-<a href="https://codecov.io/gh/igorbenav/fastcrud" > 
-  <img src="https://codecov.io/gh/igorbenav/fastcrud/graph/badge.svg?token=J7XUP29RKU"/> 
+<a href="https://codecov.io/gh/benavlabs/fastcrud" > 
+  <img src="https://codecov.io/gh/benavlabs/fastcrud/graph/badge.svg?token=J7XUP29RKU"/> 
 </a>
 </p>
 <hr>
 <p align="justify">
 <b>FastCRUD</b> is a Python package for <b>FastAPI</b>, offering robust async CRUD operations and flexible endpoint creation utilities, streamlined through advanced features like <b>auto-detected join</b> conditions, <b>dynamic sorting</b>, and offset and cursor <b>pagination</b>.
 </p>
-<p><b>Documentation</b>: <a href="https://igorbenav.github.io/fastcrud/">igorbenav.github.io/fastcrud</a></p>
+<p><b>Documentation</b>: <a href="https://benavlabs.github.io/fastcrud/">benavlabs.github.io/fastcrud</a></p>
 <hr>
 <h2>Features</h2>
 
@@ -212,11 +212,11 @@ async def read_item(item_id: int, db: AsyncSession = Depends(get_session)):
 
 In this example, we define custom endpoints for creating and reading items using FastCRUD directly, providing more flexibility in how the endpoints are structured and how the responses are handled.
 
-To read more detailed descriptions, go to the <a href="https://igorbenav.github.io/fastcrud/">documentation</a>.
+To read more detailed descriptions, go to the <a href="https://benavlabs.github.io/fastcrud/">documentation</a>.
 
 <h2>Showcase</h2>
 
-Browse our [showcase](https://igorbenav.github.io/fastcrud/showcase/) to see projects and tutorials built with FastCRUD:
+Browse our [showcase](https://benavlabs.github.io/fastcrud/showcase/) to see projects and tutorials built with FastCRUD:
 
 - 🚀 **Applications**: Web apps and services powered by FastCRUD
 - 📖 **Open Source**: Libraries and tools built with FastCRUD
@@ -224,13 +224,13 @@ Browse our [showcase](https://igorbenav.github.io/fastcrud/showcase/) to see pro
 
 <h3>Featured Projects</h3>
 
-- **[FastAPI Boilerplate](https://github.com/igorbenav/FastAPI-boilerplate)**: Extendable async API using FastAPI, Pydantic V2, SQLAlchemy 2.0 and PostgreSQL
+- **[FastAPI Boilerplate](https://github.com/benavlabs/FastAPI-boilerplate)**: Extendable async API using FastAPI, Pydantic V2, SQLAlchemy 2.0 and PostgreSQL
 - **[Email Assistant API](https://github.com/igorbenav/email-assistant-api)**: Personalized email writing assistant using OpenAI
-- **[SQLModel Boilerplate](https://github.com/igorbenav/SQLModel-boilerplate)**: Async API boilerplate using FastAPI, SQLModel and PostgreSQL
+- **[SQLModel Boilerplate](https://github.com/benavlabs/SQLModel-boilerplate)**: Async API boilerplate using FastAPI, SQLModel and PostgreSQL
 
 <h3>Share Your Project</h3>
 
-Built something with FastCRUD? We'd love to feature it! Submit your project through our [showcase submission process](https://igorbenav.github.io/fastcrud/community/showcase_submission/).
+Built something with FastCRUD? We'd love to feature it! Submit your project through our [showcase submission process](https://benavlabs.github.io/fastcrud/community/showcase_submission/).
 
 ## References
 
@@ -249,5 +249,5 @@ Built something with FastCRUD? We'd love to feature it! Submit your project thro
 
 ## Contact
 
-Igor Magalhaes – [@igormagalhaesr](https://twitter.com/igormagalhaesr) – igormagalhaesr@gmail.com
-[github.com/igorbenav](https://github.com/igorbenav/)
+Benav Labs – [benav.io](https://benav.io)
+[github.com/benavlabs](https://github.com/benavlabs/)

@@ -51,6 +51,7 @@ from ..endpoint.helper import _get_primary_keys
 
 FilterCallable = Callable[[Column[Any]], Callable[..., ColumnElement[bool]]]
 
+
 class FastCRUD(
     Generic[
         ModelType,
@@ -504,9 +505,7 @@ class FastCRUD(
         return cast(Optional[FilterCallable], self._SUPPORTED_FILTERS.get(operator))
 
     def _parse_filters(
-            self,
-            model: Optional[Union[type[ModelType], AliasedClass]] = None,
-            **kwargs
+        self, model: Optional[Union[type[ModelType], AliasedClass]] = None, **kwargs
     ) -> list[ColumnElement]:
         """Parse and convert filter arguments into SQLAlchemy filter conditions.
 
@@ -536,25 +535,20 @@ class FastCRUD(
             elif operator == "not":
                 filters.extend(self._handle_not_filter(model_column, value))
             else:
-                filters.extend(self._handle_standard_filter(model_column, operator, value))
+                filters.extend(
+                    self._handle_standard_filter(model_column, operator, value)
+                )
 
         return filters
 
     def _handle_simple_filter(
-            self,
-            model: Union[type[ModelType], AliasedClass],
-            key: str,
-            value: Any
+        self, model: Union[type[ModelType], AliasedClass], key: str, value: Any
     ) -> list[ColumnElement]:
         """Handle simple equality filters (e.g., name='John')."""
         col = getattr(model, key, None)
         return [col == value] if col is not None else []
 
-    def _handle_or_filter(
-            self,
-            col: Column,
-            value: dict
-    ) -> list[ColumnElement]:
+    def _handle_or_filter(self, col: Column, value: dict) -> list[ColumnElement]:
         """Handle OR conditions (e.g., age__or={'gt': 18, 'lt': 65})."""
         if not isinstance(value, dict):  # pragma: no cover
             raise ValueError("OR filter value must be a dictionary")
@@ -572,11 +566,7 @@ class FastCRUD(
 
         return [or_(*or_conditions)] if or_conditions else []
 
-    def _handle_not_filter(
-            self,
-            col: Column,
-            value: dict
-    ) -> list[ColumnElement[bool]]:
+    def _handle_not_filter(self, col: Column, value: dict) -> list[ColumnElement[bool]]:
         """Handle NOT conditions (e.g., age__not={'eq': 20, 'between': (30, 40)})."""
         if not isinstance(value, dict):  # pragma: no cover
             raise ValueError("NOT filter value must be a dictionary")
@@ -594,13 +584,12 @@ class FastCRUD(
             )
             not_conditions.append(condition)
 
-        return [and_(*(not_(cond) for cond in not_conditions))] if not_conditions else []
+        return (
+            [and_(*(not_(cond) for cond in not_conditions))] if not_conditions else []
+        )
 
     def _handle_standard_filter(
-            self,
-            col: Column[Any],
-            operator: str,
-            value: Any
+        self, col: Column[Any], operator: str, value: Any
     ) -> list[ColumnElement[bool]]:
         """Handle standard comparison operators (e.g., age__gt=18)."""
         sqlalchemy_filter = self._get_sqlalchemy_filter(operator, value)
@@ -662,9 +651,7 @@ class FastCRUD(
         return [or_(*or_conditions)] if or_conditions else []
 
     def _get_column(
-            self,
-            model: Union[type[ModelType], AliasedClass],
-            field_name: str
+        self, model: Union[type[ModelType], AliasedClass], field_name: str
     ) -> Column[Any]:
         """Get column from model, raising ValueError if not found."""
         model_column = getattr(model, field_name, None)
@@ -2445,17 +2432,19 @@ class FastCRUD(
         return_as_model: bool = False,
     ) -> dict:
         data = [dict(row) for row in db_row.mappings()]
-        
+
         if not return_as_model:
             return {"data": data}
-        
+
         if not schema_to_select:  # pragma: no cover
             raise ValueError("schema_to_select required when return_as_model is True")
-        
+
         try:
             return {"data": [schema_to_select(**row) for row in data]}
         except ValidationError as e:  # pragma: no cover
-            raise ValueError(f"Schema validation error ({schema_to_select.__name__}): {e}")
+            raise ValueError(
+                f"Schema validation error ({schema_to_select.__name__}): {e}"
+            )
 
     async def db_delete(
         self,
@@ -2575,9 +2564,8 @@ class FastCRUD(
         """
         filters = self._parse_filters(**kwargs)
         if db_row:
-            has_soft_delete = (
-                hasattr(db_row, self.is_deleted_column) and 
-                hasattr(db_row, self.deleted_at_column)
+            has_soft_delete = hasattr(db_row, self.is_deleted_column) and hasattr(
+                db_row, self.deleted_at_column
             )
             if has_soft_delete:
                 setattr(db_row, self.is_deleted_column, True)

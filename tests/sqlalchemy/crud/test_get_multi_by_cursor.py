@@ -178,20 +178,19 @@ async def test_get_multi_by_cursor_descending_order(async_session, test_data):
     await async_session.commit()
 
     crud = FastCRUD(ModelTest)
-    
+
     first_page = await crud.get_multi_by_cursor(
-        db=async_session,
-        limit=2,
-        sort_column="id",
-        sort_order="desc"
+        db=async_session, limit=2, sort_column="id", sort_order="desc"
     )
     next_cursor = first_page["next_cursor"]
     item1, item2 = first_page["data"][0]["id"], first_page["data"][1]["id"]
-    
+
     assert len(first_page["data"]) == 2
     assert first_page["data"][0]["id"] == 11  # Should start with highest ID
     assert first_page["data"][1]["id"] == 10
-    assert first_page["next_cursor"] == 10  # Next cursor should be the last ID in the result
+    assert (
+        first_page["next_cursor"] == 10
+    )  # Next cursor should be the last ID in the result
 
     while next_cursor is not None:
         next_page = await crud.get_multi_by_cursor(
@@ -199,7 +198,7 @@ async def test_get_multi_by_cursor_descending_order(async_session, test_data):
             cursor=next_cursor,
             limit=2,
             sort_column="id",
-            sort_order="desc"
+            sort_order="desc",
         )
         next_cursor = next_page["next_cursor"]
         if len(next_page["data"]) == 2:
@@ -211,5 +210,3 @@ async def test_get_multi_by_cursor_descending_order(async_session, test_data):
         else:
             assert next_page["data"][0]["id"] == item1 - 2
             assert next_cursor is None
-
-

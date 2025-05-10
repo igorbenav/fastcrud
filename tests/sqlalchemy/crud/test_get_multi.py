@@ -249,9 +249,7 @@ async def test_get_multi_handle_validation_error(async_session, test_model):
 
 
 @pytest.mark.asyncio
-async def test_read_items_with_advanced_filters(
-        async_session, test_model, test_data
-):
+async def test_read_items_with_advanced_filters(async_session, test_model, test_data):
     for data in test_data:
         new_item = test_model(**data)
         async_session.add(new_item)
@@ -293,28 +291,18 @@ async def test_get_multi_or_filtering(async_session, test_model):
     crud = FastCRUD(test_model)
 
     # Test OR with simple conditions on tier_id
-    result = await crud.get_multi(
-        async_session,
-        tier_id__or={"eq": 1, "eq": 6}
-    )
+    result = await crud.get_multi(async_session, tier_id__or={"eq_1": 1, "eq_2": 6})
     assert len(result["data"]) > 0
     assert all(item["tier_id"] in [1, 6] for item in result["data"])
 
     # Test OR with range conditions on tier_id
-    result = await crud.get_multi(
-        async_session,
-        tier_id__or={"lt": 2, "gt": 5}
-    )
+    result = await crud.get_multi(async_session, tier_id__or={"lt": 2, "gt": 5})
     assert len(result["data"]) > 0
-    assert all(
-        item["tier_id"] < 2 or item["tier_id"] > 5
-        for item in result["data"]
-    )
+    assert all(item["tier_id"] < 2 or item["tier_id"] > 5 for item in result["data"])
 
     # Test OR with like conditions on name
     result = await crud.get_multi(
-        async_session,
-        name__or={"like": "Alice%", "like": "Frank%"}
+        async_session, name__or={"like_alice": "Alice%", "like_frank": "Frank%"}
     )
     assert len(result["data"]) > 0
     assert all(
@@ -342,20 +330,13 @@ async def test_get_multi_not_filtering(async_session, test_model):
     crud = FastCRUD(test_model)
 
     # Test NOT with single condition
-    result = await crud.get_multi(
-        async_session,
-        name__not={"eq": "Alice"}
-    )
+    result = await crud.get_multi(async_session, name__not={"eq": "Alice"})
     assert len(result["data"]) > 0
     assert all(item["name"] != "Alice" for item in result["data"])
 
     # Test NOT with multiple conditions
     result = await crud.get_multi(
-        async_session,
-        tier_id__not={
-            "between": (1, 3),
-            "eq": 5
-        }
+        async_session, tier_id__not={"between": (1, 3), "eq": 5}
     )
     assert len(result["data"]) > 0
     assert all(

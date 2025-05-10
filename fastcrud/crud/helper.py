@@ -291,7 +291,11 @@ def _handle_one_to_many(nested_data, nested_key, nested_field, value):
     return nested_data
 
 
-def _sort_nested_list(nested_list: list[dict], sort_columns: Union[str, list[str]], sort_orders: Optional[Union[str, list[str]]] = None) -> list[dict]:
+def _sort_nested_list(
+    nested_list: list[dict],
+    sort_columns: Union[str, list[str]],
+    sort_orders: Optional[Union[str, list[str]]] = None,
+) -> list[dict]:
     """
     Sorts a list of dictionaries based on specified sort columns and orders.
 
@@ -327,17 +331,24 @@ def _sort_nested_list(nested_list: list[dict], sort_columns: Union[str, list[str
 
         for order in sort_orders:
             if order not in ["asc", "desc"]:
-                raise ValueError(f"Invalid sort order: {order}. Only 'asc' or 'desc' are allowed.")
+                raise ValueError(
+                    f"Invalid sort order: {order}. Only 'asc' or 'desc' are allowed."
+                )
     else:
         sort_orders = ["asc"] * len(sort_columns)
 
     # Create a list of (column, order) tuples for sorting
-    sort_specs = [(col, 1 if order == "asc" else -1) for col, order in zip(sort_columns, sort_orders)]
+    sort_specs = [
+        (col, 1 if order == "asc" else -1)
+        for col, order in zip(sort_columns, sort_orders)
+    ]
 
     # Sort the list using the sort_specs
     sorted_list = nested_list.copy()
     for col, direction in reversed(sort_specs):
-        sorted_list.sort(key=lambda x: (x.get(col) is None, x.get(col)), reverse=direction == -1)
+        sorted_list.sort(
+            key=lambda x: (x.get(col) is None, x.get(col)), reverse=direction == -1
+        )
 
     return sorted_list
 
@@ -636,11 +647,16 @@ def _nest_multi_join_data(
                                     existing_items.add(item[join_primary_key])
 
                             # Apply sorting to nested list if sort_columns is specified
-                            if join_config.sort_columns and pre_nested_data[primary_key_value][join_prefix]:
-                                pre_nested_data[primary_key_value][join_prefix] = _sort_nested_list(
-                                    pre_nested_data[primary_key_value][join_prefix],
-                                    join_config.sort_columns,
-                                    join_config.sort_orders
+                            if (
+                                join_config.sort_columns
+                                and pre_nested_data[primary_key_value][join_prefix]
+                            ):
+                                pre_nested_data[primary_key_value][join_prefix] = (
+                                    _sort_nested_list(
+                                        pre_nested_data[primary_key_value][join_prefix],
+                                        join_config.sort_columns,
+                                        join_config.sort_orders,
+                                    )
                                 )
             else:  # pragma: no cover
                 if join_prefix in row_dict:

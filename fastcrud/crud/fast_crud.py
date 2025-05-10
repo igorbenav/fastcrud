@@ -485,12 +485,14 @@ class FastCRUD(
         is_deleted_column: str = "is_deleted",
         deleted_at_column: str = "deleted_at",
         updated_at_column: str = "updated_at",
+        multi_response_key: str = "data",
     ) -> None:
         self.model = model
         self.model_col_names = [col.key for col in model.__table__.columns]
         self.is_deleted_column = is_deleted_column
         self.deleted_at_column = deleted_at_column
         self.updated_at_column = updated_at_column
+        self.multi_response_key = multi_response_key
         self._primary_keys = _get_primary_keys(self.model)
 
     def _get_sqlalchemy_filter(
@@ -1427,7 +1429,7 @@ class FastCRUD(
         result = await db.execute(stmt)
         data = [dict(row) for row in result.mappings()]
 
-        response: dict[str, Any] = {"data": data}
+        response: dict[str, Any] = {self.multi_response_key: data}
 
         if return_total_count:
             total_count = await self.count(db=db, **kwargs)
@@ -1440,7 +1442,7 @@ class FastCRUD(
                 )
             try:
                 model_data = [schema_to_select(**row) for row in data]
-                response["data"] = model_data
+                response[self.multi_response_key] = model_data
             except ValidationError as e:
                 raise ValueError(
                     f"Data validation error for schema {schema_to_select.__name__}: {e}"

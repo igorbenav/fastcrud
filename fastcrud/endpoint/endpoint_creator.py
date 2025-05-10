@@ -32,6 +32,7 @@ from .helper import (
     _create_dynamic_filters,
     _get_column_types,
 )
+from ..paginated.schemas import create_list_response, create_paginated_response
 
 
 class EndpointCreator:
@@ -297,29 +298,14 @@ class EndpointCreator:
         self.column_types = _get_column_types(model)
 
         if select_schema is not None:
-            self.list_response_model: Optional[Type[ListResponse[Any]]] = type(
-                "DynamicListResponse",
-                (ListResponse[BaseModel],),
-                {"__annotations__": {"data": list[select_schema]}},  # type: ignore
-            )
-            self.paginated_response_model: Optional[
-                Type[PaginatedListResponse[Any]]
-            ] = type(
-                "DynamicPaginatedResponse",
-                (PaginatedListResponse[BaseModel],),
-                {
-                    "__annotations__": {
-                        "data": list[select_schema],  # type: ignore
-                        "total_count": int,
-                        "has_more": bool,
-                        "page": Optional[int],
-                        "items_per_page": Optional[int],
-                    }
-                },
+            response_key = getattr(self.crud, "multi_response_key", "data")
+            self.list_response_model = create_list_response(select_schema, response_key)
+            self.paginated_response_model = create_paginated_response(
+                select_schema, response_key
             )
         else:
-            self.list_response_model = None
-            self.paginated_response_model = None
+            self.list_response_model = None # type: ignore
+            self.paginated_response_model = None # type: ignore
 
     def _validate_filter_config(self, filter_config: FilterConfig) -> None:
         model_columns = self.crud.model_col_names
@@ -441,6 +427,7 @@ class EndpointCreator:
                     crud_data=crud_data,
                     page=page,  # type: ignore
                     items_per_page=items_per_page,  # type: ignore
+                    multi_response_key=self.crud.multi_response_key,
                 )
 
             return crud_data  # pragma: no cover

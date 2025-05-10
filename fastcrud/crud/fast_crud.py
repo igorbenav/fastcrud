@@ -520,7 +520,6 @@ class FastCRUD(
         model = model or self.model
         filters = []
 
-        # Check for special _or key for multi-field OR filtering
         if "_or" in kwargs:
             filters.extend(self._handle_multi_field_or_filter(model, kwargs.pop("_or")))
 
@@ -638,14 +637,12 @@ class FastCRUD(
         or_conditions = []
 
         for field_condition, condition_value in value.items():
-            # Handle simple equality conditions (no operator)
             if "__" not in field_condition:
                 col = getattr(model, field_condition, None)
                 if col is not None:
                     or_conditions.append(col == condition_value)
                 continue
 
-            # Handle conditions with operators
             field_name, operator = field_condition.rsplit("__", 1)
             try:
                 model_column = self._get_column(model, field_name)
@@ -659,7 +656,7 @@ class FastCRUD(
                     )
                     or_conditions.append(condition)
             except ValueError:
-                # Skip invalid columns
+                # TODO: log warning
                 continue
 
         return [or_(*or_conditions)] if or_conditions else []

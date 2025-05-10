@@ -57,7 +57,6 @@ class ModelTest(Base):
     category_id = Column(
         Integer, ForeignKey("category.id"), nullable=True, default=None
     )
-    organization_id = Column(Integer, nullable=True, default=None)
     tier = relationship("TierModel", back_populates="tests")
     category = relationship("CategoryModel", back_populates="tests")
     multi_pk = relationship("MultiPkModel", back_populates="test")
